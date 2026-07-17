@@ -1046,6 +1046,76 @@ def gerente_alterar_login():
         session["gerente_nome"] = novo_usuario
     return jsonify({"status": "ok"})
 
+
+
+@app.route("/api/seed", methods=["POST"])
+def seed_database():
+    """Popula o banco de dados com dados iniciais"""
+    db = get_db()
+    
+    # Verificar se já tem dados
+    count = db.execute("SELECT COUNT(*) FROM servicos").fetchone()[0]
+    if count > 0:
+        return jsonify({"mensagem": "Banco já populado", "servicos": count})
+    
+    # Inserir serviços
+    servicos = [
+        ('Corte Masculino', 45.00, 30, 1, 1),
+        ('Barba', 35.00, 20, 1, 2),
+        ('Corte + Barba', 70.00, 50, 1, 3),
+        ('Sobrancelha', 15.00, 15, 1, 4),
+        ('Hidratação', 50.00, 45, 1, 5),
+        ('Corte Infantil', 30.00, 30, 1, 6),
+        ('Luzes/Platinado', 60.00, 60, 1, 7),
+    ]
+    for s in servicos:
+        db.execute(
+            "INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
+            s
+        )
+    
+    # Inserir profissionais
+    profissionais = [
+        ('Kekeu', 'Cortes e barba', 1, 1),
+        ('Cristiano', 'Gerente', 1, 2),
+        ('Henrique', 'Especialista em barba', 1, 3),
+        ('Gabriel', 'Cortes modernos', 1, 4),
+    ]
+    for p in profissionais:
+        db.execute(
+            "INSERT INTO profissionais (nome, especialidade, ativo, ordem) VALUES (?, ?, ?, ?)",
+            p
+        )
+    
+    # Inserir produtos
+    produtos = [
+        ('Pomada Modeladora', 35.00, 1, 1),
+        ('Óleo para Barba', 28.00, 1, 2),
+        ('Shampoo Anticaspa', 25.00, 1, 3),
+    ]
+    for p in produtos:
+        db.execute(
+            "INSERT INTO produtos (nome, preco, ativo, ordem) VALUES (?, ?, ?, ?)",
+            p
+        )
+    
+    # Inserir assinaturas
+    assinaturas = [
+        ('Plano Bronze', 20.00, '🥉', 1, 1),
+        ('Plano Prata', 35.00, '🥈', 1, 2),
+        ('Plano Ouro', 55.00, '🥇', 1, 3),
+        ('Plano Diamante', 80.00, '💎', 1, 4),
+    ]
+    for a in assinaturas:
+        db.execute(
+            "INSERT INTO assinaturas (nome, preco, icone, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
+            a
+        )
+    
+    db.commit()
+    return jsonify({"mensagem": "Banco populado com sucesso!", "servicos": len(servicos)})
+
+
 if __name__ == "__main__":
     print("\n" + "="*60)
     print("  🚀 INICIANDO SERVIDOR - Barbearia Studio Leblon")
