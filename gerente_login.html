@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login do Gerente - Barbearia Studio Leblon</title>
+<style>
+  :root{
+    --bg: #121212;
+    --bg-card: #1c1c1e;
+    --bg-elevated: #232325;
+    --border: #2c2c2e;
+    --text: #f5f5f5;
+    --text-muted: #9a9a9d;
+    --accent-green: #3ddc84;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .box{
+    width:100%; max-width: 400px; background: var(--bg-card); border:1px solid var(--border);
+    border-radius: 18px; padding: 32px 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  }
+  .box .logo-area{ text-align:center; margin-bottom:20px; }
+  .box .logo-area img{ max-height:60px; max-width:180px; border-radius:8px; }
+  .box .logo-area h1{ font-size:1.4rem; margin-top:8px; color: var(--accent-green); }
+  .box .logo-area p{ color:var(--text-muted); font-size:.8rem; }
+  .box .divider{ width:50px; height:2px; background: var(--accent-green); margin:12px auto; border-radius:2px; }
+  
+  .form-group{ margin-bottom:16px; }
+  .form-group label{ display:block; font-size:.8rem; font-weight:600; color:var(--text-muted); margin-bottom:6px; }
+  .form-group input{
+    width:100%; padding:12px 14px; background:var(--bg); border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-size:.95rem; outline:none; transition:.2s;
+  }
+  .form-group input:focus{ border-color: var(--accent-green); box-shadow:0 0 20px rgba(61,220,132,0.08); }
+  .btn-entrar{
+    width:100%; background: var(--accent-green); color:#000; border:none; padding:14px;
+    border-radius:10px; font-weight:700; font-size:1rem; cursor:pointer; margin-top:8px; transition:.2s;
+  }
+  .btn-entrar:active{ transform:scale(0.97); }
+  .btn-entrar:disabled{ opacity:.6; cursor:not-allowed; }
+  .erro{ background: rgba(231,76,60,0.12); border:1px solid #e74c3c; color:#ff9d91; padding:10px 12px;
+    border-radius:10px; font-size:.85rem; margin-bottom:16px; display:none; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo-area">
+      <img src="/static/logo.jpeg" alt="Leblon Studio" onerror="this.style.display='none'">
+      <h1>Barbearia</h1>
+      <p>Studio Leblon</p>
+      <div class="divider"></div>
+    </div>
+    
+    <div class="erro" id="erroMsg"></div>
+    
+    <div class="form-group">
+      <label>Usuário</label>
+      <input type="text" id="usuario" placeholder="Digite seu usuário" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Digite sua senha" autocomplete="current-password">
+    </div>
+    
+    <button class="btn-entrar" id="btnEntrar" onclick="entrar()">Entrar</button>
+  </div>
+
+  <script>
+    document.getElementById('senha').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+    document.getElementById('usuario').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+
+    async function entrar(){
+      const usuario = document.getElementById('usuario').value.trim();
+      const senha = document.getElementById('senha').value;
+      const erroBox = document.getElementById('erroMsg');
+      const btn = document.getElementById('btnEntrar');
+      erroBox.style.display = 'none';
+
+      if (!usuario || !senha){
+        erroBox.textContent = 'Preencha usuário e senha.';
+        erroBox.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      try{
+        const res = await fetch('/api/gerente/login', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({usuario, senha})
+        });
+        const data = await res.json();
+        if (res.ok){
+          window.location.href = '/gerente';
+        } else {
+          erroBox.textContent = data.erro || 'Usuário ou senha inválidos.';
+          erroBox.style.display = 'block';
+        }
+      } catch(e){
+        erroBox.textContent = 'Erro de conexão com o servidor.';
+        erroBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    }
+  </script>
+</body>
+</html>

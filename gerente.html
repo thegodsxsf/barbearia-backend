@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Painel Gerente - Barbearia Studio Leblon</title>
+<style>
+  :root{
+    --bg: #0a0a0e;
+    --bg-card: #14141a;
+    --bg-elevated: #1c1c24;
+    --border: #2a2a32;
+    --text: #eeeeef;
+    --text-muted: #88889a;
+    --accent: #3ddc84;
+    --red: #e74c3c;
+    --blue: #4a9eff;
+    --gold: #ffd700;
+    --radius: 12px;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display:flex; min-height:100vh; }
+  a{ color:inherit; text-decoration:none; }
+  ::-webkit-scrollbar{ width:4px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+
+  .sidebar{
+    width: 260px; background: var(--bg-card); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; flex-shrink:0;
+    position: sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .sidebar .brand{
+    display:flex; align-items:center; gap:12px; 
+    padding: 18px 20px 16px; 
+    border-bottom:1px solid var(--border); 
+    margin-bottom:4px;
+  }
+  .sidebar .brand img{
+    width:42px; height:42px; border-radius:10px; 
+    object-fit:cover; border:1px solid var(--border);
+    background:#fff;
+  }
+  .sidebar .brand .nome{ font-weight:700; font-size:.95rem; line-height:1.2; }
+  .sidebar .brand .sub{ font-size:.6rem; color:var(--text-muted); font-weight:400; letter-spacing:.04em; text-transform:uppercase; }
+  .sidebar .grupo-label{ font-size:.6rem; letter-spacing:.08em; color:var(--text-muted); font-weight:700; padding: 16px 20px 6px; text-transform:uppercase; }
+  .nav-link{
+    display:flex; align-items:center; gap:12px; 
+    padding: 10px 20px; color: var(--text-muted);
+    font-size:.82rem; font-weight:500; 
+    cursor:pointer; border-left:3px solid transparent; 
+    transition:.2s;
+  }
+  .nav-link:hover{ background: var(--bg-elevated); color: var(--text); }
+  .nav-link.active{ color: var(--accent); border-left-color: var(--accent); background: rgba(61,220,132,0.06); }
+  .nav-link .badge{ margin-left:auto; background: var(--red); color:#fff; border-radius:20px; font-size:.6rem; padding:2px 8px; font-weight:700; }
+  .nav-link .icon{ width:22px; height:22px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .nav-link .icon svg{ width:18px; height:18px; fill:currentColor; stroke:currentColor; stroke-width:0; }
+  .sidebar-footer{ margin-top:auto; padding: 14px 20px; border-top:1px solid var(--border); }
+  .sidebar-footer .nome{ font-weight:600; font-size:.8rem; }
+  .sidebar-footer .btn-sair{ margin-top:8px; width:100%; background:transparent; border:1px solid var(--border); color:var(--red); padding:8px; border-radius:8px; font-weight:600; font-size:.75rem; cursor:pointer; transition:.2s; }
+  .sidebar-footer .btn-sair:hover{ background: rgba(231,76,60,0.1); }
+
+  .main{ flex:1; min-width:0; padding: 20px 28px 40px; }
+  .topo{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+  .topo h1{ font-size:1.3rem; font-weight:700; }
+  .topo p{ color:var(--text-muted); font-size:.8rem; margin-top:2px; }
+  .btn-refresh{ background: var(--bg-elevated); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:8px; cursor:pointer; font-size:.75rem; font-weight:600; transition:.2s; }
+  .btn-refresh:hover{ border-color:var(--accent); }
+  .hidden{ display:none !important; }
+
+  .stats-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:24px; }
+  .stat-card{ background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; transition:.2s; cursor:pointer; }
+  .stat-card:hover{ border-color:var(--accent); transform:translateY(-2px); }
+  .stat-card .label{ color:var(--text-muted); font-size:.7rem; margin-bottom:4px; }
+  .stat-card .valor{ font-size:1.3rem; font-weight:800; }
+  .stat-card .valor.green{ color: var(--accent); }
+  .stat-card .valor.red{ color: var(--red); }
+  .stat-card .valor.blue{ color: var(--blue); }
+  .stat-card .valor.gold{ color: var(--gold); }
+
+  .card-secao{ background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-bottom:16px; }
+  .card-secao .cabecalho{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+  .card-secao h2{ font-size:1rem; font-weight:600; }
+  .filtros{ display:flex; gap:6px; flex-wrap:wrap; }
+  .filtro-btn{ background:var(--bg-elevated); border:1px solid var(--border); color:var(--text-muted); padding:4px 12px; border-radius:16px; font-size:.7rem; font-weight:600; cursor:pointer; transition:.2s; }
+  .filtro-btn:hover{ border-color:var(--accent); }
+  .filtro-btn.active{ background: var(--accent); color:#000; border-color: var(--accent); }
+
+  table{ width:100%; border-collapse:collapse; font-size:.78rem; }
+  thead th{ text-align:left; color:var(--text-muted); font-weight:600; font-size:.65rem; text-transform:uppercase; letter-spacing:.04em; padding: 6px 8px; border-bottom:1px solid var(--border); }
+  tbody td{ padding: 8px 8px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: var(--bg-elevated); }
+  .status-pill{ display:inline-block; padding:2px 10px; border-radius:20px; font-size:.65rem; font-weight:700; }
+  .status-pendente{ background: rgba(255,193,7,0.15); color:#ffc107; }
+  .status-confirmado{ background: rgba(74,158,255,0.15); color:var(--blue); }
+  .status-concluido{ background: rgba(61,220,132,0.15); color: var(--accent); }
+  .status-cancelado{ background: rgba(231,76,60,0.15); color: var(--red); }
+
+  .tabela-scroll{ overflow-x:auto; }
+  .acoes{ display:flex; gap:4px; flex-wrap:wrap; }
+  .btn-mini{ border:none; padding:4px 10px; border-radius:6px; font-size:.65rem; font-weight:700; cursor:pointer; transition:.2s; }
+  .btn-mini:active{ transform:scale(0.95); }
+  .btn-mini.ok{ background: var(--accent); color:#000; }
+  .btn-mini.blue{ background: var(--blue); color:#fff; }
+  .btn-mini.gray{ background: var(--bg-elevated); color:var(--text); border:1px solid var(--border); }
+  .btn-mini.red{ background: var(--red); color:#fff; }
+  .btn-add{ background: var(--accent); color:#000; border:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:.75rem; cursor:pointer; transition:.2s; }
+  .btn-add:hover{ opacity:0.85; }
+  .btn-add:active{ transform:scale(0.95); }
+  .empty-msg{ text-align:center; color:var(--text-muted); padding:20px 0; font-size:.8rem; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; backdrop-filter:blur(4px); }
+  .modal-overlay.active{ display:flex; }
+  .modal{ background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; }
+  .modal h2{ font-size:1.1rem; margin-bottom:16px; }
+  .form-group{ margin-bottom:12px; }
+  .form-group label{ display:block; font-size:.75rem; font-weight:600; color:var(--text-muted); margin-bottom:4px; }
+  .form-group label .required{ color:var(--red); }
+  .form-group input, .form-group select, .form-group textarea{ width:100%; padding:8px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.85rem; outline:none; transition:.2s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus{ border-color:var(--accent); }
+  .form-group textarea{ min-height:50px; resize:vertical; }
+  .modal-acoes{ display:flex; gap:10px; margin-top:6px; }
+  .modal-acoes button{ flex:1; padding:10px; border-radius:8px; font-weight:700; font-size:.85rem; border:none; cursor:pointer; transition:.2s; }
+  .modal-acoes button:active{ transform:scale(0.97); }
+  .btn-salvar{ background: var(--accent); color:#000; }
+  .btn-cancelar{ background: var(--bg-elevated); color:var(--text); border:1px solid var(--border) !important; }
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--bg-elevated); border:1px solid var(--border); color:var(--text); padding:10px 22px; border-radius:var(--radius); font-weight:600; font-size:.8rem; z-index:2000; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+  .btn-menu{ display:none; background:var(--bg-elevated); border:1px solid var(--border); color:var(--text); width:36px; height:36px; border-radius:8px; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; }
+  .btn-menu:hover{ border-color:var(--accent); }
+
+  @media (max-width: 860px){
+    .sidebar{ position:fixed; left:-280px; z-index:200; transition:.3s; box-shadow:0 0 40px rgba(0,0,0,0.5); }
+    .sidebar.aberta{ left:0; }
+    .btn-menu{ display:inline-flex !important; }
+    .main{ padding: 14px 14px 40px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="sidebar" id="sidebar">
+    <div class="brand">
+      <img id="sidebarLogo" src="/static/logo.jpeg" alt="Logo" onerror="this.style.display='none'">
+      <div>
+        <div class="nome">Barbearia</div>
+        <div class="sub">Studio Leblon</div>
+      </div>
+    </div>
+
+    <div class="grupo-label">Operação</div>
+    <div class="nav-link active" data-secao="inicio"><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Início</div>
+    <div class="nav-link" data-secao="pedidos"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Pedidos & Agenda<span class="badge hidden" id="badgePendentes">0</span></div>
+    <div class="nav-link" data-secao="clientes"><span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Gerenciar Clientes</div>
+
+    <div class="grupo-label">Catálogo</div>
+    <div class="nav-link" data-secao="servicos"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Serviços</div>
+    <div class="nav-link" data-secao="produtos"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Produtos</div>
+    <div class="nav-link" data-secao="equipe"><span class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Equipe</div>
+    <div class="nav-link" data-secao="assinaturas"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> Planos</div>
+
+    <div class="grupo-label">Financeiro</div>
+    <div class="nav-link" data-secao="comandas"><span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Comandas<span class="badge hidden" id="badgeComandas">0</span></div>
+    <div class="nav-link" data-secao="repasses"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Repasses<span class="badge hidden" id="badgeRepasses">0</span></div>
+    <div class="nav-link" data-secao="caixa"><span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span> Caixa</div>
+    <div class="nav-link" data-secao="relatorios"><span class="icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Relatórios</div>
+
+    <div class="grupo-label">Configurações</div>
+    <div class="nav-link" data-secao="horarios"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Horários</div>
+    <div class="nav-link" data-secao="perfil"><span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Minha Conta</div>
+
+    <div class="sidebar-footer">
+      <div class="nome" id="nomeGerente">👤 Gerente</div>
+      <button class="btn-sair" onclick="sair()">🚪 Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topo">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="btn-menu" onclick="document.getElementById('sidebar').classList.toggle('aberta')">☰</button>
+        <div><h1 id="tituloSecao">Início</h1><p id="subtituloSecao">Visão geral da barbearia</p></div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000;">🔊 Som Ligado</button>
+        <button class="btn-refresh" onclick="recarregarSecaoAtual()">🔄 Atualizar</button>
+      </div>
+    </div>
+
+    <div id="secInicio">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">💰 Faturamento Total</div><div class="valor green" id="statFaturamento">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">💵 Saldo em Caixa</div><div class="valor blue" id="statSaldo">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">⏳ Pedidos Pendentes</div><div class="valor" id="statPendentes">0</div></div>
+        <div class="stat-card"><div class="label">📅 Agendamentos Hoje</div><div class="valor" id="statHoje">0</div></div>
+        <div class="stat-card"><div class="label">👥 Clientes Atendidos</div><div class="valor" id="statClientes">0</div></div>
+        <div class="stat-card"><div class="label">📋 Comandas Abertas</div><div class="valor blue" id="statComandas">0</div></div>
+        <div class="stat-card"><div class="label">💰 Repasses Pendentes</div><div class="valor red" id="statRepasses">0</div></div>
+      </div>
+      <div class="card-secao">
+        <div class="cabecalho"><h2>📋 Últimos pedidos recebidos</h2></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Recebido em</th></tr></thead><tbody id="tabelaInicioPedidos"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secPedidos" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>📋 Pedidos e Agendamentos</h2>
+          <div class="filtros" id="filtrosPedidos">
+            <div class="filtro-btn active" data-status="">Todos</div>
+            <div class="filtro-btn" data-status="pendente">Pendentes</div>
+            <div class="filtro-btn" data-status="confirmado">Confirmados</div>
+            <div class="filtro-btn" data-status="concluido">Concluídos</div>
+            <div class="filtro-btn" data-status="cancelado">Cancelados</div>
+          </div>
+        </div>
+        <div class="tabela-scroll"><table><thead><tr><th>Cliente</th><th>Contato</th><th>CPF</th><th>Serviço</th><th>Profissional</th><th>Data/Hora</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tabelaPedidos"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secClientes" class="hidden">
+      <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+        <button class="btn-add" onclick="abrirModalCliente()" style="padding:12px 24px;">➕ NOVO CLIENTE</button>
+        <div style="flex:1; display:flex; gap:8px;">
+          <input type="text" id="buscaCliente" placeholder="🔍 Buscar cliente..." style="flex:1; padding:10px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text);">
+          <button class="btn-add" onclick="carregarClientes()">Buscar</button>
+          <button class="btn-refresh" onclick="carregarClientes(); document.getElementById('buscaCliente').value='';">🔄</button>
+        </div>
+      </div>
+      <div class="card-secao">
+        <div class="cabecalho"><h2>👥 Lista de Clientes</h2></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Telefone</th><th>CPF</th><th>Email</th><th>Endereço</th><th>Nascimento</th><th>Cadastro</th><th>Ações</th></tr></thead><tbody id="tabelaClientes"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secServicos" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>✂️ Serviços</h2><button class="btn-add" onclick="abrirModalItem('servicos')">+ Novo Serviço</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço</th><th>Duração</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaServicos"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secProdutos" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>🧴 Produtos</h2><button class="btn-add" onclick="abrirModalItem('produtos')">+ Novo Produto</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaProdutos"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secEquipe" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>👤 Equipe</h2><button class="btn-add" onclick="abrirModalItem('profissionais')">+ Novo Profissional</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Especialidade</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaEquipe"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secAssinaturas" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>📋 Planos de Assinatura</h2><button class="btn-add" onclick="abrirModalItem('assinaturas')">+ Novo Plano</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço/mês</th><th>Destaque</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaAssinaturas"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secComandas" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>📋 Comandas</h2><button class="btn-add" onclick="abrirModalComanda()">+ Nova Comanda</button></div>
+        <div class="filtros" style="margin-bottom:12px;">
+          <div class="filtro-btn active" data-status="">Todas</div>
+          <div class="filtro-btn" data-status="aberta">Abertas</div>
+          <div class="filtro-btn" data-status="paga">Pagas</div>
+          <div class="filtro-btn" data-status="cancelada">Canceladas</div>
+        </div>
+        <div class="tabela-scroll"><table><thead><tr><th>Ticket</th><th>Cliente</th><th>Profissional</th><th>Serviços</th><th>Valor</th><th>Status</th><th>Pagamento</th><th>Ações</th></tr></thead><tbody id="tabelaComandas"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secRepasses" class="hidden">
+      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card"><div class="label">Total Pendente</div><div class="valor red" id="repTotalPendente">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">Total Pago</div><div class="valor green" id="repTotalPago">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">Total Geral</div><div class="valor blue" id="repTotalGeral">R$ 0,00</div></div>
+      </div>
+      <div class="card-secao">
+        <div class="cabecalho"><h2>💰 Repasses</h2><button class="btn-add" onclick="abrirModalRepasse()">+ Adicionar Repasse</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Profissional</th><th>Serviço</th><th>Valor Serviço</th><th>Comissão</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead><tbody id="tabelaRepasses"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secCaixa" class="hidden">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">📈 Entradas</div><div class="valor green" id="caixaEntradas">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">📉 Saídas</div><div class="valor red" id="caixaSaidas">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">💵 Saldo</div><div class="valor blue" id="caixaSaldo">R$ 0,00</div></div>
+      </div>
+      <div class="card-secao">
+        <div class="cabecalho"><h2>💰 Movimentações</h2><button class="btn-add" onclick="abrirModalCaixa()">+ Lançamento</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Tipo</th><th>Descrição</th><th>Pagamento</th><th>Valor</th><th>Data</th><th>Ações</th></tr></thead><tbody id="tabelaCaixa"></tbody></table></div>
+      </div>
+    </div>
+
+    <div id="secRelatorios" class="hidden">
+      <div class="card-secao" style="text-align:center; padding:30px;">
+        <h2>📊 Relatórios</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Baixe relatórios completos do sistema</p>
+        <button class="btn-add" onclick="baixarRelatorio()" style="padding:12px 24px;">📥 Baixar Relatório PDF</button>
+        <div style="margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px;">
+          <div class="stat-card"><div class="label">Total Pedidos</div><div class="valor" id="relPedidos">0</div></div>
+          <div class="stat-card"><div class="label">Total Comandas</div><div class="valor" id="relComandas">0</div></div>
+          <div class="stat-card"><div class="label">Total Repasses</div><div class="valor" id="relRepasses">0</div></div>
+          <div class="stat-card"><div class="label">Faturamento</div><div class="valor green" id="relFaturamento">R$ 0,00</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="secHorarios" class="hidden">
+      <div class="card-secao">
+        <div class="cabecalho"><h2>🕐 Horários de Atendimento</h2></div>
+        <p style="color:var(--text-muted); margin-bottom:16px;">Configure os dias e horários de atendimento</p>
+        <div id="horariosGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:12px;"></div>
+        <button class="btn-add" onclick="salvarHorarios()" style="width:100%; margin-top:16px;">💾 Salvar Horários</button>
+      </div>
+    </div>
+
+    <div id="secPerfil" class="hidden">
+      <div class="card-secao" style="max-width:500px;">
+        <h2>👤 Minha Conta</h2>
+        <div style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+          <h3 style="font-size:.85rem; margin-bottom:8px;">📝 Alterar Nome</h3>
+          <div class="form-group"><label>Novo nome</label><input type="text" id="novoNome" placeholder="Digite seu novo nome"></div>
+          <button class="btn-add" onclick="alterarNome()" style="width:100%;">Salvar Nome</button>
+        </div>
+        <div>
+          <h3 style="font-size:.85rem; margin-bottom:8px;">🔐 Alterar Login</h3>
+          <p style="color:var(--text-muted); font-size:.7rem; margin-bottom:10px;">Preencha apenas o que quiser alterar.</p>
+          <div class="form-group"><label>Senha atual <span class="required">*</span></label><input type="password" id="senhaAtualLogin" placeholder="Senha atual" required></div>
+          <div class="form-group"><label>Novo usuário</label><input type="text" id="novoUsuario" placeholder="Novo usuário (opcional)"></div>
+          <div class="form-group"><label>Nova senha</label><input type="password" id="novaSenhaLogin" placeholder="Nova senha (opcional)"></div>
+          <button class="btn-add" onclick="alterarLogin()" style="width:100%;">Salvar Login</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalCliente">
+    <div class="modal" style="max-width:600px;">
+      <h2 id="modalClienteTitulo">👤 Novo Cliente</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="form-group" style="grid-column: span 2;"><label>Nome completo <span class="required">*</span></label><input type="text" id="clienteNomeModal" placeholder="Nome completo"></div>
+        <div class="form-group"><label>Telefone <span class="required">*</span></label><input type="tel" id="clienteTelefoneModal" placeholder="(81) 99999-9999"></div>
+        <div class="form-group"><label>CPF</label><input type="text" id="clienteCpfModal" placeholder="000.000.000-00" maxlength="14"></div>
+        <div class="form-group" style="grid-column: span 2;"><label>Email</label><input type="email" id="clienteEmailModal" placeholder="cliente@email.com"></div>
+        <div class="form-group"><label>Data Nascimento</label><input type="date" id="clienteNascimentoModal"></div>
+        <div class="form-group"><label>Gênero</label><select id="clienteGeneroModal"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option></select></div>
+        <div class="form-group" style="grid-column: span 2;"><label>Endereço</label><input type="text" id="clienteEnderecoModal" placeholder="Rua, Avenida..."></div>
+        <div class="form-group"><label>Número</label><input type="text" id="clienteNumeroModal" placeholder="123"></div>
+        <div class="form-group"><label>Complemento</label><input type="text" id="clienteComplementoModal" placeholder="Apto"></div>
+        <div class="form-group"><label>Bairro</label><input type="text" id="clienteBairroModal" placeholder="Bairro"></div>
+        <div class="form-group"><label>Cidade</label><input type="text" id="clienteCidadeModal" placeholder="Cidade"></div>
+        <div class="form-group"><label>Estado</label><select id="clienteEstadoModal"><option value="">Selecione</option><option>PE</option><option>SP</option><option>RJ</option></select></div>
+        <div class="form-group"><label>CEP</label><input type="text" id="clienteCepModal" placeholder="00000-000" maxlength="9"></div>
+        <div class="form-group" style="grid-column: span 2;"><label>Observações</label><textarea id="clienteObsModal" rows="2"></textarea></div>
+      </div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalCliente()">Cancelar</button><button class="btn-salvar" onclick="salvarCliente()">Salvar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalItem">
+    <div class="modal">
+      <h2 id="modalItemTitulo">Novo item</h2>
+      <div id="modalItemCampos"></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalItem()">Cancelar</button><button class="btn-salvar" onclick="salvarItem()">Salvar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalComanda">
+    <div class="modal">
+      <h2>📋 Nova Comanda</h2>
+      <div class="form-group"><label>Cliente *</label><input type="text" id="comandaCliente" placeholder="Nome"></div>
+      <div class="form-group"><label>Telefone</label><input type="tel" id="comandaTelefone"></div>
+      <div class="form-group"><label>Profissional</label><input type="text" id="comandaProfissional"></div>
+      <div class="form-group"><label>Serviços</label><textarea id="comandaServicos"></textarea></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="comandaValor"></div>
+      <div class="form-group"><label>Pagamento</label><select id="comandaPagamento"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalComanda()">Cancelar</button><button class="btn-salvar" onclick="salvarComanda()">Salvar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalRepasse">
+    <div class="modal">
+      <h2>💰 Novo Repasse</h2>
+      <div class="form-group"><label>Profissional *</label><input type="text" id="repasseProfissional"></div>
+      <div class="form-group"><label>Serviço *</label><input type="text" id="repasseServico"></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="repasseValor"></div>
+      <div class="form-group"><label>Comissão %</label><input type="number" id="repassePorcentagem" value="50"></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalRepasse()">Cancelar</button><button class="btn-salvar" onclick="salvarRepasse()">Salvar</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalCaixa">
+    <div class="modal">
+      <h2>Novo lançamento</h2>
+      <div class="form-group"><label>Tipo</label><select id="caixaTipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div>
+      <div class="form-group"><label>Descrição</label><input type="text" id="caixaDescricao"></div>
+      <div class="form-group"><label>Valor</label><input type="number" step="0.01" id="caixaValor"></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalCaixa()">Cancelar</button><button class="btn-salvar" onclick="salvarCaixa()">Salvar</button></div>
+    </div>
+  </div>
+
+<script>
+let filtroStatusAtual = '';
+let filtroComandaStatus = '';
+let itemEditando = null;
+let clienteEditandoId = null;
+let ultimoPedidoId = 0;
+let somAtivo = true;
+
+function formatarData(iso){
+  if(!iso) return '-';
+  try {
+    const d = new Date(iso.replace(' ', 'T'));
+    if(isNaN(d)) return iso;
+    return d.toLocaleString('pt-BR', { timeZone: 'America/Recife', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch(e) { return iso; }
+}
+
+function formatarPreco(v){ return "R$ " + Number(v || 0).toFixed(2).replace(".", ","); }
+
+function showToast(msg){
+  const old = document.querySelector('.toast'); if(old) old.remove();
+  const t = document.createElement('div'); t.className='toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2600);
+}
+
+async function api(url, options={}){
+  const res = await fetch(url, {headers:{'Content-Type':'application/json'}, ...options});
+  if (res.status === 401){ window.location.href = '/gerente/login'; throw new Error('Não autenticado'); }
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok){ throw new Error(data.erro || 'Erro na requisição'); }
+  return data;
+}
+
+document.querySelectorAll('.nav-link').forEach(link=>{
+  link.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+    const secao = link.dataset.secao;
+    mostrarSecao(secao);
+    document.getElementById('sidebar').classList.remove('aberta');
+  });
+});
+
+function mostrarSecao(secao){
+  const secoes = ['inicio','pedidos','clientes','servicos','produtos','equipe','assinaturas','comandas','repasses','caixa','relatorios','horarios','perfil'];
+  secoes.forEach(s=>{
+    const el = document.getElementById('sec' + s.charAt(0).toUpperCase() + s.slice(1));
+    if(el) el.classList.toggle('hidden', s !== secao);
+  });
+  const titulos = { inicio:['Início','Visão geral'], pedidos:['Pedidos & Agenda','Acompanhe os pedidos'], clientes:['Clientes','Gerencie seus clientes'], servicos:['Serviços','Gerencie os serviços'], produtos:['Produtos','Gerencie os produtos'], equipe:['Equipe','Gerencie os profissionais'], assinaturas:['Planos','Gerencie os planos'], comandas:['Comandas','Controle de comandas'], repasses:['Repasses','Comissões'], caixa:['Caixa','Controle financeiro'], relatorios:['Relatórios','Baixe relatórios'], horarios:['Horários','Configure os horários'], perfil:['Minha Conta','Altere seus dados'] };
+  const t = titulos[secao] || [secao, ''];
+  document.getElementById('tituloSecao').textContent = t[0];
+  document.getElementById('subtituloSecao').textContent = t[1];
+  window._secaoAtual = secao;
+  carregarSecao(secao);
+}
+
+function recarregarSecaoAtual(){ carregarSecao(window._secaoAtual || 'inicio'); }
+
+function carregarSecao(secao){
+  if (secao === 'inicio') carregarInicio();
+  else if (secao === 'pedidos') carregarPedidos();
+  else if (secao === 'clientes') carregarClientes();
+  else if (secao === 'servicos') carregarCatalogo('servicos');
+  else if (secao === 'produtos') carregarCatalogo('produtos');
+  else if (secao === 'equipe') carregarCatalogo('profissionais');
+  else if (secao === 'assinaturas') carregarCatalogo('assinaturas');
+  else if (secao === 'comandas') carregarComandas();
+  else if (secao === 'repasses') carregarRepasses();
+  else if (secao === 'caixa') carregarCaixa();
+  else if (secao === 'relatorios') carregarRelatorios();
+  else if (secao === 'horarios') carregarHorarios();
+}
+
+async function carregarCatalogo(tabela) {
+  try {
+    const rotas = { 'servicos': '/api/servicos', 'produtos': '/api/produtos', 'profissionais': '/api/profissionais', 'assinaturas': '/api/assinaturas' };
+    const elementos = { 'servicos': 'tabelaServicos', 'produtos': 'tabelaProdutos', 'profissionais': 'tabelaEquipe', 'assinaturas': 'tabelaAssinaturas' };
+    const response = await fetch(rotas[tabela]);
+    if (!response.ok) throw new Error('Erro ao buscar dados');
+    const lista = await response.json();
+    const el = document.getElementById(elementos[tabela]);
+    if (!el) return;
+    if (tabela === 'servicos') {
+      el.innerHTML = lista.length ? lista.map(s => `<tr><td>${s.nome}</td><td>${formatarPreco(s.preco)}</td><td>${s.duracao_min || 30} min</td><td>${s.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('servicos', ${JSON.stringify(s).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('servicos', ${s.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum serviço.</td></tr>';
+    } else if (tabela === 'produtos') {
+      el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${formatarPreco(p.preco)}</td><td>${p.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('produtos', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('produtos', ${p.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum produto.</td></tr>';
+    } else if (tabela === 'profissionais') {
+      el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${p.especialidade || '-'}</td><td>${p.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('profissionais', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('profissionais', ${p.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum profissional.</td></tr>';
+    } else if (tabela === 'assinaturas') {
+      el.innerHTML = lista.length ? lista.map(a => `<tr><td>${a.icone || ''} ${a.nome}</td><td>${formatarPreco(a.preco)}</td><td>${a.destaque ? '⭐' : '-'}</td><td>${a.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('assinaturas', ${JSON.stringify(a).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('assinaturas', ${a.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum plano.</td></tr>';
+    }
+  } catch(e) { console.error('Erro ao carregar catálogo:', e); showToast('Erro ao carregar ' + tabela); }
+}
+
+function abrirModalItem(tabela, item=null){
+  itemEditando = {tabela, id: item ? item.id : null};
+  const titulos = { 'servicos': '✂️ Serviço', 'produtos': '🧴 Produto', 'profissionais': '👤 Profissional', 'assinaturas': '⭐ Plano' };
+  document.getElementById('modalItemTitulo').textContent = item ? `✏️ Editar ${titulos[tabela]}` : `📋 Novo ${titulos[tabela]}`;
+  let campos = '';
+  if (tabela === 'servicos') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Duração (min)</label><input type="number" id="campo_duracao_min" value="${item ? item.duracao_min || 30 : 30}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'produtos') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'profissionais') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Especialidade</label><input type="text" id="campo_especialidade" value="${item ? item.especialidade || '' : ''}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'assinaturas') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Ícone</label><input type="text" id="campo_icone" value="${item ? item.icone || '⭐' : '⭐'}" maxlength="2"></div><div class="form-group"><label>Descrição</label><textarea id="campo_descricao" rows="2">${item ? item.descricao || '' : ''}</textarea></div><div class="form-group"><label>Destaque</label><select id="campo_destaque"><option value="1" ${item && item.destaque ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.destaque ? 'selected' : ''}>Não</option></select></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  }
+  document.getElementById('modalItemCampos').innerHTML = campos;
+  document.getElementById('modalItem').classList.add('active');
+}
+
+function fecharModalItem(){ document.getElementById('modalItem').classList.remove('active'); itemEditando = null; }
+
+async function salvarItem(){
+  const {tabela, id} = itemEditando;
+  if (!tabela) { showToast('❌ Erro: tabela não definida'); return; }
+  const nome = document.getElementById('campo_nome')?.value?.trim() || '';
+  const preco = parseFloat(document.getElementById('campo_preco')?.value) || 0;
+  const ativo = parseInt(document.getElementById('campo_ativo')?.value) || 1;
+  if (!nome) { showToast('⚠️ Nome é obrigatório.'); return; }
+  let dados = { nome, preco, ativo };
+  if (tabela === 'servicos') {
+    dados.duracao_min = parseInt(document.getElementById('campo_duracao_min')?.value) || 30;
+    dados.categoria = 'servicos'; dados.ordem = 0;
+  } else if (tabela === 'produtos') {
+    dados.ordem = 0;
+  } else if (tabela === 'profissionais') {
+    dados.especialidade = document.getElementById('campo_especialidade')?.value?.trim() || '';
+    dados.ordem = 0;
+  } else if (tabela === 'assinaturas') {
+    dados.icone = document.getElementById('campo_icone')?.value?.trim() || '⭐';
+    dados.descricao = document.getElementById('campo_descricao')?.value?.trim() || '';
+    dados.destaque = parseInt(document.getElementById('campo_destaque')?.value) || 0;
+    dados.ordem = 0; dados.beneficios = ''; dados.cor = '#3ddc84';
+  }
+  try {
+    let url = `/api/${tabela}`;
+    let method = 'POST';
+    if (id) { url = `/api/${tabela}/${id}`; method = 'PUT'; }
+    const response = await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados) });
+    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao salvar'); }
+    showToast('✅ Salvo com sucesso!');
+    fecharModalItem();
+    carregarCatalogo(tabela);
+  } catch(e) { showToast('❌ Erro: ' + e.message); console.error('Erro ao salvar:', e); }
+}
+
+async function excluirItemCatalogo(tabela, id) {
+  if (!confirm(`Tem certeza que deseja excluir este item?`)) return;
+  try {
+    const response = await fetch(`/api/${tabela}/${id}`, { method: 'DELETE', headers: {'Content-Type': 'application/json'} });
+    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao excluir'); }
+    showToast('✅ Item excluído!');
+    carregarCatalogo(tabela);
+  } catch(e) { showToast('❌ Erro: ' + e.message); console.error('Erro ao excluir:', e); }
+}
+
+async function excluirPedido(id){
+  console.log('🗑️ CLICOU EM EXCLUIR - ID:', id);
+  if(!confirm('⚠️ Tem certeza que deseja EXCLUIR PERMANENTEMENTE este pedido?')) return;
+  try{
+    const response = await fetch('/api/gerente/pedidos/' + id, { method: 'DELETE', headers: {'Content-Type': 'application/json'} });
+    console.log('📥 Resposta status:', response.status);
+    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao excluir'); }
+    showToast('✅ Pedido excluído com sucesso!');
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    showToast('❌ Erro ao excluir: ' + e.message);
+    console.error('Erro:', e);
+  }
+}
+
+async function atualizarStatusPedido(id, status){
+  try{
+    await api(`/api/gerente/pedidos/${id}`, {method:'PUT', body: JSON.stringify({status})});
+    const statusMap = { 'pendente': '⏳ Pendente', 'confirmado': '✅ Confirmado', 'concluido': '🎯 Concluído', 'cancelado': '❌ Cancelado' };
+    showToast(`✅ Status alterado para: ${statusMap[status] || status}`);
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    showToast('❌ Erro: ' + e.message);
+    console.error('Erro ao atualizar status:', e);
+  }
+}
+
+async function carregarInicio(){
+  try{
+    const stats = await api('/api/gerente/dashboard');
+    document.getElementById('statFaturamento').textContent = formatarPreco(stats.faturamento_total);
+    document.getElementById('statSaldo').textContent = formatarPreco(stats.saldo);
+    document.getElementById('statPendentes').textContent = stats.pedidos_pendentes;
+    document.getElementById('statHoje').textContent = stats.agendamentos_hoje;
+    document.getElementById('statClientes').textContent = stats.total_clientes;
+    document.getElementById('statComandas').textContent = stats.comandas_abertas || 0;
+    document.getElementById('statRepasses').textContent = stats.repasses_pendentes || 0;
+    const pedidos = await api('/api/gerente/pedidos');
+    const ultimos = pedidos.slice(0, 8);
+    document.getElementById('tabelaInicioPedidos').innerHTML = ultimos.length ? ultimos.map(p => `<tr><td>${p.cliente_nome}</td><td>${p.servico_nome}</td><td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td><td>${formatarPreco(p.valor)}</td><td><span class="status-pill status-${p.status}">${p.status}</span></td><td>${formatarData(p.criado_em)}</td></tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhum pedido ainda.</td></tr>';
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+document.querySelectorAll('#filtrosPedidos .filtro-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#filtrosPedidos .filtro-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    filtroStatusAtual = btn.dataset.status;
+    carregarPedidos();
+  });
+});
+
+async function carregarPedidos(){
+  try{
+    const url = filtroStatusAtual ? `/api/gerente/pedidos?status=${filtroStatusAtual}` : '/api/gerente/pedidos';
+    const pedidos = await api(url);
+    document.getElementById('tabelaPedidos').innerHTML = pedidos.length ? pedidos.map(p => `<tr>
+      <td><strong>${p.cliente_nome}</strong></td>
+      <td>${p.cliente_telefone || '-'}</td>
+      <td>${p.cliente_cpf || '-'}</td>
+      <td>${p.servico_nome}</td>
+      <td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td>
+      <td>${p.data_agendada ? (p.data_agendada.split('-').reverse().join('/') + ' ' + (p.hora_agendada||'')) : formatarData(p.criado_em)}</td>
+      <td>${formatarPreco(p.valor)}</td>
+      <td>${p.pagamento || '-'}</td>
+      <td><span class="status-pill status-${p.status}">${p.status}</span></td>
+      <td><div class="acoes">
+        ${p.status==='pendente' ? `<button class="btn-mini blue" onclick="atualizarStatusPedido(${p.id}, 'confirmado')">Confirmar</button>` : ''}
+        ${p.status!=='concluido' ? `<button class="btn-mini ok" onclick="atualizarStatusPedido(${p.id}, 'concluido')">Concluir</button>` : ''}
+        ${p.status!=='cancelado' ? `<button class="btn-mini gray" onclick="atualizarStatusPedido(${p.id}, 'cancelado')">Cancelar</button>` : ''}
+        <button class="btn-mini red" onclick="excluirPedido(${p.id})">Excluir</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="10" class="empty-msg">Nenhum pedido encontrado.</td></tr>';
+  } catch(e){ 
+    showToast('❌ Erro ao carregar pedidos: ' + e.message);
+    console.error('Erro:', e);
+  }
+}
+
+function abrirModalCliente(cliente = null) {
+  clienteEditandoId = cliente ? cliente.id : null;
+  document.getElementById('modalClienteTitulo').textContent = cliente ? '✏️ Editar Cliente' : '👤 Novo Cliente';
+  document.getElementById('clienteNomeModal').value = cliente ? cliente.nome || '' : '';
+  document.getElementById('clienteTelefoneModal').value = cliente ? cliente.telefone || '' : '';
+  document.getElementById('clienteCpfModal').value = cliente ? cliente.cpf || '' : '';
+  document.getElementById('clienteEmailModal').value = cliente ? cliente.email || '' : '';
+  document.getElementById('clienteEnderecoModal').value = cliente ? cliente.endereco || '' : '';
+  document.getElementById('clienteNumeroModal').value = cliente ? cliente.numero || '' : '';
+  document.getElementById('clienteComplementoModal').value = cliente ? cliente.complemento || '' : '';
+  document.getElementById('clienteBairroModal').value = cliente ? cliente.bairro || '' : '';
+  document.getElementById('clienteCidadeModal').value = cliente ? cliente.cidade || '' : '';
+  document.getElementById('clienteEstadoModal').value = cliente ? cliente.estado || '' : '';
+  document.getElementById('clienteCepModal').value = cliente ? cliente.cep || '' : '';
+  document.getElementById('clienteNascimentoModal').value = cliente ? cliente.data_nascimento || '' : '';
+  document.getElementById('clienteGeneroModal').value = cliente ? cliente.genero || '' : '';
+  document.getElementById('clienteObsModal').value = cliente ? cliente.observacoes || '' : '';
+  document.getElementById('modalCliente').classList.add('active');
+}
+
+function fecharModalCliente() { document.getElementById('modalCliente').classList.remove('active'); clienteEditandoId = null; }
+
+async function salvarCliente() {
+  const dados = {
+    nome: document.getElementById('clienteNomeModal').value.trim(),
+    telefone: document.getElementById('clienteTelefoneModal').value.trim(),
+    cpf: document.getElementById('clienteCpfModal').value.trim(),
+    email: document.getElementById('clienteEmailModal').value.trim(),
+    endereco: document.getElementById('clienteEnderecoModal').value.trim(),
+    numero: document.getElementById('clienteNumeroModal').value.trim(),
+    complemento: document.getElementById('clienteComplementoModal').value.trim(),
+    bairro: document.getElementById('clienteBairroModal').value.trim(),
+    cidade: document.getElementById('clienteCidadeModal').value.trim(),
+    estado: document.getElementById('clienteEstadoModal').value,
+    cep: document.getElementById('clienteCepModal').value.trim(),
+    data_nascimento: document.getElementById('clienteNascimentoModal').value,
+    genero: document.getElementById('clienteGeneroModal').value,
+    observacoes: document.getElementById('clienteObsModal').value.trim()
+  };
+  if (!dados.nome) { showToast('⚠️ Nome é obrigatório.'); return; }
+  if (!dados.telefone) { showToast('⚠️ Telefone é obrigatório.'); return; }
+  try {
+    let url = '/api/gerente/clientes'; let method = 'POST';
+    if (clienteEditandoId) { url = `/api/gerente/clientes/${clienteEditandoId}`; method = 'PUT'; }
+    await api(url, {method: method, body: JSON.stringify(dados)});
+    showToast('✅ Cliente salvo!');
+    fecharModalCliente();
+    carregarClientes();
+  } catch(e) { showToast('Erro: ' + e.message); }
+}
+
+async function carregarClientes() {
+  try {
+    const busca = document.getElementById('buscaCliente')?.value || '';
+    const url = busca ? `/api/gerente/clientes?busca=${encodeURIComponent(busca)}` : '/api/gerente/clientes';
+    const clientes = await api(url);
+    document.getElementById('tabelaClientes').innerHTML = clientes.length ? clientes.map(c => `<tr><td><strong>${c.nome}</strong></td><td>${c.telefone || '-'}</td><td>${c.cpf || '-'}</td><td>${c.email || '-'}</td><td>${c.endereco ? c.endereco + (c.numero ? ', ' + c.numero : '') : '-'}</td><td>${c.data_nascimento || '-'}</td><td>${formatarData(c.data_cadastro)}</td><td><div class="acoes"><button class="btn-mini blue" onclick="editarCliente(${c.id})">✏️</button><button class="btn-mini red" onclick="excluirCliente(${c.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-msg">Nenhum cliente.</td></tr>';
+  } catch(e) { showToast('Erro: ' + e.message); }
+}
+
+async function editarCliente(id) {
+  try {
+    const clientes = await api('/api/gerente/clientes');
+    const cliente = clientes.find(c => c.id === id);
+    if (cliente) abrirModalCliente(cliente);
+  } catch(e) { showToast('Erro: ' + e.message); }
+}
+
+async function excluirCliente(id) {
+  if (!confirm('Excluir este cliente?')) return;
+  try {
+    await api(`/api/gerente/clientes/${id}`, {method: 'DELETE'});
+    showToast('✅ Cliente excluído!');
+    carregarClientes();
+  } catch(e) { showToast('Erro: ' + e.message); }
+}
+
+async function carregarComandas(){
+  try{
+    const comandas = await api('/api/gerente/comandas');
+    document.getElementById('tabelaComandas').innerHTML = comandas.length ? comandas.map(c => `<tr><td><strong>${c.ticket}</strong></td><td>${c.cliente_nome}</td><td>${c.profissional || '-'}</td><td>${c.servicos || '-'}</td><td>${formatarPreco(c.valor_total)}</td><td><span class="status-pill status-${c.status}">${c.status}</span></td><td>${c.pagamento}</td><td><div class="acoes"><button class="btn-mini red" onclick="excluirComanda(${c.id})">Excluir</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-msg">Nenhuma comanda.</td></tr>';
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+function abrirModalComanda(){ document.getElementById('modalComanda').classList.add('active'); }
+function fecharModalComanda(){ document.getElementById('modalComanda').classList.remove('active'); }
+
+async function salvarComanda(){
+  const dados = {
+    cliente_nome: document.getElementById('comandaCliente').value.trim(),
+    cliente_telefone: document.getElementById('comandaTelefone').value.trim(),
+    profissional: document.getElementById('comandaProfissional').value.trim(),
+    servicos: document.getElementById('comandaServicos').value.trim(),
+    valor_total: parseFloat(document.getElementById('comandaValor').value) || 0,
+    pagamento: document.getElementById('comandaPagamento').value,
+    status: 'aberta'
+  };
+  if (!dados.cliente_nome) { showToast('⚠️ Nome do cliente é obrigatório.'); return; }
+  try{
+    await api('/api/gerente/comandas', {method:'POST', body: JSON.stringify(dados)});
+    showToast('✅ Comanda criada!');
+    fecharModalComanda();
+    carregarComandas();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function excluirComanda(id){
+  if(!confirm('Excluir esta comanda?')) return;
+  try{
+    await api(`/api/gerente/comandas/${id}`, {method:'DELETE'});
+    showToast('✅ Comanda excluída!');
+    carregarComandas();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function carregarRepasses(){
+  try{
+    const repasses = await api('/api/gerente/repasses');
+    const resumo = await api('/api/gerente/repasses/resumo');
+    document.getElementById('repTotalPendente').textContent = formatarPreco(resumo.total_pendente);
+    document.getElementById('repTotalPago').textContent = formatarPreco(resumo.total_pago);
+    document.getElementById('repTotalGeral').textContent = formatarPreco(resumo.total_pendente + resumo.total_pago);
+    document.getElementById('tabelaRepasses').innerHTML = repasses.length ? repasses.map(r => `<tr><td>${r.profissional}</td><td>${r.servico_nome}</td><td>${formatarPreco(r.valor_servico)}</td><td>${formatarPreco(r.comissao)}</td><td><span class="status-pill ${r.status === 'pago' ? 'status-concluido' : 'status-pendente'}">${r.status}</span></td><td>${formatarData(r.criado_em)}</td><td><div class="acoes"><button class="btn-mini red" onclick="excluirRepasse(${r.id})">Excluir</button></div></td></tr>`).join('') : '<tr><td colspan="7" class="empty-msg">Nenhum repasse.</td></tr>';
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+function abrirModalRepasse(){ document.getElementById('modalRepasse').classList.add('active'); }
+function fecharModalRepasse(){ document.getElementById('modalRepasse').classList.remove('active'); }
+
+async function salvarRepasse(){
+  const dados = {
+    profissional: document.getElementById('repasseProfissional').value.trim(),
+    servico_nome: document.getElementById('repasseServico').value.trim(),
+    valor_servico: parseFloat(document.getElementById('repasseValor').value) || 0,
+    porcentagem: parseFloat(document.getElementById('repassePorcentagem').value) || 50,
+    status: 'pendente'
+  };
+  if (!dados.profissional || !dados.servico_nome) { showToast('⚠️ Profissional e serviço obrigatórios.'); return; }
+  try{
+    await api('/api/gerente/repasses', {method:'POST', body: JSON.stringify(dados)});
+    showToast('✅ Repasse criado!');
+    fecharModalRepasse();
+    carregarRepasses();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function excluirRepasse(id){
+  if(!confirm('Excluir este repasse?')) return;
+  try{
+    await api(`/api/gerente/repasses/${id}`, {method:'DELETE'});
+    showToast('✅ Repasse excluído!');
+    carregarRepasses();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function carregarCaixa(){
+  try{
+    const lista = await api('/api/gerente/caixa');
+    const entradas = lista.filter(c=>c.tipo==='entrada').reduce((s,c)=>s+c.valor,0);
+    const saidas = lista.filter(c=>c.tipo==='saida').reduce((s,c)=>s+c.valor,0);
+    document.getElementById('caixaEntradas').textContent = formatarPreco(entradas);
+    document.getElementById('caixaSaidas').textContent = formatarPreco(saidas);
+    document.getElementById('caixaSaldo').textContent = formatarPreco(entradas - saidas);
+    document.getElementById('tabelaCaixa').innerHTML = lista.length ? lista.map(c => `<tr><td><span class="status-pill ${c.tipo==='entrada' ? 'status-concluido' : 'status-cancelado'}">${c.tipo}</span></td><td>${c.descricao || '-'}</td><td>${c.pagamento || '-'}</td><td>${formatarPreco(c.valor)}</td><td>${formatarData(c.criado_em)}</td><td><button class="btn-mini red" onclick="excluirCaixa(${c.id})">Excluir</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhuma movimentação.</td></tr>';
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+function abrirModalCaixa(){ document.getElementById('modalCaixa').classList.add('active'); }
+function fecharModalCaixa(){ document.getElementById('modalCaixa').classList.remove('active'); }
+
+async function salvarCaixa(){
+  const tipo = document.getElementById('caixaTipo').value;
+  const descricao = document.getElementById('caixaDescricao').value.trim();
+  const valor = Number(document.getElementById('caixaValor').value);
+  if (!valor || valor <= 0){ showToast('Informe um valor válido.'); return; }
+  try{
+    await api('/api/gerente/caixa', {method:'POST', body: JSON.stringify({tipo, descricao, valor, pagamento:'manual'})});
+    showToast('✅ Lançamento adicionado!');
+    fecharModalCaixa();
+    carregarCaixa();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function excluirCaixa(id){
+  if (!confirm('Excluir este lançamento?')) return;
+  try{
+    await api(`/api/gerente/caixa/${id}`, {method:'DELETE'});
+    showToast('✅ Lançamento excluído.');
+    carregarCaixa();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function carregarRelatorios(){
+  try{
+    const pedidos = await api('/api/gerente/pedidos');
+    const comandas = await api('/api/gerente/comandas');
+    const repasses = await api('/api/gerente/repasses');
+    const caixa = await api('/api/gerente/caixa');
+    document.getElementById('relPedidos').textContent = pedidos.length;
+    document.getElementById('relComandas').textContent = comandas.length;
+    document.getElementById('relRepasses').textContent = repasses.length;
+    const total = caixa.filter(c=>c.tipo==='entrada').reduce((s,c)=>s+c.valor,0);
+    document.getElementById('relFaturamento').textContent = formatarPreco(total);
+  } catch(e){ showToast('Erro ao carregar relatórios: ' + e.message); }
+}
+
+async function baixarRelatorio(){
+  try{
+    window.open('/api/gerente/relatorio/pdf', '_blank');
+    showToast('📥 Baixando relatório...');
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+let horariosData = [];
+
+async function carregarHorarios(){
+  try{
+    const horarios = await api('/api/horarios');
+    horariosData = horarios;
+    const grid = document.getElementById('horariosGrid');
+    grid.innerHTML = horarios.map(h => `<div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:12px;"><h4 style="font-size:.9rem; margin-bottom:8px;">${DIAS_SEMANA[h.dia_semana]}</h4><div class="form-group"><label>Abertura</label><input type="time" id="hora_abertura_${h.dia_semana}" value="${h.abertura || ''}"></div><div class="form-group"><label>Fechamento</label><input type="time" id="hora_fechamento_${h.dia_semana}" value="${h.fechamento || ''}"></div><div style="display:flex; align-items:center; gap:8px; margin-top:4px;"><input type="checkbox" id="hora_ativo_${h.dia_semana}" ${h.ativo ? 'checked' : ''}><label>Ativo</label></div></div>`).join('');
+  } catch(e){ showToast('Erro ao carregar horários: ' + e.message); }
+}
+
+async function salvarHorarios(){
+  try{
+    const dados = {};
+    horariosData.forEach(h => {
+      const dia = h.dia_semana;
+      dados[dia] = {
+        abertura: document.getElementById(`hora_abertura_${dia}`).value,
+        fechamento: document.getElementById(`hora_fechamento_${dia}`).value,
+        ativo: document.getElementById(`hora_ativo_${dia}`).checked
+      };
+    });
+    await api('/api/horarios', {method:'PUT', body: JSON.stringify(dados)});
+    showToast('✅ Horários salvos!');
+    carregarHorarios();
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function alterarNome(){
+  const nome = document.getElementById('novoNome').value.trim();
+  if(!nome){ showToast('Digite um nome.'); return; }
+  try{
+    await api('/api/gerente/alterar_nome', {method:'POST', body: JSON.stringify({novo_nome: nome})});
+    document.getElementById('nomeGerente').textContent = '👤 ' + nome;
+    showToast('✅ Nome alterado!');
+    document.getElementById('novoNome').value = '';
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+async function alterarLogin(){
+  const senha_atual = document.getElementById('senhaAtualLogin').value;
+  const novo_usuario = document.getElementById('novoUsuario').value.trim();
+  const nova_senha = document.getElementById('novaSenhaLogin').value;
+  if(!senha_atual){ showToast('⚠️ Digite a senha atual.'); return; }
+  if(!novo_usuario && !nova_senha){ showToast('⚠️ Digite pelo menos um campo.'); return; }
+  try{
+    await api('/api/gerente/alterar_login', {method:'POST', body: JSON.stringify({senha_atual, novo_usuario, nova_senha})});
+    showToast('✅ Login alterado!');
+    setTimeout(()=>{ window.location.href = '/gerente/login'; }, 2000);
+  } catch(e){ showToast('Erro: ' + e.message); }
+}
+
+function toggleSom() {
+  somAtivo = !somAtivo;
+  const btn = document.getElementById('btnSom');
+  if (btn) {
+    btn.textContent = somAtivo ? '🔊 Som Ligado' : '🔇 Som Desligado';
+    btn.style.background = somAtivo ? 'var(--accent)' : 'var(--red)';
+    btn.style.color = somAtivo ? '#000' : '#fff';
+  }
+  showToast(somAtivo ? '🔊 Som ativado' : '🔇 Som desativado');
+}
+
+function tocarAlerta() {
+  if (!somAtivo) return;
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let count = 0;
+    function beep() {
+      if (!somAtivo || count >= 20) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.3);
+      count++;
+      setTimeout(beep, 350);
+    }
+    beep();
+    setTimeout(() => { count = 20; }, 10000);
+  } catch(e) { console.log('Som indisponível'); }
+}
+
+setInterval(() => {
+  fetch('/api/gerente/pedidos?limit=1')
+    .then(res => res.json())
+    .then(pedidos => {
+      if (pedidos && pedidos.length > 0) {
+        const ultimo = pedidos[0];
+        if (ultimo.id > ultimoPedidoId) {
+          ultimoPedidoId = ultimo.id;
+          const agora = new Date();
+          const criado = new Date(ultimo.criado_em.replace(' ', 'T'));
+          const diff = (agora - criado) / 1000;
+          if (diff < 15) {
+            tocarAlerta();
+            const tipo = ultimo.tipo === 'agendamento' ? '📅 AGENDAMENTO' : '📋 PEDIDO';
+            const profissional = ultimo.profissional ? ' - 👤 ' + ultimo.profissional : '';
+            showToast(`🔔 ${tipo} NOVO! ${ultimo.cliente_nome} - ${ultimo.servico_nome}${profissional}`);
+            const titulo = document.getElementById('tituloSecao');
+            if (titulo) {
+              titulo.style.color = 'var(--accent)';
+              titulo.style.transition = 'color 0.5s';
+              setTimeout(() => { titulo.style.color = ''; }, 3000);
+            }
+          }
+        }
+      }
+    })
+    .catch(() => {});
+}, 10000);
+
+async function sair(){
+  await fetch('/api/gerente/logout', {method:'POST'});
+  window.location.href = '/gerente/login';
+}
+
+document.getElementById('modalCliente').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCliente(); });
+document.getElementById('modalItem').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalItem(); });
+document.getElementById('modalComanda').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalComanda(); });
+document.getElementById('modalRepasse').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalRepasse(); });
+document.getElementById('modalCaixa').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCaixa(); });
+
+async function iniciar(){
+  try{
+    const me = await api('/api/gerente/me');
+    document.getElementById('nomeGerente').textContent = '👤 ' + me.nome;
+  } catch(e){ return; }
+  mostrarSecao('inicio');
+  setInterval(()=>{ if (window._secaoAtual === 'inicio') carregarInicio(); }, 30000);
+}
+
+iniciar();
+</script>
+</body>
+</html>

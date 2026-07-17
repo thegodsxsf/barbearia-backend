@@ -1,0 +1,13 @@
+*.pyc
+__pycache__/
+banco.db
+banco_gerente.db
+*.db
+cookies.txt
+*.quebrado*
+*.bak_*
+*.backup_*
+*.corrompido
+venv/
+.env
+ngrok
