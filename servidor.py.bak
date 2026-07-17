@@ -1,0 +1,517 @@
+"""
+Servidor da Barbearia Studio Leblon
+------------------------------------
+ÁREA DO GERENTE:
+  http://localhost:5000/gerente          -> painel (exige login)
+  http://localhost:5000/gerente/login    -> tela de login
+  Usuário padrão: admin   |  Senha padrão: admin123
+"""
+
+import os
+import sqlite3
+from datetime import date, datetime
+
+from flask import Flask, jsonify, request, send_from_directory, g, session, redirect
+from werkzeug.security import generate_password_hash, check_password_hash
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(BASE_DIR, "banco.db")
+SQL_SCHEMA_PATH = os.path.join(BASE_DIR, "banco.sql")
+
+DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
+SQL_GERENTE_SCHEMA_PATH = os.path.join(BASE_DIR, "banco_gerente.sql")
+
+app = Flask(__name__, static_folder="static")
+app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave-em-producao-leblon-2026")
+
+
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+
+def init_db():
+    if not os.path.exists(SQL_SCHEMA_PATH):
+        print(f"AVISO: {SQL_SCHEMA_PATH} não encontrado.")
+        return
+    if os.path.exists(DB_PATH):
+        os.remove(DB_PATH)
+        print("banco.db antigo removido.")
+    print("Criando banco.db a partir de banco.sql...")
+    conn = sqlite3.connect(DB_PATH)
+    with open(SQL_SCHEMA_PATH, "r", encoding="utf-8") as f:
+        conn.executescript(f.read())
+    conn.commit()
+    conn.close()
+    print("Banco criado com sucesso!")
+
+
+def get_db_gerente():
+    if "db_gerente" not in g:
+        g.db_gerente = sqlite3.connect(DB_GERENTE_PATH)
+        g.db_gerente.row_factory = sqlite3.Row
+    return g.db_gerente
+
+
+def init_db_gerente():
+    novo = not os.path.exists(DB_GERENTE_PATH)
+    conn = sqlite3.connect(DB_GERENTE_PATH)
+    if os.path.exists(SQL_GERENTE_SCHEMA_PATH):
+        with open(SQL_GERENTE_SCHEMA_PATH, "r", encoding="utf-8") as f:
+            conn.executescript(f.read())
+        conn.commit()
+    if novo:
+        print("banco_gerente.db criado pela primeira vez.")
+    existe_admin = conn.execute("SELECT COUNT(*) FROM gerentes").fetchone()[0]
+    if existe_admin == 0:
+        conn.execute(
+            "INSERT INTO gerentes (usuario, senha_hash, nome) VALUES (?, ?, ?)",
+            ("admin", generate_password_hash("admin123"), "Gerente"),
+        )
+        conn.commit()
+        print("Usuário gerente padrão criado -> usuario: admin | senha: admin123")
+    conn.close()
+
+
+@app.teardown_appcontext
+def close_db(exception=None):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+    db2 = g.pop("db_gerente", None)
+    if db2 is not None:
+        db2.close()
+
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorado(*args, **kwargs):
+        if not session.get("gerente_id"):
+            return jsonify({"erro": "Não autenticado"}), 401
+        return f(*args, **kwargs)
+    return decorado
+
+
+@app.route("/api/gerente/login", methods=["POST"])
+def gerente_login():
+    dados = request.get_json(force=True, silent=True) or {}
+    usuario = (dados.get("usuario") or "").strip()
+    senha = dados.get("senha") or ""
+    db = get_db_gerente()
+    row = db.execute("SELECT * FROM gerentes WHERE usuario = ?", (usuario,)).fetchone()
+    if row is None or not check_password_hash(row["senha_hash"], senha):
+        return jsonify({"erro": "Usuário ou senha inválidos"}), 401
+    session["gerente_id"] = row["id"]
+    session["gerente_nome"] = row["nome"]
+    return jsonify({"status": "ok", "nome": row["nome"]})
+
+
+@app.route("/api/gerente/logout", methods=["POST"])
+def gerente_logout():
+    session.clear()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/me")
+def gerente_me():
+    if not session.get("gerente_id"):
+        return jsonify({"erro": "Não autenticado"}), 401
+    return jsonify({"nome": session.get("gerente_nome")})
+
+
+@app.route("/api/gerente/senha", methods=["POST"])
+@login_required
+def gerente_trocar_senha():
+    dados = request.get_json(force=True, silent=True) or {}
+    atual = dados.get("senha_atual") or ""
+    nova = dados.get("senha_nova") or ""
+    if len(nova) < 4:
+        return jsonify({"erro": "A nova senha deve ter ao menos 4 caracteres"}), 400
+    db = get_db_gerente()
+    row = db.execute("SELECT * FROM gerentes WHERE id = ?", (session["gerente_id"],)).fetchone()
+    if row is None or not check_password_hash(row["senha_hash"], atual):
+        return jsonify({"erro": "Senha atual incorreta"}), 400
+    db.execute("UPDATE gerentes SET senha_hash = ? WHERE id = ?", (generate_password_hash(nova), session["gerente_id"]))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/alterar_login", methods=["POST"])
+@login_required
+def gerente_alterar_login():
+    dados = request.get_json(force=True, silent=True) or {}
+    senha_atual = dados.get("senha_atual") or ""
+    novo_usuario = dados.get("novo_usuario") or ""
+    nova_senha = dados.get("nova_senha") or ""
+    if not novo_usuario and not nova_senha:
+        return jsonify({"erro": "Informe pelo menos um campo"}), 400
+    db = get_db_gerente()
+    row = db.execute("SELECT * FROM gerentes WHERE id = ?", (session["gerente_id"],)).fetchone()
+    if row is None:
+        return jsonify({"erro": "Gerente não encontrado"}), 404
+    if not check_password_hash(row["senha_hash"], senha_atual):
+        return jsonify({"erro": "Senha atual incorreta"}), 400
+    updates = []
+    valores = []
+    if novo_usuario:
+        existe = db.execute("SELECT id FROM gerentes WHERE usuario = ? AND id != ?", (novo_usuario, session["gerente_id"])).fetchone()
+        if existe:
+            return jsonify({"erro": "Usuário já existe"}), 400
+        updates.append("usuario = ?")
+        valores.append(novo_usuario)
+    if nova_senha:
+        if len(nova_senha) < 4:
+            return jsonify({"erro": "Senha deve ter ao menos 4 caracteres"}), 400
+        updates.append("senha_hash = ?")
+        valores.append(generate_password_hash(nova_senha))
+    if not updates:
+        return jsonify({"erro": "Nenhuma alteração"}), 400
+    valores.append(session["gerente_id"])
+    db.execute(f"UPDATE gerentes SET {', '.join(updates)} WHERE id = ?", valores)
+    db.commit()
+    if novo_usuario:
+        session["gerente_nome"] = novo_usuario
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/alterar_nome", methods=["POST"])
+@login_required
+def gerente_alterar_nome():
+    dados = request.get_json(force=True, silent=True) or {}
+    novo_nome = dados.get("novo_nome") or ""
+    if not novo_nome:
+        return jsonify({"erro": "Informe o novo nome"}), 400
+    db = get_db_gerente()
+    db.execute("UPDATE gerentes SET nome = ? WHERE id = ?", (novo_nome, session["gerente_id"]))
+    db.commit()
+    session["gerente_nome"] = novo_nome
+    return jsonify({"status": "ok"})
+
+
+@app.route("/")
+def home():
+    return send_from_directory(BASE_DIR, "cliente.html")
+
+
+@app.route("/static/<path:filename>")
+def static_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
+
+
+@app.route("/fotos/<path:filename>")
+def serve_foto(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "fotos"), filename)
+
+
+@app.route("/gerente/login")
+def pagina_login_gerente():
+    return send_from_directory(BASE_DIR, "gerente_login.html")
+
+
+@app.route("/gerente")
+def pagina_gerente():
+    if not session.get("gerente_id"):
+        return redirect("/gerente/login")
+    return send_from_directory(BASE_DIR, "gerente.html")
+
+
+@app.route("/api/barbearia")
+def api_barbearia():
+    db = get_db()
+    row = db.execute("SELECT * FROM barbearia LIMIT 1").fetchone()
+    if row is None:
+        return jsonify({}), 404
+    return jsonify(dict(row))
+
+
+@app.route("/api/servicos")
+def api_servicos():
+    db = get_db()
+    busca = request.args.get("busca", "").strip().lower()
+    if busca:
+        rows = db.execute("SELECT * FROM servicos WHERE ativo = 1 AND LOWER(nome) LIKE ? ORDER BY ordem, id", (f"%{busca}%",)).fetchall()
+    else:
+        rows = db.execute("SELECT * FROM servicos WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/assinaturas")
+def api_assinaturas():
+    db = get_db()
+    rows = db.execute("SELECT * FROM assinaturas WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/profissionais")
+def api_profissionais():
+    db = get_db()
+    rows = db.execute("SELECT * FROM profissionais WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/produtos")
+def api_produtos():
+    db = get_db()
+    rows = db.execute("SELECT * FROM produtos WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/imagens")
+def api_imagens():
+    db = get_db()
+    rows = db.execute("SELECT * FROM imagens WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route("/api/recarregar", methods=["POST"])
+def recarregar():
+    init_db()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/pedidos", methods=["POST"])
+def api_criar_pedido():
+    d = request.get_json(force=True, silent=True) or {}
+    campos_obrigatorios = ["tipo", "servico_nome", "cliente_nome"]
+    if any(not d.get(c) for c in campos_obrigatorios):
+        return jsonify({"erro": "Dados incompletos"}), 400
+    db = get_db_gerente()
+    cur = db.execute(
+        """INSERT INTO pedidos
+           (tipo, servico_nome, valor, cliente_nome, cliente_telefone, cliente_cpf,
+            data_agendada, hora_agendada, corte_em_casa, endereco,
+            complemento, observacoes, pagamento, data_assinatura, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente')""",
+        (
+            d.get("tipo"),
+            d.get("servico_nome"),
+            float(d.get("valor") or 0),
+            d.get("cliente_nome"),
+            d.get("cliente_telefone"),
+            d.get("cliente_cpf"),
+            d.get("data_agendada"),
+            d.get("hora_agendada"),
+            d.get("corte_em_casa", "nao"),
+            d.get("endereco"),
+            d.get("complemento"),
+            d.get("observacoes"),
+            d.get("pagamento"),
+            d.get("data_assinatura"),
+        ),
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+
+@app.route("/api/gerente/dashboard")
+@login_required
+def gerente_dashboard():
+    db = get_db_gerente()
+    faturamento_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo = 'entrada'").fetchone()[0]
+    saidas_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo = 'saida'").fetchone()[0]
+    pedidos_pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status = 'pendente'").fetchone()[0]
+    hoje = date.today().isoformat()
+    agendamentos_hoje = db.execute("SELECT COUNT(*) FROM pedidos WHERE tipo = 'agendamento' AND data_agendada = ?", (hoje,)).fetchone()[0]
+    total_clientes = db.execute("SELECT COUNT(DISTINCT cliente_nome) FROM pedidos").fetchone()[0]
+    assinaturas_ativas = db.execute("SELECT COUNT(*) FROM pedidos WHERE tipo = 'assinatura' AND status != 'cancelado'").fetchone()[0]
+    return jsonify({
+        "faturamento_total": faturamento_total,
+        "saidas_total": saidas_total,
+        "saldo": faturamento_total - saidas_total,
+        "pedidos_pendentes": pedidos_pendentes,
+        "agendamentos_hoje": agendamentos_hoje,
+        "total_clientes": total_clientes,
+        "assinaturas_ativas": assinaturas_ativas,
+    })
+
+
+@app.route("/api/gerente/pedidos")
+@login_required
+def gerente_listar_pedidos():
+    db = get_db_gerente()
+    status = request.args.get("status")
+    if status:
+        rows = db.execute("SELECT * FROM pedidos WHERE status = ? ORDER BY criado_em DESC", (status,)).fetchall()
+    else:
+        rows = db.execute("SELECT * FROM pedidos ORDER BY criado_em DESC").fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
+@login_required
+def gerente_atualizar_pedido(pedido_id):
+    d = request.get_json(force=True, silent=True) or {}
+    novo_status = d.get("status")
+    if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
+        return jsonify({"erro": "Status inválido"}), 400
+    db = get_db_gerente()
+    pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+    if pedido is None:
+        return jsonify({"erro": "Pedido não encontrado"}), 404
+    db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
+    if novo_status == "concluido":
+        ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
+        if not ja_lancado:
+            db.execute(
+                """INSERT INTO caixa (tipo, valor, descricao, pagamento, pedido_id)
+                   VALUES ('entrada', ?, ?, ?, ?)""",
+                (pedido["valor"], f"{pedido['servico_nome']} - {pedido['cliente_nome']}", pedido["pagamento"], pedido_id),
+            )
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_pedido(pedido_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM caixa WHERE pedido_id = ?", (pedido_id,))
+    db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/caixa")
+@login_required
+def gerente_listar_caixa():
+    db = get_db_gerente()
+    rows = db.execute("SELECT * FROM caixa ORDER BY criado_em DESC").fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/gerente/caixa", methods=["POST"])
+@login_required
+def gerente_criar_caixa():
+    d = request.get_json(force=True, silent=True) or {}
+    tipo = d.get("tipo")
+    valor = d.get("valor")
+    if tipo not in ("entrada", "saida") or valor is None:
+        return jsonify({"erro": "Dados inválidos"}), 400
+    db = get_db_gerente()
+    db.execute(
+        "INSERT INTO caixa (tipo, valor, descricao, pagamento) VALUES (?, ?, ?, ?)",
+        (tipo, float(valor), d.get("descricao", ""), d.get("pagamento", "manual")),
+    )
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/caixa/<int:caixa_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_caixa(caixa_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM caixa WHERE id = ?", (caixa_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/configuracoes", methods=["GET"])
+@login_required
+def gerente_get_configuracoes():
+    db = get_db()
+    row = db.execute("SELECT * FROM barbearia LIMIT 1").fetchone()
+    if row is None:
+        return jsonify({}), 404
+    config = dict(row)
+    try:
+        config["cor_primaria"] = config.get("cor_primaria", "#3ddc84")
+        config["cor_fundo"] = config.get("cor_fundo", "#0a0a0e")
+        config["cor_texto"] = config.get("cor_texto", "#eeeeef")
+        config["cor_card"] = config.get("cor_card", "#14141a")
+        config["cor_border"] = config.get("cor_border", "#2a2a32")
+    except:
+        pass
+    return jsonify(config)
+
+
+@app.route("/api/gerente/configuracoes", methods=["PUT"])
+@login_required
+def gerente_update_configuracoes():
+    dados = request.get_json(force=True, silent=True) or {}
+    db = get_db()
+    colunas = db.execute("PRAGMA table_info(barbearia)").fetchall()
+    colunas_nomes = [c["name"] for c in colunas]
+    updates = []
+    valores = []
+    for key, value in dados.items():
+        if key in colunas_nomes and key != "id":
+            updates.append(f"{key} = ?")
+            valores.append(value)
+    if updates:
+        valores.append(1)
+        db.execute(f"UPDATE barbearia SET {', '.join(updates)} WHERE id = ?", valores)
+        db.commit()
+    return jsonify({"status": "ok"})
+
+
+TABELAS_CATALOGO = {
+    "servicos": ["nome", "preco", "duracao_min", "imagem", "categoria", "ativo", "ordem"],
+    "produtos": ["nome", "preco", "imagem", "ativo", "ordem"],
+    "profissionais": ["nome", "especialidade", "foto", "ativo", "ordem"],
+    "assinaturas": ["nome", "preco", "descricao", "beneficios", "cor", "icone", "destaque", "ativo", "ordem"],
+}
+
+
+@app.route("/api/gerente/<tabela>", methods=["GET"])
+@login_required
+def gerente_listar_catalogo(tabela):
+    if tabela not in TABELAS_CATALOGO:
+        return jsonify({"erro": "Recurso inválido"}), 404
+    db = get_db()
+    rows = db.execute(f"SELECT * FROM {tabela} ORDER BY ordem, id").fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/gerente/<tabela>", methods=["POST"])
+@login_required
+def gerente_criar_catalogo(tabela):
+    if tabela not in TABELAS_CATALOGO:
+        return jsonify({"erro": "Recurso inválido"}), 404
+    colunas = TABELAS_CATALOGO[tabela]
+    d = request.get_json(force=True, silent=True) or {}
+    valores = [d.get(c) for c in colunas]
+    placeholders = ", ".join(["?"] * len(colunas))
+    db = get_db()
+    cur = db.execute(f"INSERT INTO {tabela} ({', '.join(colunas)}) VALUES ({placeholders})", valores)
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+
+@app.route("/api/gerente/<tabela>/<int:item_id>", methods=["PUT"])
+@login_required
+def gerente_editar_catalogo(tabela, item_id):
+    if tabela not in TABELAS_CATALOGO:
+        return jsonify({"erro": "Recurso inválido"}), 404
+    colunas = TABELAS_CATALOGO[tabela]
+    d = request.get_json(force=True, silent=True) or {}
+    sets = ", ".join([f"{c} = ?" for c in colunas if c in d])
+    valores = [d.get(c) for c in colunas if c in d]
+    if not sets:
+        return jsonify({"erro": "Nada para atualizar"}), 400
+    valores.append(item_id)
+    db = get_db()
+    db.execute(f"UPDATE {tabela} SET {sets} WHERE id = ?", valores)
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/gerente/<tabela>/<int:item_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_catalogo(tabela, item_id):
+    if tabela not in TABELAS_CATALOGO:
+        return jsonify({"erro": "Recurso inválido"}), 404
+    db = get_db()
+    db.execute(f"DELETE FROM {tabela} WHERE id = ?", (item_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+if __name__ == "__main__":
+    init_db()
+    init_db_gerente()
+    app.run(debug=True, host="0.0.0.0", port=5000)
+      
