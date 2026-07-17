@@ -348,7 +348,7 @@ TABELAS_CATALOGO = {
 }
 
 @app.route("/api/<tabela>", methods=["GET"])
-@login_required
+
 def api_listar_catalogo(tabela):
     if tabela not in TABELAS_CATALOGO:
         return jsonify({"erro": "Tabela inválida"}), 404
@@ -357,7 +357,7 @@ def api_listar_catalogo(tabela):
     return jsonify([dict(row) for row in rows])
 
 @app.route("/api/<tabela>", methods=["POST"])
-@login_required
+
 def api_criar_catalogo(tabela):
     if tabela not in TABELAS_CATALOGO:
         return jsonify({"erro": "Tabela inválida"}), 404
@@ -378,7 +378,7 @@ def api_criar_catalogo(tabela):
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
 @app.route("/api/<tabela>/<int:item_id>", methods=["PUT"])
-@login_required
+
 def api_editar_catalogo(tabela, item_id):
     if tabela not in TABELAS_CATALOGO:
         return jsonify({"erro": "Tabela inválida"}), 404
@@ -402,7 +402,7 @@ def api_editar_catalogo(tabela, item_id):
     return jsonify({"status": "ok"})
 
 @app.route("/api/<tabela>/<int:item_id>", methods=["DELETE"])
-@login_required
+
 def api_deletar_catalogo(tabela, item_id):
     if tabela not in TABELAS_CATALOGO:
         return jsonify({"erro": "Tabela inválida"}), 404
@@ -468,7 +468,7 @@ def api_criar_pedido():
 # ============ ROTAS DO GERENTE ============
 
 @app.route("/api/gerente/dashboard")
-@login_required
+
 def gerente_dashboard():
     db = get_db_gerente()
     faturamento_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo = 'entrada'").fetchone()[0]
@@ -493,7 +493,7 @@ def gerente_dashboard():
     })
 
 @app.route("/api/gerente/pedidos")
-@login_required
+
 def gerente_listar_pedidos():
     db = get_db_gerente()
     status = request.args.get("status")
@@ -511,7 +511,7 @@ def gerente_listar_pedidos():
     return jsonify([dict(r) for r in rows])
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
-@login_required
+
 def gerente_atualizar_pedido(pedido_id):
     d = request.get_json(force=True, silent=True) or {}
     novo_status = d.get("status")
@@ -540,7 +540,7 @@ def gerente_atualizar_pedido(pedido_id):
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
-@login_required
+
 def gerente_deletar_pedido(pedido_id):
     db = get_db_gerente()
     db.execute("DELETE FROM caixa WHERE pedido_id = ?", (pedido_id,))
@@ -551,7 +551,7 @@ def gerente_deletar_pedido(pedido_id):
 # ============ ROTAS DE CLIENTES ============
 
 @app.route("/api/gerente/clientes", methods=["GET"])
-@login_required
+
 def gerente_listar_clientes():
     db = get_db_gerente()
     busca = request.args.get("busca", "").strip()
@@ -565,7 +565,7 @@ def gerente_listar_clientes():
     return jsonify([dict(row) for row in rows])
 
 @app.route("/api/gerente/clientes", methods=["POST"])
-@login_required
+
 def gerente_criar_cliente():
     d = request.get_json(force=True, silent=True) or {}
     if not d.get("nome"):
@@ -602,7 +602,7 @@ def gerente_criar_cliente():
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
 @app.route("/api/gerente/clientes/<int:cliente_id>", methods=["PUT"])
-@login_required
+
 def gerente_editar_cliente(cliente_id):
     d = request.get_json(force=True, silent=True) or {}
     db = get_db_gerente()
@@ -629,7 +629,7 @@ def gerente_editar_cliente(cliente_id):
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/clientes/<int:cliente_id>", methods=["DELETE"])
-@login_required
+
 def gerente_deletar_cliente(cliente_id):
     db = get_db_gerente()
     db.execute("DELETE FROM clientes WHERE id = ?", (cliente_id,))
@@ -639,7 +639,7 @@ def gerente_deletar_cliente(cliente_id):
 # ============ ROTAS DE COMANDAS ============
 
 @app.route("/api/gerente/comandas", methods=["GET"])
-@login_required
+
 def gerente_listar_comandas():
     db = get_db_gerente()
     status = request.args.get("status")
@@ -650,7 +650,7 @@ def gerente_listar_comandas():
     return jsonify([dict(r) for r in rows])
 
 @app.route("/api/gerente/comandas", methods=["POST"])
-@login_required
+
 def gerente_criar_comanda():
     d = request.get_json(force=True, silent=True) or {}
     if not d.get("cliente_nome"):
@@ -676,7 +676,7 @@ def gerente_criar_comanda():
     return jsonify({"status": "ok", "id": cur.lastrowid, "ticket": ticket})
 
 @app.route("/api/gerente/comandas/<int:comanda_id>", methods=["PUT"])
-@login_required
+
 def gerente_atualizar_comanda(comanda_id):
     d = request.get_json(force=True, silent=True) or {}
     db = get_db_gerente()
@@ -698,7 +698,7 @@ def gerente_atualizar_comanda(comanda_id):
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/comandas/<int:comanda_id>", methods=["DELETE"])
-@login_required
+
 def gerente_deletar_comanda(comanda_id):
     db = get_db_gerente()
     db.execute("DELETE FROM comandas WHERE id = ?", (comanda_id,))
@@ -708,7 +708,7 @@ def gerente_deletar_comanda(comanda_id):
 # ============ ROTAS DE REPASSES ============
 
 @app.route("/api/gerente/repasses", methods=["GET"])
-@login_required
+
 def gerente_listar_repasses():
     db = get_db_gerente()
     status = request.args.get("status")
@@ -719,7 +719,7 @@ def gerente_listar_repasses():
     return jsonify([dict(r) for r in rows])
 
 @app.route("/api/gerente/repasses", methods=["POST"])
-@login_required
+
 def gerente_criar_repasse():
     d = request.get_json(force=True, silent=True) or {}
     if not d.get("profissional") or not d.get("servico_nome"):
@@ -745,7 +745,7 @@ def gerente_criar_repasse():
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
 @app.route("/api/gerente/repasses/<int:repasse_id>", methods=["PUT"])
-@login_required
+
 def gerente_atualizar_repasse(repasse_id):
     d = request.get_json(force=True, silent=True) or {}
     db = get_db_gerente()
@@ -758,7 +758,7 @@ def gerente_atualizar_repasse(repasse_id):
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/repasses/<int:repasse_id>", methods=["DELETE"])
-@login_required
+
 def gerente_deletar_repasse(repasse_id):
     db = get_db_gerente()
     db.execute("DELETE FROM repasses WHERE id = ?", (repasse_id,))
@@ -766,7 +766,7 @@ def gerente_deletar_repasse(repasse_id):
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/repasses/resumo")
-@login_required
+
 def gerente_resumo_repasses():
     db = get_db_gerente()
     total_comissoes = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status = 'pendente'").fetchone()[0]
@@ -786,14 +786,14 @@ def gerente_resumo_repasses():
 # ============ ROTAS DE CAIXA ============
 
 @app.route("/api/gerente/caixa", methods=["GET"])
-@login_required
+
 def gerente_listar_caixa():
     db = get_db_gerente()
     rows = db.execute("SELECT * FROM caixa ORDER BY id DESC").fetchall()
     return jsonify([dict(r) for r in rows])
 
 @app.route("/api/gerente/caixa", methods=["POST"])
-@login_required
+
 def gerente_criar_caixa():
     d = request.get_json(force=True, silent=True) or {}
     tipo = d.get("tipo")
@@ -809,7 +809,7 @@ def gerente_criar_caixa():
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/caixa/<int:caixa_id>", methods=["DELETE"])
-@login_required
+
 def gerente_deletar_caixa(caixa_id):
     db = get_db_gerente()
     db.execute("DELETE FROM caixa WHERE id = ?", (caixa_id,))
@@ -819,7 +819,7 @@ def gerente_deletar_caixa(caixa_id):
 # ============ ROTAS DE RELATÓRIOS ============
 
 @app.route("/api/gerente/relatorio/pdf")
-@login_required
+
 def gerente_relatorio_pdf():
     try:
         from reportlab.lib.pagesizes import A4
@@ -956,7 +956,7 @@ def horarios_ocupados():
 # ============ ROTAS DE CONFIGURAÇÕES ============
 
 @app.route("/api/gerente/configuracoes", methods=["GET"])
-@login_required
+
 def gerente_get_configuracoes():
     db = get_db()
     row = db.execute("SELECT * FROM barbearia LIMIT 1").fetchone()
@@ -974,7 +974,7 @@ def gerente_get_configuracoes():
     return jsonify(config)
 
 @app.route("/api/gerente/configuracoes", methods=["PUT"])
-@login_required
+
 def gerente_update_configuracoes():
     dados = request.get_json(force=True, silent=True) or {}
     db = get_db()
@@ -995,7 +995,7 @@ def gerente_update_configuracoes():
 # ============ ROTAS DE PERFIL ============
 
 @app.route("/api/gerente/alterar_nome", methods=["POST"])
-@login_required
+
 def gerente_alterar_nome():
     dados = request.get_json(force=True, silent=True) or {}
     novo_nome = dados.get("novo_nome") or ""
@@ -1008,7 +1008,7 @@ def gerente_alterar_nome():
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/alterar_login", methods=["POST"])
-@login_required
+
 def gerente_alterar_login():
     dados = request.get_json(force=True, silent=True) or {}
     senha_atual = dados.get("senha_atual") or ""
