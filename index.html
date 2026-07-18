@@ -5,168 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barbearia Studio Leblon</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0e;
-            color: #eeeeef;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #2a2a32;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        .logo h1 {
-            font-size: 1.5rem;
-            color: #3ddc84;
-        }
-        .logo p {
-            color: #88889a;
-            font-size: 0.8rem;
-        }
-        .nav-links {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .nav-links a {
-            color: #88889a;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            transition: 0.3s;
-            cursor: pointer;
-        }
-        .nav-links a:hover,
-        .nav-links a.active {
-            background: #1c1c24;
-            color: #fff;
-        }
-        .btn-agendar {
-            background: #3ddc84;
-            color: #000 !important;
-            font-weight: 600;
-        }
-        .btn-agendar:hover {
-            opacity: 0.85;
-        }
-        .hero {
-            text-align: center;
-            padding: 40px 0;
-        }
-        .hero h2 {
-            font-size: 2rem;
-            margin-bottom: 8px;
-        }
-        .hero p {
-            color: #88889a;
-            font-size: 1.1rem;
-        }
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            border-bottom: 1px solid #2a2a32;
-            padding-bottom: 8px;
-        }
-        .tab {
-            padding: 10px 20px;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            color: #88889a;
-            transition: 0.3s;
-        }
-        .tab:hover {
-            color: #fff;
-        }
-        .tab.active {
-            background: #1c1c24;
-            color: #fff;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px 0;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
-        .service-card {
-            background: #14141a;
-            border: 1px solid #2a2a32;
-            border-radius: 12px;
-            padding: 20px;
-            transition: 0.3s;
-            cursor: pointer;
-        }
-        .service-card:hover {
-            transform: translateY(-4px);
-            border-color: #3ddc84;
-        }
-        .service-card h3 {
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
-        .service-card .price {
-            color: #3ddc84;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        .service-card .duration {
-            color: #88889a;
-            font-size: 0.8rem;
-        }
-        .empty-msg {
-            text-align: center;
-            padding: 40px;
-            color: #88889a;
-        }
-        footer {
-            margin-top: 40px;
-            padding: 20px 0;
-            border-top: 1px solid #2a2a32;
-            text-align: center;
-            color: #88889a;
-            font-size: 0.8rem;
-        }
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                text-align: center;
-            }
-            .services-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            }
-        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0e;color:#eeeeef;min-height:100vh}
+        .container{max-width:1200px;margin:0 auto;padding:20px}
+        header{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #2a2a32;flex-wrap:wrap;gap:16px}
+        .logo h1{font-size:1.5rem;color:#3ddc84}
+        .logo p{color:#88889a;font-size:.8rem}
+        .nav-links{display:flex;gap:16px;flex-wrap:wrap}
+        .nav-links a{color:#88889a;text-decoration:none;padding:8px 16px;border-radius:8px;transition:.3s;cursor:pointer}
+        .nav-links a:hover,.nav-links a.active{background:#1c1c24;color:#fff}
+        .btn-agendar{background:#3ddc84;color:#000!important;font-weight:600}
+        .btn-agendar:hover{opacity:.85}
+        .hero{text-align:center;padding:40px 0}
+        .hero h2{font-size:2rem;margin-bottom:8px}
+        .hero p{color:#88889a;font-size:1.1rem}
+        .tabs{display:flex;gap:8px;margin:20px 0;flex-wrap:wrap;border-bottom:1px solid #2a2a32;padding-bottom:8px}
+        .tab{padding:10px 20px;border-radius:8px 8px 0 0;cursor:pointer;color:#88889a;transition:.3s}
+        .tab:hover{color:#fff}
+        .tab.active{background:#1c1c24;color:#fff}
+        .tab-content{display:none;padding:20px 0}
+        .tab-content.active{display:block}
+        .services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+        .service-card{background:#14141a;border:1px solid #2a2a32;border-radius:12px;padding:20px;transition:.3s;cursor:pointer}
+        .service-card:hover{transform:translateY(-4px);border-color:#3ddc84}
+        .service-card h3{font-size:1rem;margin-bottom:8px}
+        .service-card .price{color:#3ddc84;font-size:1.2rem;font-weight:700}
+        .service-card .duration{color:#88889a;font-size:.8rem}
+        .empty-msg{text-align:center;padding:40px;color:#88889a}
+        footer{margin-top:40px;padding:20px 0;border-top:1px solid #2a2a32;text-align:center;color:#88889a;font-size:.8rem}
+        @media(max-width:768px){header{flex-direction:column;text-align:center}.services-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
     </style>
 </head>
 <body>
-
 <div class="container">
     <header>
-        <div class="logo">
-            <h1>✂️ Leblon Studio</h1>
-            <p>Av. Liberdade, 1477 - Totó, Recife - PE</p>
-        </div>
+        <div class="logo"><h1>✂️ Leblon Studio</h1><p>Av. Liberdade, 1477 - Totó, Recife - PE</p></div>
         <div class="nav-links">
             <a class="active" onclick="mostrarTab('servicos')">Serviços</a>
             <a onclick="mostrarTab('assinaturas')">Assinaturas</a>
@@ -175,204 +48,40 @@
             <a class="btn-agendar" onclick="abrirAgendamento()">📅 Agendar</a>
         </div>
     </header>
-
-    <div class="hero">
-        <h2>Bem-vindo à Barbearia Studio Leblon</h2>
-        <p>🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</p>
-    </div>
-
+    <div class="hero"><h2>Bem-vindo à Barbearia Studio Leblon</h2><p>🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</p></div>
     <div class="tabs">
         <div class="tab active" data-tab="servicos" onclick="mostrarTab('servicos')">✂️ Serviços</div>
         <div class="tab" data-tab="assinaturas" onclick="mostrarTab('assinaturas')">📋 Assinaturas</div>
         <div class="tab" data-tab="profissionais" onclick="mostrarTab('profissionais')">👤 Profissionais</div>
         <div class="tab" data-tab="produtos" onclick="mostrarTab('produtos')">🧴 Produtos</div>
     </div>
-
-    <div id="servicos" class="tab-content active">
-        <div id="servicesList" class="services-grid"><div class="empty-msg">Carregando serviços...</div></div>
-    </div>
-
-    <div id="assinaturas" class="tab-content">
-        <div id="assinaturasList" class="services-grid"><div class="empty-msg">Carregando assinaturas...</div></div>
-    </div>
-
-    <div id="profissionais" class="tab-content">
-        <div id="profissionaisList" class="services-grid"><div class="empty-msg">Carregando profissionais...</div></div>
-    </div>
-
-    <div id="produtos" class="tab-content">
-        <div id="produtosList" class="services-grid"><div class="empty-msg">Carregando produtos...</div></div>
-    </div>
-
-    <footer>
-        <p>© 2026 Barbearia Studio Leblon - Todos os direitos reservados</p>
-    </footer>
+    <div id="servicos" class="tab-content active"><div id="servicesList" class="services-grid"><div class="empty-msg">Carregando serviços...</div></div></div>
+    <div id="assinaturas" class="tab-content"><div id="assinaturasList" class="services-grid"><div class="empty-msg">Carregando assinaturas...</div></div></div>
+    <div id="profissionais" class="tab-content"><div id="profissionaisList" class="services-grid"><div class="empty-msg">Carregando profissionais...</div></div></div>
+    <div id="produtos" class="tab-content"><div id="produtosList" class="services-grid"><div class="empty-msg">Carregando produtos...</div></div></div>
+    <footer><p>© 2026 Barbearia Studio Leblon - Todos os direitos reservados</p></footer>
 </div>
-
 <script>
-// ============ BACKEND URL ============
-const BACKEND_URL = 'https://barbearia-backend-m1uy.onrender.com';
+const BACKEND_URL = '';
+let todosServicos=[];
 
-// ============ VARIÁVEIS GLOBAIS ============
-let todosServicos = [];
-let todasAssinaturas = [];
-let todosProfissionais = [];
-let todosProdutos = [];
+function cardServicoHTML(s){return `<div class="service-card" onclick="alert('✂️ ${s.nome}\\n💰 R$ ${(s.preco||0).toFixed(2)}')"><h3>${s.nome||'Serviço'}</h3><div class="price">R$ ${(s.preco||0).toFixed(2)}</div><div class="duration">⏱️ ${s.duracao_min||30} min</div></div>`}
 
-// ============ FUNÇÕES DE RENDER ============
+function renderServicos(lista){var c=document.getElementById('servicesList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=cardServicoHTML(lista[i]);c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhum serviço disponível.</div>'}}
 
-function cardServicoHTML(servico) {
-    return `
-        <div class="service-card" onclick="abrirModalServico('${servico.nome || 'Serviço'}', ${servico.preco || 0})">
-            <h3>${servico.nome || 'Serviço'}</h3>
-            <div class="price">R$ ${(servico.preco || 0).toFixed(2)}</div>
-            <div class="duration">⏱️ ${servico.duracao_min || 30} min</div>
-        </div>
-    `;
-}
+function renderAssinaturas(lista){var c=document.getElementById('assinaturasList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=`<div class="service-card"><h3>${lista[i].nome||'Plano'}</h3><div class="price">R$ ${(lista[i].preco||0).toFixed(2)}/mês</div></div>`;c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhuma assinatura disponível.</div>'}}
 
-function renderServicos(lista) {
-    console.log('🔍 Renderizando serviços:', lista ? lista.length : 0);
-    var c = document.getElementById('servicesList');
-    if (!c) {
-        console.error('❌ Elemento servicesList não encontrado');
-        return;
-    }
-    if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-            html += cardServicoHTML(lista[i]);
-        }
-        c.innerHTML = html;
-        console.log('✅ Serviços renderizados com sucesso!');
-    } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum serviço disponível no momento.</div>';
-        console.warn('⚠️ Nenhum serviço para renderizar');
-    }
-}
+function renderProfissionais(lista){var c=document.getElementById('profissionaisList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=`<div class="service-card"><h3>${lista[i].nome||'Profissional'}</h3><div class="duration">${lista[i].especialidade||''}</div></div>`;c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhum profissional disponível.</div>'}}
 
-function renderAssinaturas(lista) {
-    var c = document.getElementById('assinaturasList');
-    if (!c) return;
-    if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-            html += `
-                <div class="service-card">
-                    <h3>${lista[i].nome || 'Plano'}</h3>
-                    <div class="price">R$ ${(lista[i].preco || 0).toFixed(2)}/mês</div>
-                    <div class="duration">${lista[i].descricao || ''}</div>
-                </div>
-            `;
-        }
-        c.innerHTML = html;
-    } else {
-        c.innerHTML = '<div class="empty-msg">Nenhuma assinatura disponível.</div>';
-    }
-}
+function renderProdutos(lista){var c=document.getElementById('produtosList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=`<div class="service-card"><h3>${lista[i].nome||'Produto'}</h3><div class="price">R$ ${(lista[i].preco||0).toFixed(2)}</div></div>`;c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhum produto disponível.</div>'}}
 
-function renderProfissionais(lista) {
-    var c = document.getElementById('profissionaisList');
-    if (!c) return;
-    if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-            html += `
-                <div class="service-card">
-                    <h3>${lista[i].nome || 'Profissional'}</h3>
-                    <div class="duration">${lista[i].especialidade || ''}</div>
-                </div>
-            `;
-        }
-        c.innerHTML = html;
-    } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum profissional disponível.</div>';
-    }
-}
+async function carregarDados(){try{var s=await fetch('/api/servicos');var a=await fetch('/api/assinaturas');var p=await fetch('/api/profissionais');var pr=await fetch('/api/produtos');todosServicos=await s.json();var ass=await a.json();var prof=await p.json();var prod=await pr.json();renderServicos(todosServicos);renderAssinaturas(ass);renderProfissionais(prof);renderProdutos(prod)}catch(e){document.getElementById('servicesList').innerHTML='<div class="empty-msg">❌ Erro ao carregar.</div>'}}
 
-function renderProdutos(lista) {
-    var c = document.getElementById('produtosList');
-    if (!c) return;
-    if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-            html += `
-                <div class="service-card">
-                    <h3>${lista[i].nome || 'Produto'}</h3>
-                    <div class="price">R$ ${(lista[i].preco || 0).toFixed(2)}</div>
-                </div>
-            `;
-        }
-        c.innerHTML = html;
-    } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum produto disponível.</div>';
-    }
-}
+function mostrarTab(tab){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.getElementById(tab)?.classList.add('active');document.querySelector(`.tab[data-tab="${tab}"]`)?.classList.add('active')}
 
-// ============ CARREGAR DADOS ============
+function abrirAgendamento(){alert('📅 Agendamento\nWhatsApp: (81) 99999-9999')}
 
-async function carregarDados() {
-    try {
-        console.log('📡 Carregando dados do backend...');
-        
-        var servRes = await fetch(BACKEND_URL + '/api/servicos');
-        var assRes = await fetch(BACKEND_URL + '/api/assinaturas');
-        var profRes = await fetch(BACKEND_URL + '/api/profissionais');
-        var prodRes = await fetch(BACKEND_URL + '/api/produtos');
-        
-        todosServicos = await servRes.json();
-        todasAssinaturas = await assRes.json();
-        todosProfissionais = await profRes.json();
-        todosProdutos = await prodRes.json();
-        
-        console.log('📦 Dados carregados:', {
-            servicos: todosServicos.length,
-            assinaturas: todasAssinaturas.length,
-            profissionais: todosProfissionais.length,
-            produtos: todosProdutos.length
-        });
-        
-        renderServicos(todosServicos);
-        renderAssinaturas(todasAssinaturas);
-        renderProfissionais(todosProfissionais);
-        renderProdutos(todosProdutos);
-        
-    } catch (err) {
-        console.error('❌ Erro ao carregar dados:', err);
-        document.getElementById('servicesList').innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços. Tente novamente.</div>';
-    }
-}
-
-// ============ NAVEGAÇÃO ============
-
-function mostrarTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    
-    var el = document.getElementById(tab);
-    if (el) el.classList.add('active');
-    
-    var tabBtn = document.querySelector(`.tab[data-tab="${tab}"]`);
-    if (tabBtn) tabBtn.classList.add('active');
-}
-
-// ============ MODAIS ============
-
-function abrirModalServico(nome, preco) {
-    alert(`✂️ ${nome}\n💰 R$ ${(preco || 0).toFixed(2)}`);
-}
-
-function abrirAgendamento() {
-    alert('📅 Agendamento\nEntre em contato pelo WhatsApp: (81) 99999-9999');
-}
-
-// ============ INICIAR ============
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Iniciando aplicação...');
-    carregarDados();
-});
+document.addEventListener('DOMContentLoaded',carregarDados);
 </script>
-
 </body>
 </html>
