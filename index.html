@@ -892,7 +892,8 @@
     </div>
   </div>
 
-<script>
+<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
+
     async function salvarPedidoServidor(dados) {
       try {
         await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
