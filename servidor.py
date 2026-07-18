@@ -28,6 +28,68 @@ app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave-em-producao-leb
 
 # ============ BASEROW INTEGRATION ============
 BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
+
+
+# ============ BASEROW CONFIGURATIONS ============
+# Clientes
+BASEROW_CLIENTES_TOKEN = "YIrPD6ZzuWYNTTj2vnYmg2EXYw4eCvKe"
+BASEROW_CLIENTES_TABLE = "1085282"
+BASEROW_CLIENTES_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_CLIENTES_TABLE}/?user_field_names=true"
+
+# Barbeiros
+BASEROW_BARBEIROS_TOKEN = "aWCJDxStBDUTlrB9sKJM1UI9TY4aqXke"
+BASEROW_BARBEIROS_TABLE = "1085289"
+BASEROW_BARBEIROS_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_BARBEIROS_TABLE}/?user_field_names=true"
+
+# Produtos/Serviços
+BASEROW_PRODUTOS_TOKEN = "3WGb3R2ZcEgemPNWrHvZeFKLGiFj6d4j"
+BASEROW_PRODUTOS_TABLE = "1085294"
+BASEROW_PRODUTOS_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_PRODUTOS_TABLE}/?user_field_names=true"
+
+def enviar_para_baserow_generico(token, url, dados):
+    """Envia dados para qualquer tabela do Baserow"""
+    if not token:
+        return False
+    try:
+        response = requests.post(
+            url,
+            json=dados,
+            headers={
+                "Authorization": f"Token {token}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        if response.status_code == 200:
+            print(f"✅ Dados enviados para Baserow: {dados}")
+            return True
+        else:
+            print(f"❌ Erro ao enviar: {response.status_code} - {response.text}")
+            return False
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        return False
+
+def carregar_do_baserow(token, url):
+    """Carrega dados do Baserow"""
+    if not token:
+        return []
+    try:
+        response = requests.get(
+            url,
+            headers={"Authorization": f"Token {token}"},
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('results', [])
+        else:
+            print(f"❌ Erro ao carregar: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        return []
+
 BASEROW_TABLE_ID = "1083808"
 BASEROW_URL = "https://api.baserow.io/api/database/rows/table/" + BASEROW_TABLE_ID + "/?user_field_names=true"
 
@@ -1114,6 +1176,125 @@ def seed_database():
     
     db.commit()
     return jsonify({"mensagem": "Banco populado com sucesso!", "servicos": len(servicos)})
+
+
+
+
+@app.route("/config.js")
+def serve_config():
+    return send_from_directory(BASE_DIR, "config.js")
+
+
+
+
+# ============ FUNÇÕES DE SINCRONIZAÇÃO ============
+
+def sincronizar_clientes_com_baserow():
+    """Sincroniza clientes do SQLite com Baserow"""
+    db = get_db_gerente()
+    clientes = db.execute("SELECT * FROM clientes").fetchall()
+    
+    for cliente in clientes:
+        dados = {
+            "nome": cliente["nome"],
+            "contato": cliente["telefone"] or "",
+            "cpf": cliente["cpf"] or "",
+            "endereço": cliente["endereco"] or ""
+        }
+        enviar_para_baserow_generico(
+            BASEROW_CLIENTES_TOKEN,
+            BASEROW_CLIENTES_URL,
+            dados
+        )
+
+def sincronizar_barbeiros_com_baserow():
+    """Sincroniza barbeiros do SQLite com Baserow"""
+    db = get_db()
+    barbeiros = db.execute("SELECT * FROM profissionais").fetchall()
+    
+    for barbeiro in barbeiros:
+        dados = {
+            "profissional": barbeiro["nome"],
+            "descrição": barbeiro["especialidade"] or ""
+        }
+        enviar_para_baserow_generico(
+            BASEROW_BARBEIROS_TOKEN,
+            BASEROW_BARBEIROS_URL,
+            dados
+        )
+
+def sincronizar_produtos_com_baserow():
+    """Sincroniza produtos/serviços do SQLite com Baserow"""
+    db = get_db()
+    produtos = db.execute("SELECT * FROM servicos").fetchall()
+    
+    for produto in produtos:
+        dados = {
+            "nome": produto["nome"],
+            "valor": str(produto["preco"]),
+            "tempo": str(produto["duracao_min"]) + " min"
+        }
+        enviar_para_baserow_generico(
+            BASEROW_PRODUTOS_TOKEN,
+            BASEROW_PRODUTOS_URL,
+            dados
+        )
+
+def restaurar_do_baserow(tipo):
+    """Restaura dados do Baserow para o SQLite"""
+    if tipo == "clientes":
+        dados = carregar_do_baserow(BASEROW_CLIENTES_TOKEN, BASEROW_CLIENTES_URL)
+        if dados:
+            db = get_db_gerente()
+            for item in dados:
+                db.execute(
+                    "INSERT OR REPLACE INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)",
+                    (item.get("nome", ""), item.get("contato", ""), item.get("cpf", ""), item.get("endereço", ""))
+                )
+            db.commit()
+            print(f"✅ {len(dados)} clientes restaurados do Baserow!")
+    
+    elif tipo == "barbeiros":
+        dados = carregar_do_baserow(BASEROW_BARBEIROS_TOKEN, BASEROW_BARBEIROS_URL)
+        if dados:
+            db = get_db()
+            for item in dados:
+                db.execute(
+                    "INSERT OR REPLACE INTO profissionais (nome, especialidade) VALUES (?, ?)",
+                    (item.get("profissional", ""), item.get("descrição", ""))
+                )
+            db.commit()
+            print(f"✅ {len(dados)} barbeiros restaurados do Baserow!")
+    
+    elif tipo == "produtos":
+        dados = carregar_do_baserow(BASEROW_PRODUTOS_TOKEN, BASEROW_PRODUTOS_URL)
+        if dados:
+            db = get_db()
+            for item in dados:
+                preco = float(item.get("valor", "0").replace("R$", "").replace(",", ".").strip()) if item.get("valor") else 0
+                db.execute(
+                    "INSERT OR REPLACE INTO servicos (nome, preco) VALUES (?, ?)",
+                    (item.get("nome", ""), preco)
+                )
+            db.commit()
+            print(f"✅ {len(dados)} produtos restaurados do Baserow!")
+
+# Rotas de sincronização
+@app.route("/api/sincronizar/tudo", methods=["POST"])
+def sincronizar_tudo():
+    """Sincroniza todos os dados com Baserow"""
+    sincronizar_clientes_com_baserow()
+    sincronizar_barbeiros_com_baserow()
+    sincronizar_produtos_com_baserow()
+    return jsonify({"status": "ok", "mensagem": "Dados sincronizados com Baserow!"})
+
+@app.route("/api/restaurar/<tipo>", methods=["POST"])
+def restaurar_dados(tipo):
+    """Restaura dados do Baserow para o SQLite"""
+    if tipo not in ["clientes", "barbeiros", "produtos"]:
+        return jsonify({"erro": "Tipo inválido"}), 400
+    restaurar_do_baserow(tipo)
+    return jsonify({"status": "ok", "mensagem": f"Dados de {tipo} restaurados!"})
 
 
 if __name__ == "__main__":
