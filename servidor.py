@@ -310,45 +310,47 @@ def gerente_listar_pedidos():
     
     return jsonify([dict(r) for r in rows])
 
+
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_pedido(pedido_id):
-    dados = request.get_json() or {}
-    novo_status = dados.get("status")
-    
-    if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
-        return jsonify({"erro": "Status inválido"}), 400
-    
-    db = get_db_gerente()
-    
-    # Buscar pedido antes de atualizar
-    pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
-    if not pedido:
-        return jsonify({"erro": "Pedido não encontrado"}), 404
-    
-    # Atualizar status
-    db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
-    
-    # Se for concluído, lançar no caixa e enviar para Baserow
-    if novo_status == "concluido":
-        # Verificar se já foi lançado no caixa
-        ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
-        if not ja_lancado:
-            db.execute(
-                "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
-                ("entrada", f"{pedido['servico_nome']} - {pedido['cliente_nome']}", 
-                 pedido.get('pagamento', 'manual'), pedido['valor'], pedido_id)
-            )
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        novo_status = dados.get("status")
         
-        # Enviar para Baserow
-        try:
-            enviar_pedido_baserow(dict(pedido))
-        except Exception as e:
-            print(f"⚠️ Erro ao enviar Baserow: {e}")
-    
-    db.commit()
-    return jsonify({"status": "ok"})
-
+        if not novo_status:
+            return jsonify({"erro": "Status não informado"}), 400
+        
+        if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
+            return jsonify({"erro": "Status inválido"}), 400
+        
+        db = get_db_gerente()
+        
+        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+        if not pedido:
+            return jsonify({"erro": "Pedido não encontrado"}), 404
+        
+        db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
+        
+        if novo_status == "concluido":
+            ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
+            if not ja_lancado:
+                db.execute(
+                    "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
+                    ("entrada", f"{pedido['servico_nome']} - {pedido['cliente_nome']}", 
+                     pedido.get('pagamento', 'manual'), pedido['valor'], pedido_id)
+                )
+            try:
+                enviar_pedido_baserow(dict(pedido))
+            except:
+                pass
+        
+        db.commit()
+        return jsonify({"status": "ok"})
+        
+    except Exception as e:
+        print(f"❌ ERRO: {e}")
+        return jsonify({"erro": str(e)}), 500
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
 @login_required
 def gerente_deletar_pedido(pedido_id):

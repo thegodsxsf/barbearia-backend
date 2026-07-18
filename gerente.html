@@ -673,6 +673,11 @@ function showToast(msg){
 }
 
 async function api(url, options={}){
+  const res = await fetch(url, {
+    headers:{'Content-Type':'application/json'},
+    credentials: 'include',
+    ...options
+  });
   const res = await fetch(url, {headers:{'Content-Type':'application/json'}, ...options});
   if (res.status === 401){ window.location.href = '/gerente/login'; throw new Error('Não autenticado'); }
   const data = await res.json().catch(()=>({}));
@@ -904,11 +909,47 @@ async function carregarPedidos(){
   }
 }
 
+
 async function atualizarStatusPedido(id, status){
   try{
     console.log('📤 Atualizando pedido:', id, 'para', status);
     
-    const response = await fetch(`/api/gerente/pedidos/${id}`, {
+    const response = await fetch('/api/gerente/pedidos/' + id, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({status: status})
+    });
+    
+    console.log('📥 Resposta status:', response.status);
+    
+    if (response.status === 401) {
+      window.location.href = '/gerente/login';
+      return;
+    }
+    
+    const data = await response.json();
+    console.log('📥 Resposta data:', data);
+    
+    if (!response.ok) {
+      throw new Error(data.erro || 'Erro ao atualizar status');
+    }
+    
+    const statusMap = {
+      'pendente': '⏳ Pendente',
+      'confirmado': '✅ Confirmado',
+      'concluido': '🎯 Concluído',
+      'cancelado': '❌ Cancelado'
+    };
+    showToast('✅ Status alterado para: ' + (statusMap[status] || status));
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    console.error('❌ Erro:', e);
+    showToast('❌ Erro ao atualizar: ' + e.message);
+  }
+}
+`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -940,10 +981,30 @@ async function atualizarStatusPedido(id, status){
   }
 }
 
+
 async function excluirPedido(id){
   if(!confirm('Excluir este pedido?')) return;
   try{
-    await api(`/api/gerente/pedidos/${id}`, {method:'DELETE'});
+    const response = await fetch('/api/gerente/pedidos/' + id, {
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include'
+    });
+    if (response.status === 401) {
+      window.location.href = '/gerente/login';
+      return;
+    }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.erro || 'Erro ao excluir');
+    showToast('✅ Pedido excluído.');
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    showToast('❌ Erro ao excluir: ' + e.message);
+    console.error('Erro ao excluir:', e);
+  }
+}
+`, {method:'DELETE'});
     showToast('✅ Pedido excluído.');
     carregarPedidos();
   } catch(e){ 
