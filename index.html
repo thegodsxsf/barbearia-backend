@@ -892,8 +892,7 @@
     </div>
   </div>
 
-<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
-
+<script>
     async function salvarPedidoServidor(dados) {
       try {
         await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
@@ -1422,13 +1421,13 @@
         var assinaturas = await assRes.json();
         var profissionais = await profRes.json();
         var produtos = await prodRes.json();
-        // var imagens = await imgRes.json();
+        var imagens = await imgRes.json();
 
         renderServicos(todosServicos);
         renderAssinaturas(assinaturas);
         renderProfissionais(profissionais);
         renderProdutos(produtos);
-        // renderImagens(imagens);
+        renderImagens(imagens);
         preencherSelectAgendamento();
         preencherProfissionais();
         
@@ -1437,7 +1436,7 @@
           profissionais: profissionais.length,
           assinaturas: assinaturas.length,
           produtos: produtos.length,
-          // imagens: imagens.length
+          imagens: imagens.length
         });
         
       } catch (err) {
