@@ -700,6 +700,191 @@ def gerente_relatorio_pdf():
     return jsonify({"erro": "Geração de PDF ainda não implementada"}), 501
 
 # ============ INICIAR ============
+
+
+# ============ CRUD SERVIÇOS ============
+@app.route("/api/servicos", methods=["POST"])
+@login_required
+def api_criar_servico():
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        if not dados.get("nome"):
+            return jsonify({"erro": "Nome é obrigatório"}), 400
+        db = get_db()
+        cur = db.execute(
+            "INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
+            (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
+             dados.get('ativo', 1), dados.get('ordem', 0))
+        )
+        db.commit()
+        return jsonify({"status": "ok", "id": cur.lastrowid})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/servicos/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_servico(item_id):
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        db = get_db()
+        db.execute(
+            "UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?",
+            (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
+             dados.get('ativo', 1), item_id)
+        )
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/servicos/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_servico(item_id):
+    try:
+        db = get_db()
+        db.execute("DELETE FROM servicos WHERE id=?", (item_id,))
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+# ============ CRUD PRODUTOS ============
+@app.route("/api/produtos", methods=["POST"])
+@login_required
+def api_criar_produto():
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        if not dados.get("nome"):
+            return jsonify({"erro": "Nome é obrigatório"}), 400
+        db = get_db()
+        cur = db.execute(
+            "INSERT INTO produtos (nome, preco, ativo, ordem) VALUES (?, ?, ?, ?)",
+            (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), dados.get('ordem', 0))
+        )
+        db.commit()
+        return jsonify({"status": "ok", "id": cur.lastrowid})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/produtos/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_produto(item_id):
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        db = get_db()
+        db.execute(
+            "UPDATE produtos SET nome=?, preco=?, ativo=? WHERE id=?",
+            (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), item_id)
+        )
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/produtos/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_produto(item_id):
+    try:
+        db = get_db()
+        db.execute("DELETE FROM produtos WHERE id=?", (item_id,))
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+# ============ CRUD PROFISSIONAIS ============
+@app.route("/api/profissionais", methods=["POST"])
+@login_required
+def api_criar_profissional():
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        if not dados.get("nome"):
+            return jsonify({"erro": "Nome é obrigatório"}), 400
+        db = get_db()
+        cur = db.execute(
+            "INSERT INTO profissionais (nome, especialidade, ativo, ordem) VALUES (?, ?, ?, ?)",
+            (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), dados.get('ordem', 0))
+        )
+        db.commit()
+        return jsonify({"status": "ok", "id": cur.lastrowid})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/profissionais/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_profissional(item_id):
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        db = get_db()
+        db.execute(
+            "UPDATE profissionais SET nome=?, especialidade=?, ativo=? WHERE id=?",
+            (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), item_id)
+        )
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/profissionais/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_profissional(item_id):
+    try:
+        db = get_db()
+        db.execute("DELETE FROM profissionais WHERE id=?", (item_id,))
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+# ============ CRUD ASSINATURAS ============
+@app.route("/api/assinaturas", methods=["POST"])
+@login_required
+def api_criar_assinatura():
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        if not dados.get("nome"):
+            return jsonify({"erro": "Nome é obrigatório"}), 400
+        db = get_db()
+        cur = db.execute(
+            """INSERT INTO assinaturas (nome, preco, icone, descricao, destaque, ativo, ordem, beneficios, cor)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
+             dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1),
+             dados.get('ordem', 0), dados.get('beneficios', ''), dados.get('cor', '#3ddc84'))
+        )
+        db.commit()
+        return jsonify({"status": "ok", "id": cur.lastrowid})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/assinaturas/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_assinatura(item_id):
+    try:
+        dados = request.get_json(force=True, silent=True) or {}
+        db = get_db()
+        db.execute(
+            "UPDATE assinaturas SET nome=?, preco=?, icone=?, descricao=?, destaque=?, ativo=? WHERE id=?",
+            (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
+             dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1), item_id)
+        )
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/assinaturas/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_assinatura(item_id):
+    try:
+        db = get_db()
+        db.execute("DELETE FROM assinaturas WHERE id=?", (item_id,))
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
