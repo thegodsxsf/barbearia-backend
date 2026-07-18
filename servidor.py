@@ -360,33 +360,45 @@ def gerente_me():
         return jsonify({"erro": "Não autenticado"}), 401
     return jsonify({"nome": session.get("gerente_nome")})
 
+
 @app.route("/api/gerente/dashboard")
 @login_required
 def gerente_dashboard():
     db = get_db_gerente()
+    
+    # Faturamento total (entradas)
     entradas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0]
+    
+    # Saídas
     saidas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0]
+    
+    # Pedidos pendentes
     pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status='pendente'").fetchone()[0]
-
+    
+    # Agendamentos hoje
     hoje = date.today().isoformat()
     agendamentos_hoje = db.execute(
-        "SELECT COUNT(*) FROM pedidos WHERE data_agendada = ?", (hoje,)
+        "SELECT COUNT(*) FROM pedidos WHERE data_agendada = ? AND status != 'cancelado'", (hoje,)
     ).fetchone()[0]
-
-    total_clientes = db.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
-
+    
+    # Total de clientes (distintos)
+    total_clientes = db.execute("SELECT COUNT(DISTINCT cliente_nome) FROM pedidos").fetchone()[0]
+    
+    # Comandas abertas
     try:
         comandas_abertas = db.execute("SELECT COUNT(*) FROM comandas WHERE status='aberta'").fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         comandas_abertas = 0
-
+    
+    # Repasses pendentes
     try:
         repasses_pendentes = db.execute("SELECT COUNT(*) FROM repasses WHERE status='pendente'").fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         repasses_pendentes = 0
-
+    
     return jsonify({
         "faturamento_total": entradas,
+        "saidas_total": saidas,
         "saldo": entradas - saidas,
         "pedidos_pendentes": pendentes,
         "agendamentos_hoje": agendamentos_hoje,
@@ -395,8 +407,6 @@ def gerente_dashboard():
         "comandas_abertas": comandas_abertas,
         "repasses_pendentes": repasses_pendentes
     })
-
-# ============ API GERENTE - PEDIDOS ============
 @app.route("/api/gerente/pedidos", methods=["GET"])
 @login_required
 def gerente_listar_pedidos():
@@ -415,28 +425,42 @@ def gerente_listar_pedidos():
     rows = db.execute(query, params).fetchall()
     return jsonify([dict(r) for r in rows])
 
+
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_pedido(pedido_id):
     dados = request.get_json() or {}
-    status = dados.get("status")
+    novo_status = dados.get("status")
+    
+    if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
+        return jsonify({"erro": "Status inválido"}), 400
+    
     db = get_db_gerente()
-    db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (status, pedido_id))
-    db.commit()
-
-    if status == "concluido":
-        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
-        if pedido:
+    
+    # Buscar pedido antes de atualizar
+    pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+    if not pedido:
+        return jsonify({"erro": "Pedido não encontrado"}), 404
+    
+    # Atualizar status
+    db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
+    
+    # Se for concluído, lançar no caixa e enviar para Baserow
+    if novo_status == "concluido":
+        # Verificar se já foi lançado no caixa
+        ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
+        if not ja_lancado:
             db.execute(
-                "INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)",
-                ("entrada", f"Pedido #{pedido_id} - {pedido['servico_nome']}", pedido["pagamento"], pedido["valor"])
+                "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
+                ("entrada", f"{pedido['servico_nome']} - {pedido['cliente_nome']}", 
+                 pedido.get('pagamento', 'manual'), pedido['valor'], pedido_id)
             )
-            db.commit()
-            data_hora = f"{pedido['data_agendada'] or ''} {pedido['hora_agendada'] or ''}".strip()
-            enviar_pedido_baserow(pedido["cliente_nome"], pedido["servico_nome"], data_hora, pedido["valor"])
-
+        
+        # Enviar para Baserow
+        enviar_pedido_baserow(dict(pedido))
+    
+    db.commit()
     return jsonify({"status": "ok"})
-
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
 @login_required
 def gerente_deletar_pedido(pedido_id):
