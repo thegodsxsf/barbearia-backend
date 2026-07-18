@@ -893,6 +893,19 @@
   </div>
 
 <script>
+    // Faz um fetch e devolve [] (ou {} se isObject=true) em vez de travar
+    // a tela inteira quando alguma rota não existir ou responder com erro.
+    async function fetchSeguro(url, valorPadrao) {
+      try {
+        var res = await fetch(url);
+        if (!res.ok) return valorPadrao;
+        return await res.json();
+      } catch (e) {
+        console.warn('Falha ao buscar ' + url + ':', e);
+        return valorPadrao;
+      }
+    }
+
     async function salvarPedidoServidor(dados) {
       try {
         await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
@@ -925,28 +938,24 @@
     function formatarPreco(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
 
     // ======== PREENCHER PROFISSIONAIS ========
-    function preencherProfissionais() {
-      fetch('/api/profissionais')
-        .then(function(res) { return res.json(); })
-        .then(function(profissionais) {
-          todosProfissionais = profissionais;
-          var options = '';
-          for (var i = 0; i < profissionais.length; i++) {
-            if (profissionais[i].ativo === 1) {
-              options += '<option value="' + profissionais[i].id + '">' + profissionais[i].nome + ' - ' + (profissionais[i].especialidade || '') + '</option>';
-            }
-          }
-          
-          var selectSimples = document.getElementById('profissionalSimples');
-          if (selectSimples) {
-            selectSimples.innerHTML = '<option value="">Selecione um profissional</option>' + options;
-          }
-          var selectAgenda = document.getElementById('profissionalAgenda');
-          if (selectAgenda) {
-            selectAgenda.innerHTML = '<option value="">Selecione um profissional</option>' + options;
-          }
-        })
-        .catch(function(err) { console.warn('Erro ao carregar profissionais:', err); });
+    async function preencherProfissionais() {
+      var profissionais = await fetchSeguro('/api/profissionais', []);
+      todosProfissionais = profissionais;
+      var options = '';
+      for (var i = 0; i < profissionais.length; i++) {
+        if (profissionais[i].ativo === 1) {
+          options += '<option value="' + profissionais[i].id + '">' + profissionais[i].nome + ' - ' + (profissionais[i].especialidade || '') + '</option>';
+        }
+      }
+      
+      var selectSimples = document.getElementById('profissionalSimples');
+      if (selectSimples) {
+        selectSimples.innerHTML = '<option value="">Selecione um profissional</option>' + options;
+      }
+      var selectAgenda = document.getElementById('profissionalAgenda');
+      if (selectAgenda) {
+        selectAgenda.innerHTML = '<option value="">Selecione um profissional</option>' + options;
+      }
     }
 
     // ======== SERVIÇOS ========
@@ -1395,53 +1404,44 @@
     }
 
     // ======== CARREGAR DADOS ========
+    // Cada rota é buscada com fetchSeguro: se UMA rota faltar ou falhar,
+    // as outras continuam carregando normalmente (antes, uma única rota
+    // quebrada travava a tela inteira em "Carregando...").
     async function carregarDados() {
-      try {
-        var bizRes = await fetch('/api/barbearia');
-        if (bizRes.ok) {
-          var biz = await bizRes.json();
-          document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
-          document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
-          if (biz.logo) {
-            document.getElementById('coverLogo').src = biz.logo;
-            document.getElementById('infoLogo').src = biz.logo;
-          }
-          if (biz.whatsapp) {
-            bizWhatsapp = biz.whatsapp;
-          }
+      var biz = await fetchSeguro('/api/barbearia', null);
+      if (biz) {
+        document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
+        document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
+        if (biz.logo) {
+          document.getElementById('coverLogo').src = biz.logo;
+          document.getElementById('infoLogo').src = biz.logo;
         }
-        
-        var servRes = await fetch('/api/servicos');
-        var assRes = await fetch('/api/assinaturas');
-        var profRes = await fetch('/api/profissionais');
-        var prodRes = await fetch('/api/produtos');
-        var imgRes = await fetch('/api/imagens');
-
-        todosServicos = await servRes.json();
-        var assinaturas = await assRes.json();
-        var profissionais = await profRes.json();
-        var produtos = await prodRes.json();
-        var imagens = await imgRes.json();
-
-        renderServicos(todosServicos);
-        renderAssinaturas(assinaturas);
-        renderProfissionais(profissionais);
-        renderProdutos(produtos);
-        renderImagens(imagens);
-        preencherSelectAgendamento();
-        preencherProfissionais();
-        
-        console.log('✅ Dados carregados:', {
-          servicos: todosServicos.length,
-          profissionais: profissionais.length,
-          assinaturas: assinaturas.length,
-          produtos: produtos.length,
-          imagens: imagens.length
-        });
-        
-      } catch (err) {
-        console.error('Erro ao carregar dados:', err);
+        if (biz.whatsapp) {
+          bizWhatsapp = biz.whatsapp;
+        }
       }
+
+      todosServicos = await fetchSeguro('/api/servicos', []);
+      var assinaturas = await fetchSeguro('/api/assinaturas', []);
+      var profissionais = await fetchSeguro('/api/profissionais', []);
+      var produtos = await fetchSeguro('/api/produtos', []);
+      var imagens = await fetchSeguro('/api/imagens', []);
+
+      renderServicos(todosServicos);
+      renderAssinaturas(assinaturas);
+      renderProfissionais(profissionais);
+      renderProdutos(produtos);
+      renderImagens(imagens);
+      preencherSelectAgendamento();
+      preencherProfissionais();
+
+      console.log('✅ Dados carregados:', {
+        servicos: todosServicos.length,
+        profissionais: profissionais.length,
+        assinaturas: assinaturas.length,
+        produtos: produtos.length,
+        imagens: imagens.length
+      });
     }
 
     // ======== FECHAR MODAIS ========

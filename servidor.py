@@ -1,5 +1,5 @@
 """
-Servidor Barbearia - SQLite
+Barbearia - SQLite
 """
 import os
 import sqlite3
@@ -47,7 +47,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorado
 
-# ============ ROTAS ============
+# ============ ROTAS DE PÁGINAS ============
 @app.route("/")
 def home():
     return send_from_directory(BASE_DIR, "index.html")
@@ -55,6 +55,10 @@ def home():
 @app.route("/static/<path:filename>")
 def static_files(filename):
     return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
+
+@app.route("/fotos/<path:filename>")
+def fotos_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "fotos"), filename)
 
 @app.route("/gerente/login")
 def pagina_login_gerente():
@@ -66,7 +70,24 @@ def pagina_gerente():
         return redirect("/gerente/login")
     return send_from_directory(BASE_DIR, "gerente.html")
 
-# ============ API PÚBLICA ============
+# ============ API PÚBLICA (usada pelo index.html) ============
+@app.route("/api/barbearia", methods=["GET"])
+def api_barbearia():
+    # Tenta ler dados da barbearia; se a tabela não existir, devolve valores padrão
+    try:
+        db = get_db()
+        row = db.execute("SELECT * FROM barbearia LIMIT 1").fetchone()
+        if row:
+            return jsonify(dict(row))
+    except sqlite3.OperationalError:
+        pass
+    return jsonify({
+        "nome": "Leblon Studio",
+        "endereco": "Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280",
+        "whatsapp": "558181365730",
+        "logo": None
+    })
+
 @app.route("/api/servicos", methods=["GET"])
 def api_servicos():
     db = get_db()
@@ -91,7 +112,206 @@ def api_produtos():
     rows = db.execute("SELECT * FROM produtos WHERE ativo = 1 ORDER BY ordem, id").fetchall()
     return jsonify([dict(r) for r in rows])
 
-# ============ API GERENTE ============
+@app.route("/api/imagens", methods=["GET"])
+def api_imagens():
+    # Rota que estava faltando e travava o carregamento do site inteiro.
+    # Se a tabela "imagens" não existir ainda, devolve lista vazia em vez de dar 404.
+    try:
+        db = get_db()
+        rows = db.execute("SELECT * FROM imagens WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except sqlite3.OperationalError:
+        return jsonify([])
+
+@app.route("/api/horarios", methods=["GET"])
+def api_horarios_get():
+    try:
+        db = get_db()
+        rows = db.execute("SELECT * FROM horarios ORDER BY dia_semana").fetchall()
+        if rows:
+            return jsonify([dict(r) for r in rows])
+    except sqlite3.OperationalError:
+        pass
+    # Padrão: todos os dias, sem horário configurado ainda
+    return jsonify([{"dia_semana": i, "abertura": "", "fechamento": "", "ativo": 0} for i in range(7)])
+
+@app.route("/api/horarios", methods=["PUT"])
+@login_required
+def api_horarios_put():
+    dados = request.get_json() or {}
+    db = get_db()
+    try:
+        db.execute("""CREATE TABLE IF NOT EXISTS horarios (
+            dia_semana INTEGER PRIMARY KEY, abertura TEXT, fechamento TEXT, ativo INTEGER
+        )""")
+        for dia, info in dados.items():
+            db.execute(
+                "INSERT INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(dia_semana) DO UPDATE SET abertura=excluded.abertura, "
+                "fechamento=excluded.fechamento, ativo=excluded.ativo",
+                (int(dia), info.get("abertura", ""), info.get("fechamento", ""), 1 if info.get("ativo") else 0)
+            )
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+# ---- Recebe pedidos vindos do site (index.html) ----
+@app.route("/api/pedidos", methods=["POST"])
+def api_criar_pedido():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    cur = db.execute(
+        """INSERT INTO pedidos (tipo, servico_nome, valor, cliente_nome, cliente_telefone,
+            cliente_cpf, data_agendada, hora_agendada, profissional, pagamento, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente')""",
+        (dados.get('tipo'), dados.get('servico_nome'), dados.get('valor', 0),
+         dados.get('cliente_nome'), dados.get('cliente_telefone'), dados.get('cliente_cpf'),
+         dados.get('data_agendada'), dados.get('hora_agendada'), dados.get('profissional'),
+         dados.get('pagamento'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+# ============ CRUD SERVIÇOS ============
+@app.route("/api/servicos", methods=["POST"])
+@login_required
+def api_criar_servico():
+    dados = request.get_json() or {}
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
+        (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
+         dados.get('ativo', 1), dados.get('ordem', 0))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/servicos/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_servico(item_id):
+    dados = request.get_json() or {}
+    db = get_db()
+    db.execute(
+        "UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?",
+        (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
+         dados.get('ativo', 1), item_id)
+    )
+    db.commit()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/servicos/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_servico(item_id):
+    db = get_db()
+    db.execute("DELETE FROM servicos WHERE id=?", (item_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ CRUD PRODUTOS ============
+@app.route("/api/produtos", methods=["POST"])
+@login_required
+def api_criar_produto():
+    dados = request.get_json() or {}
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO produtos (nome, preco, ativo, ordem) VALUES (?, ?, ?, ?)",
+        (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), dados.get('ordem', 0))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/produtos/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_produto(item_id):
+    dados = request.get_json() or {}
+    db = get_db()
+    db.execute(
+        "UPDATE produtos SET nome=?, preco=?, ativo=? WHERE id=?",
+        (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), item_id)
+    )
+    db.commit()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/produtos/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_produto(item_id):
+    db = get_db()
+    db.execute("DELETE FROM produtos WHERE id=?", (item_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ CRUD PROFISSIONAIS ============
+@app.route("/api/profissionais", methods=["POST"])
+@login_required
+def api_criar_profissional():
+    dados = request.get_json() or {}
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO profissionais (nome, especialidade, ativo, ordem) VALUES (?, ?, ?, ?)",
+        (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), dados.get('ordem', 0))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/profissionais/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_profissional(item_id):
+    dados = request.get_json() or {}
+    db = get_db()
+    db.execute(
+        "UPDATE profissionais SET nome=?, especialidade=?, ativo=? WHERE id=?",
+        (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), item_id)
+    )
+    db.commit()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/profissionais/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_profissional(item_id):
+    db = get_db()
+    db.execute("DELETE FROM profissionais WHERE id=?", (item_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ CRUD ASSINATURAS (Planos) ============
+@app.route("/api/assinaturas", methods=["POST"])
+@login_required
+def api_criar_assinatura():
+    dados = request.get_json() or {}
+    db = get_db()
+    cur = db.execute(
+        """INSERT INTO assinaturas (nome, preco, icone, descricao, destaque, ativo, ordem, beneficios, cor)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
+         dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1),
+         dados.get('ordem', 0), dados.get('beneficios', ''), dados.get('cor', '#3ddc84'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/assinaturas/<int:item_id>", methods=["PUT"])
+@login_required
+def api_atualizar_assinatura(item_id):
+    dados = request.get_json() or {}
+    db = get_db()
+    db.execute(
+        "UPDATE assinaturas SET nome=?, preco=?, icone=?, descricao=?, destaque=?, ativo=? WHERE id=?",
+        (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
+         dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1), item_id)
+    )
+    db.commit()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/assinaturas/<int:item_id>", methods=["DELETE"])
+@login_required
+def api_deletar_assinatura(item_id):
+    db = get_db()
+    db.execute("DELETE FROM assinaturas WHERE id=?", (item_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ API GERENTE - LOGIN ============
 @app.route("/api/gerente/login", methods=["POST"])
 def gerente_login():
     dados = request.get_json() or {}
@@ -133,11 +353,23 @@ def gerente_dashboard():
         "repasses_pendentes": 0
     })
 
+# ============ API GERENTE - PEDIDOS ============
 @app.route("/api/gerente/pedidos", methods=["GET"])
 @login_required
 def gerente_listar_pedidos():
     db = get_db_gerente()
-    rows = db.execute("SELECT * FROM pedidos ORDER BY id DESC").fetchall()
+    status = request.args.get("status")
+    limit = request.args.get("limit")
+    query = "SELECT * FROM pedidos"
+    params = ()
+    if status:
+        query += " WHERE status = ?"
+        params = (status,)
+    query += " ORDER BY id DESC"
+    if limit:
+        query += " LIMIT ?"
+        params = params + (int(limit),)
+    rows = db.execute(query, params).fetchall()
     return jsonify([dict(r) for r in rows])
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
@@ -164,7 +396,7 @@ def gerente_criar_pedido():
     dados = request.get_json() or {}
     db = get_db_gerente()
     cur = db.execute(
-        """INSERT INTO pedidos (tipo, servico_nome, valor, cliente_nome, cliente_telefone, 
+        """INSERT INTO pedidos (tipo, servico_nome, valor, cliente_nome, cliente_telefone,
             cliente_cpf, data_agendada, hora_agendada, profissional, pagamento, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente')""",
         (dados.get('tipo'), dados.get('servico_nome'), dados.get('valor', 0),
@@ -175,11 +407,16 @@ def gerente_criar_pedido():
     db.commit()
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
+# ============ API GERENTE - CLIENTES ============
 @app.route("/api/gerente/clientes", methods=["GET"])
 @login_required
 def gerente_listar_clientes():
     db = get_db_gerente()
-    rows = db.execute("SELECT * FROM clientes ORDER BY nome").fetchall()
+    busca = request.args.get("busca")
+    if busca:
+        rows = db.execute("SELECT * FROM clientes WHERE nome LIKE ? ORDER BY nome", (f"%{busca}%",)).fetchall()
+    else:
+        rows = db.execute("SELECT * FROM clientes ORDER BY nome").fetchall()
     return jsonify([dict(r) for r in rows])
 
 @app.route("/api/gerente/clientes", methods=["POST"])
@@ -194,172 +431,6 @@ def gerente_criar_cliente():
     db.commit()
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
-# ============ INICIAR ============
-# ============================================================
-# ROTAS QUE ESTAVAM FALTANDO
-# ============================================================
-
-# ---- Recebe pedidos vindos do site (index.html) ----
-@app.route("/api/pedidos", methods=["POST"])
-def api_criar_pedido():
-    dados = request.get_json() or {}
-    db = get_db_gerente()
-    cur = db.execute(
-        """INSERT INTO pedidos (tipo, servico_nome, valor, cliente_nome, cliente_telefone,
-            cliente_cpf, data_agendada, hora_agendada, profissional, pagamento, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente')""",
-        (dados.get('tipo'), dados.get('servico_nome'), dados.get('valor', 0),
-         dados.get('cliente_nome'), dados.get('cliente_telefone'), dados.get('cliente_cpf'),
-         dados.get('data_agendada'), dados.get('hora_agendada'), dados.get('profissional'),
-         dados.get('pagamento'))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-
-# ---- CRUD de Serviços ----
-@app.route("/api/servicos", methods=["POST"])
-@login_required
-def api_criar_servico():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        "INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
-         dados.get('ativo', 1), dados.get('ordem', 0))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/servicos/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_servico(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
-         dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/servicos/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_servico(item_id):
-    db = get_db()
-    db.execute("DELETE FROM servicos WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-
-# ---- CRUD de Produtos ----
-@app.route("/api/produtos", methods=["POST"])
-@login_required
-def api_criar_produto():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        "INSERT INTO produtos (nome, preco, ativo, ordem) VALUES (?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), dados.get('ordem', 0))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/produtos/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_produto(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE produtos SET nome=?, preco=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/produtos/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_produto(item_id):
-    db = get_db()
-    db.execute("DELETE FROM produtos WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-
-# ---- CRUD de Profissionais ----
-@app.route("/api/profissionais", methods=["POST"])
-@login_required
-def api_criar_profissional():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        "INSERT INTO profissionais (nome, especialidade, ativo, ordem) VALUES (?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), dados.get('ordem', 0))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/profissionais/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_profissional(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE profissionais SET nome=?, especialidade=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/profissionais/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_profissional(item_id):
-    db = get_db()
-    db.execute("DELETE FROM profissionais WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-
-# ---- CRUD de Assinaturas (Planos) ----
-@app.route("/api/assinaturas", methods=["POST"])
-@login_required
-def api_criar_assinatura():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        """INSERT INTO assinaturas (nome, preco, icone, descricao, destaque, ativo, ordem, beneficios, cor)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
-         dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1),
-         dados.get('ordem', 0), dados.get('beneficios', ''), dados.get('cor', '#3ddc84'))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/assinaturas/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_assinatura(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE assinaturas SET nome=?, preco=?, icone=?, descricao=?, destaque=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
-         dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/assinaturas/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_assinatura(item_id):
-    db = get_db()
-    db.execute("DELETE FROM assinaturas WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-
-# ---- Editar/Excluir Clientes ----
 @app.route("/api/gerente/clientes/<int:cliente_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_cliente(cliente_id):
@@ -380,6 +451,167 @@ def gerente_deletar_cliente(cliente_id):
     db.commit()
     return jsonify({"status": "ok"})
 
+# ============ API GERENTE - COMANDAS / REPASSES / CAIXA (evitam 404 no painel) ============
+@app.route("/api/gerente/comandas", methods=["GET"])
+@login_required
+def gerente_listar_comandas():
+    db = get_db_gerente()
+    try:
+        rows = db.execute("SELECT * FROM comandas ORDER BY id DESC").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except sqlite3.OperationalError:
+        return jsonify([])
+
+@app.route("/api/gerente/comandas", methods=["POST"])
+@login_required
+def gerente_criar_comanda():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    db.execute("""CREATE TABLE IF NOT EXISTS comandas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, ticket TEXT, cliente_nome TEXT, cliente_telefone TEXT,
+        profissional TEXT, servicos TEXT, valor_total REAL, status TEXT, pagamento TEXT,
+        criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+    )""")
+    ticket = "CMD-" + datetime.now().strftime("%Y%m%d%H%M%S")
+    cur = db.execute(
+        """INSERT INTO comandas (ticket, cliente_nome, cliente_telefone, profissional, servicos, valor_total, status, pagamento)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (ticket, dados.get('cliente_nome'), dados.get('cliente_telefone'), dados.get('profissional'),
+         dados.get('servicos'), dados.get('valor_total', 0), dados.get('status', 'aberta'), dados.get('pagamento'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/gerente/comandas/<int:comanda_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_comanda(comanda_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM comandas WHERE id=?", (comanda_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/gerente/repasses", methods=["GET"])
+@login_required
+def gerente_listar_repasses():
+    db = get_db_gerente()
+    try:
+        rows = db.execute("SELECT * FROM repasses ORDER BY id DESC").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except sqlite3.OperationalError:
+        return jsonify([])
+
+@app.route("/api/gerente/repasses/resumo", methods=["GET"])
+@login_required
+def gerente_repasses_resumo():
+    db = get_db_gerente()
+    try:
+        pendente = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pendente'").fetchone()[0]
+        pago = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pago'").fetchone()[0]
+    except sqlite3.OperationalError:
+        pendente, pago = 0, 0
+    return jsonify({"total_pendente": pendente, "total_pago": pago})
+
+@app.route("/api/gerente/repasses", methods=["POST"])
+@login_required
+def gerente_criar_repasse():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    db.execute("""CREATE TABLE IF NOT EXISTS repasses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, profissional TEXT, servico_nome TEXT,
+        valor_servico REAL, comissao REAL, status TEXT, criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+    )""")
+    porcentagem = dados.get('porcentagem', 50)
+    valor_servico = dados.get('valor_servico', 0)
+    comissao = valor_servico * (porcentagem / 100)
+    cur = db.execute(
+        """INSERT INTO repasses (profissional, servico_nome, valor_servico, comissao, status)
+           VALUES (?, ?, ?, ?, ?)""",
+        (dados.get('profissional'), dados.get('servico_nome'), valor_servico, comissao, dados.get('status', 'pendente'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/gerente/repasses/<int:repasse_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_repasse(repasse_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM repasses WHERE id=?", (repasse_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/gerente/caixa", methods=["GET"])
+@login_required
+def gerente_listar_caixa():
+    db = get_db_gerente()
+    try:
+        rows = db.execute("SELECT * FROM caixa ORDER BY id DESC").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except sqlite3.OperationalError:
+        return jsonify([])
+
+@app.route("/api/gerente/caixa", methods=["POST"])
+@login_required
+def gerente_criar_caixa():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    db.execute("""CREATE TABLE IF NOT EXISTS caixa (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT, descricao TEXT, pagamento TEXT,
+        valor REAL, criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+    )""")
+    cur = db.execute(
+        "INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)",
+        (dados.get('tipo'), dados.get('descricao'), dados.get('pagamento'), dados.get('valor', 0))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/gerente/caixa/<int:caixa_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_caixa(caixa_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ API GERENTE - PERFIL ============
+@app.route("/api/gerente/alterar_nome", methods=["POST"])
+@login_required
+def gerente_alterar_nome():
+    dados = request.get_json() or {}
+    novo_nome = dados.get("novo_nome", "").strip()
+    if not novo_nome:
+        return jsonify({"erro": "Nome inválido"}), 400
+    db = get_db_gerente()
+    db.execute("UPDATE gerentes SET nome=? WHERE id=?", (novo_nome, session["gerente_id"]))
+    db.commit()
+    session["gerente_nome"] = novo_nome
+    return jsonify({"status": "ok"})
+
+@app.route("/api/gerente/alterar_login", methods=["POST"])
+@login_required
+def gerente_alterar_login():
+    dados = request.get_json() or {}
+    senha_atual = dados.get("senha_atual", "")
+    novo_usuario = dados.get("novo_usuario", "").strip()
+    nova_senha = dados.get("nova_senha", "")
+    db = get_db_gerente()
+    row = db.execute("SELECT * FROM gerentes WHERE id = ?", (session["gerente_id"],)).fetchone()
+    if not row or row["senha_hash"] != senha_atual:
+        return jsonify({"erro": "Senha atual incorreta"}), 401
+    if novo_usuario:
+        db.execute("UPDATE gerentes SET usuario=? WHERE id=?", (novo_usuario, session["gerente_id"]))
+    if nova_senha:
+        db.execute("UPDATE gerentes SET senha_hash=? WHERE id=?", (nova_senha, session["gerente_id"]))
+    db.commit()
+    session.clear()
+    return jsonify({"status": "ok"})
+
+@app.route("/api/gerente/relatorio/pdf", methods=["GET"])
+@login_required
+def gerente_relatorio_pdf():
+    return jsonify({"erro": "Geração de PDF ainda não implementada"}), 501
+
+# ============ INICIAR ============
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
