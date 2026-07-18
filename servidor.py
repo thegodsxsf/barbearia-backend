@@ -6,6 +6,30 @@ import sqlite3
 from datetime import date, datetime, timedelta
 import getpass
 from flask import Flask, jsonify, request, send_from_directory, g, session, redirect, send_file
+import requests
+
+# ---- Configuração do Baserow (token vem de variável de ambiente, nunca fixo no código) ----
+BASEROW_TOKEN = os.environ.get("BASEROW_TOKEN", "")
+BASEROW_TABLE_ID = 1083808  # tabela "Customers"
+
+def enviar_pedido_baserow(cliente_nome, servico_nome, data_hora, valor):
+    if not BASEROW_TOKEN:
+        print("⚠️ BASEROW_TOKEN não configurado — pulando envio ao Baserow.")
+        return
+    try:
+        url = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/?user_field_names=true"
+        headers = {"Authorization": f"Token {BASEROW_TOKEN}", "Content-Type": "application/json"}
+        dados = {
+            "Cliente": cliente_nome or "",
+            "Serviço": servico_nome or "",
+            "Data/Hora": data_hora or "",
+            "valor": str(valor or 0)
+        }
+        resp = requests.post(url, headers=headers, json=dados, timeout=5)
+        if not resp.ok:
+            print("⚠️ Baserow respondeu erro:", resp.status_code, resp.text)
+    except Exception as e:
+        print("⚠️ Erro ao enviar para o Baserow:", e)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -340,17 +364,36 @@ def gerente_me():
 @login_required
 def gerente_dashboard():
     db = get_db_gerente()
-    faturamento = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0]
+    entradas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0]
+    saidas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0]
     pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status='pendente'").fetchone()[0]
+
+    hoje = date.today().isoformat()
+    agendamentos_hoje = db.execute(
+        "SELECT COUNT(*) FROM pedidos WHERE data_agendada = ?", (hoje,)
+    ).fetchone()[0]
+
+    total_clientes = db.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
+
+    try:
+        comandas_abertas = db.execute("SELECT COUNT(*) FROM comandas WHERE status='aberta'").fetchone()[0]
+    except sqlite3.OperationalError:
+        comandas_abertas = 0
+
+    try:
+        repasses_pendentes = db.execute("SELECT COUNT(*) FROM repasses WHERE status='pendente'").fetchone()[0]
+    except sqlite3.OperationalError:
+        repasses_pendentes = 0
+
     return jsonify({
-        "faturamento_total": faturamento,
-        "saldo": faturamento,
+        "faturamento_total": entradas,
+        "saldo": entradas - saidas,
         "pedidos_pendentes": pendentes,
-        "agendamentos_hoje": 0,
-        "total_clientes": 0,
+        "agendamentos_hoje": agendamentos_hoje,
+        "total_clientes": total_clientes,
         "assinaturas_ativas": 0,
-        "comandas_abertas": 0,
-        "repasses_pendentes": 0
+        "comandas_abertas": comandas_abertas,
+        "repasses_pendentes": repasses_pendentes
     })
 
 # ============ API GERENTE - PEDIDOS ============
@@ -380,6 +423,18 @@ def gerente_atualizar_pedido(pedido_id):
     db = get_db_gerente()
     db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (status, pedido_id))
     db.commit()
+
+    if status == "concluido":
+        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+        if pedido:
+            db.execute(
+                "INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)",
+                ("entrada", f"Pedido #{pedido_id} - {pedido['servico_nome']}", pedido["pagamento"], pedido["valor"])
+            )
+            db.commit()
+            data_hora = f"{pedido['data_agendada'] or ''} {pedido['hora_agendada'] or ''}".strip()
+            enviar_pedido_baserow(pedido["cliente_nome"], pedido["servico_nome"], data_hora, pedido["valor"])
+
     return jsonify({"status": "ok"})
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
