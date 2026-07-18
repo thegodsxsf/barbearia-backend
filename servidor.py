@@ -14,21 +14,15 @@ DB_PATH = os.path.join(BASE_DIR, "banco.db")
 DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
 
 app = Flask(__name__, static_folder="static")
-from flask_cors import CORS
-CORS(app, supports_credentials=True, origins=["https://barbearia-backend-m1uy.onrender.com", "http://localhost:5000"])
 app.secret_key = "chave-secreta-barbearia"
-app.config["SESSION_COOKIE_SECURE"] = True
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 # ============ BASEROW ============
 BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
 BASEROW_TABLE_ID = "1083808"
 BASEROW_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/?user_field_names=true"
 
-
 def enviar_pedido_baserow(pedido):
-    """Envia pedido para o Baserow"""
+    """Envia pedido para o Baserow quando concluído"""
     if not BASEROW_TOKEN:
         return False
     
@@ -68,6 +62,74 @@ def enviar_pedido_baserow(pedido):
     except Exception as e:
         print(f"⚠️ Erro ao enviar Baserow: {e}")
         return False
+
+# ============ CAIXA DIÁRIO ============
+def init_caixa_diario():
+    """Cria as tabelas de caixa diário se não existirem"""
+    db = get_db_gerente()
+    try:
+        db.execute('''
+            CREATE TABLE IF NOT EXISTS caixa_diario (
+                data TEXT PRIMARY KEY,
+                saldo_inicial REAL DEFAULT 0,
+                entradas REAL DEFAULT 0,
+                saidas REAL DEFAULT 0,
+                saldo_final REAL DEFAULT 0
+            )
+        ''')
+        db.execute('''
+            CREATE TABLE IF NOT EXISTS caixa_historico (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data TEXT NOT NULL,
+                saldo_inicial REAL DEFAULT 0,
+                entradas REAL DEFAULT 0,
+                saidas REAL DEFAULT 0,
+                saldo_final REAL DEFAULT 0,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        db.commit()
+    except Exception as e:
+        print(f"Erro ao criar tabelas: {e}")
+
+def get_caixa_dia():
+    """Retorna o caixa do dia atual"""
+    db = get_db_gerente()
+    init_caixa_diario()
+    hoje = date.today().isoformat()
+    
+    caixa = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+    if not caixa:
+        db.execute(
+            "INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)",
+            (hoje,)
+        )
+        db.commit()
+        caixa = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+    
+    return caixa
+
+def resetar_caixa_dia():
+    """Reseta o caixa do dia para R$ 0,00"""
+    db = get_db_gerente()
+    init_caixa_diario()
+    hoje = date.today().isoformat()
+    
+    caixa_atual = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+    if caixa_atual:
+        db.execute(
+            "INSERT INTO caixa_historico (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, ?, ?, ?, ?)",
+            (hoje, caixa_atual[1] or 0, caixa_atual[2] or 0, caixa_atual[3] or 0, caixa_atual[4] or 0)
+        )
+    
+    db.execute(
+        "INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)",
+        (hoje,)
+    )
+    db.commit()
+    return {"status": "ok", "mensagem": "Caixa resetado para R$ 0,00"}
+
+# ============ SQLITE ============
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH)
@@ -245,11 +307,17 @@ def gerente_me():
 @login_required
 def gerente_dashboard():
     db = get_db_gerente()
+    init_caixa_diario()
+    
+    # Pegar caixa do dia
+    caixa_dia = get_caixa_dia()
+    saldo_hoje = caixa_dia[4] if caixa_dia else 0
+    entradas_hoje = caixa_dia[2] if caixa_dia else 0
+    saidas_hoje = caixa_dia[3] if caixa_dia else 0
+    saldo_inicial = caixa_dia[1] if caixa_dia else 0
     
     # Faturamento total (entradas)
     entradas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0]
-    
-    # Saídas
     saidas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0]
     
     # Pedidos pendentes
@@ -279,7 +347,10 @@ def gerente_dashboard():
     return jsonify({
         "faturamento_total": entradas,
         "saidas_total": saidas,
-        "saldo": entradas - saidas,
+        "saldo": saldo_hoje,
+        "saldo_inicial": saldo_inicial,
+        "entradas_hoje": entradas_hoje,
+        "saidas_hoje": saidas_hoje,
         "pedidos_pendentes": pendentes,
         "agendamentos_hoje": agendamentos_hoje,
         "total_clientes": total_clientes,
@@ -308,8 +379,6 @@ def gerente_listar_pedidos():
     
     return jsonify([dict(r) for r in rows])
 
-
-
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_pedido(pedido_id):
@@ -325,28 +394,35 @@ def gerente_atualizar_pedido(pedido_id):
         
         db = get_db_gerente()
         
-        # Buscar pedido - usar índices em vez de .get()
         pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
         if not pedido:
             return jsonify({"erro": "Pedido não encontrado"}), 404
         
-        # Acessar os dados pelo índice da coluna
-        # Colunas: id(0), tipo(1), servico_nome(2), valor(3), cliente_nome(4), ...
-        servico_nome = pedido[2]  # servico_nome
-        cliente_nome = pedido[4]  # cliente_nome
-        pagamento = pedido[13] if len(pedido) > 13 else "manual"  # pagamento
-        valor = pedido[3]  # valor
+        servico_nome = pedido[2]
+        cliente_nome = pedido[4]
+        pagamento = pedido[13] if len(pedido) > 13 else "manual"
+        valor = pedido[3]
         
         db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
         
         if novo_status == "concluido":
-            # Verificar se já foi lançado no caixa
             ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
             if not ja_lancado:
                 db.execute(
                     "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
                     ("entrada", f"{servico_nome} - {cliente_nome}", pagamento, valor, pedido_id)
                 )
+                # Atualizar caixa diário
+                hoje = date.today().isoformat()
+                caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+                if caixa_dia:
+                    novas_entradas = (caixa_dia[2] or 0) + valor
+                    novo_saldo = (caixa_dia[1] or 0) + novas_entradas - (caixa_dia[3] or 0)
+                    db.execute(
+                        "UPDATE caixa_diario SET entradas = ?, saldo_final = ? WHERE data = ?",
+                        (novas_entradas, novo_saldo, hoje)
+                    )
+            
             # Enviar para Baserow
             try:
                 enviar_pedido_baserow({
@@ -365,13 +441,18 @@ def gerente_atualizar_pedido(pedido_id):
     except Exception as e:
         print(f"❌ ERRO: {e}")
         return jsonify({"erro": str(e)}), 500
+
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
 @login_required
 def gerente_deletar_pedido(pedido_id):
-    db = get_db_gerente()
-    db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
+    try:
+        db = get_db_gerente()
+        db.execute("DELETE FROM caixa WHERE pedido_id = ?", (pedido_id,))
+        db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
 
 @app.route("/api/gerente/pedidos", methods=["POST"])
 @login_required
@@ -389,6 +470,41 @@ def gerente_criar_pedido():
     )
     db.commit()
     return jsonify({"status": "ok", "id": cur.lastrowid})
+
+# ============ ROTAS DE CAIXA DIÁRIO ============
+@app.route("/api/gerente/caixa/resetar", methods=["POST"])
+@login_required
+def resetar_caixa():
+    try:
+        resultado = resetar_caixa_dia()
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/gerente/caixa/diario", methods=["GET"])
+@login_required
+def get_caixa_diario():
+    try:
+        caixa = get_caixa_dia()
+        return jsonify({
+            "data": caixa[0],
+            "saldo_inicial": caixa[1] or 0,
+            "entradas": caixa[2] or 0,
+            "saidas": caixa[3] or 0,
+            "saldo_final": caixa[4] or 0
+        })
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/gerente/caixa/historico", methods=["GET"])
+@login_required
+def get_caixa_historico():
+    try:
+        db = get_db_gerente()
+        historico = db.execute("SELECT * FROM caixa_historico ORDER BY data DESC LIMIT 30").fetchall()
+        return jsonify([dict(h) for h in historico])
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
 
 # ============ API GERENTE - CLIENTES ============
 @app.route("/api/gerente/clientes", methods=["GET"])
@@ -587,6 +703,6 @@ def gerente_relatorio_pdf():
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
-    print("  📡 SQLite + Baserow")
+    print("  📡 SQLite + Baserow + Caixa Diário")
     print("="*60)
     app.run(debug=True, host="0.0.0.0", port=5000)
