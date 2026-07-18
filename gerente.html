@@ -184,6 +184,9 @@
       </div>
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000;">🔊 Som Ligado</button>
+        
+        <button class="btn-refresh" onclick="resetarCaixa()" style="background:var(--gold); color:#000; border-color:var(--gold); font-weight:700;">📅 Novo Dia</button>
+
         <button class="btn-refresh" onclick="recarregarSecaoAtual()">🔄 Atualizar</button>
       </div>
     </div>
@@ -191,6 +194,8 @@
     <!-- INÍCIO -->
     <div id="secInicio">
       <div class="stats-grid">
+        <div class="stat-card"><div class="label">💰 Saldo Inicial do Dia</div><div class="valor gold" id="statSaldoInicial">R$ 0,00</div></div>
+        <div class="stat-card"><div class="label">📈 Entradas Hoje</div><div class="valor green" id="statEntradasHoje">R$ 0,00</div></div>
         <div class="stat-card"><div class="label">💰 Faturamento Total</div><div class="valor green" id="statFaturamento">R$ 0,00</div></div>
         <div class="stat-card"><div class="label">💵 Saldo em Caixa</div><div class="valor blue" id="statSaldo">R$ 0,00</div></div>
         <div class="stat-card"><div class="label">⏳ Pedidos Pendentes</div><div class="valor" id="statPendentes">0</div></div>
@@ -955,6 +960,35 @@ async function alterarLogin(){
 }
 
 // ============ SOM ============
+
+
+// ============ RESETAR CAIXA (NOVO DIA) ============
+async function resetarCaixa() {
+    if (!confirm('⚠️ ATENÇÃO! Isso vai ZERAR o caixa do dia para R$ 0,00.\n\nO saldo atual será salvo no histórico.\nOs pedidos e clientes NÃO serão afetados.\n\nDeseja continuar?')) return;
+    
+    try {
+        showToast('⏳ Resetando caixa...');
+        const response = await fetch('/api/gerente/caixa/resetar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showToast('✅ ' + data.mensagem);
+            carregarInicio();
+            carregarCaixa();
+        } else {
+            showToast('❌ Erro: ' + data.erro);
+        }
+    } catch(e) {
+        showToast('❌ Erro ao resetar caixa: ' + e.message);
+        console.error('Erro:', e);
+    }
+}
+
+
 function toggleSom() {
   somAtivo = !somAtivo;
   const btn = document.getElementById('btnSom');
