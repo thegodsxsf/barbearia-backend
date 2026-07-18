@@ -1242,60 +1242,110 @@ def sincronizar_produtos_com_baserow():
 
 def restaurar_do_baserow(tipo):
     """Restaura dados do Baserow para o SQLite"""
-    if tipo == "clientes":
-        dados = carregar_do_baserow(BASEROW_CLIENTES_TOKEN, BASEROW_CLIENTES_URL)
-        if dados:
-            db = get_db_gerente()
-            for item in dados:
-                db.execute(
-                    "INSERT OR REPLACE INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)",
-                    (item.get("nome", ""), item.get("contato", ""), item.get("cpf", ""), item.get("endereço", ""))
-                )
-            db.commit()
-            print(f"✅ {len(dados)} clientes restaurados do Baserow!")
-    
-    elif tipo == "barbeiros":
-        dados = carregar_do_baserow(BASEROW_BARBEIROS_TOKEN, BASEROW_BARBEIROS_URL)
-        if dados:
+    try:
+        if tipo == "clientes":
+            print("🔄 Restaurando clientes...")
+            dados = carregar_do_baserow(BASEROW_CLIENTES_TOKEN, BASEROW_CLIENTES_URL)
+            if dados:
+                db = get_db_gerente()
+                count = 0
+                for item in dados:
+                    try:
+                        db.execute(
+                            "INSERT OR REPLACE INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)",
+                            (str(item.get("nome", "")), str(item.get("contato", "")), str(item.get("cpf", "")), str(item.get("endereço", "")))
+                        )
+                        count += 1
+                    except Exception as e:
+                        print(f"Erro ao inserir cliente: {e}")
+                        continue
+                db.commit()
+                print(f"✅ {count} clientes restaurados do Baserow!")
+                return {"status": "ok", "mensagem": f"Dados de clientes restaurados! ({count} registros)"}
+            else:
+                return {"status": "ok", "mensagem": "Nenhum cliente para restaurar"}
+        
+        elif tipo == "barbeiros":
+            print("🔄 Restaurando barbeiros...")
+            dados = carregar_do_baserow(BASEROW_BARBEIROS_TOKEN, BASEROW_BARBEIROS_URL)
+            if dados:
+                db = get_db()
+                count = 0
+                for item in dados:
+                    try:
+                        db.execute(
+                            "INSERT OR REPLACE INTO profissionais (nome, especialidade) VALUES (?, ?)",
+                            (str(item.get("profissional", "")), str(item.get("descrição", "")))
+                        )
+                        count += 1
+                    except Exception as e:
+                        print(f"Erro ao inserir barbeiro: {e}")
+                        continue
+                db.commit()
+                print(f"✅ {count} barbeiros restaurados do Baserow!")
+                return {"status": "ok", "mensagem": f"Dados de barbeiros restaurados! ({count} registros)"}
+            else:
+                return {"status": "ok", "mensagem": "Nenhum barbeiro para restaurar"}
+        
+        elif tipo == "produtos":
+            print("🔄 Restaurando produtos...")
+            try:
+                dados = carregar_do_baserow(BASEROW_PRODUTOS_TOKEN, BASEROW_PRODUTOS_URL)
+                print(f"📦 Dados recebidos: {len(dados) if dados else 0} registros")
+            except Exception as e:
+                print(f"❌ Erro ao carregar produtos: {e}")
+                dados = []
+            
             db = get_db()
-            for item in dados:
-                db.execute(
-                    "INSERT OR REPLACE INTO profissionais (nome, especialidade) VALUES (?, ?)",
-                    (item.get("profissional", ""), item.get("descrição", ""))
-                )
-            db.commit()
-            print(f"✅ {len(dados)} barbeiros restaurados do Baserow!")
-    
-    elif tipo == "produtos":
-        dados = carregar_do_baserow(BASEROW_PRODUTOS_TOKEN, BASEROW_PRODUTOS_URL)
-        if dados:
-            db = get_db()
-            for item in dados:
-                preco = float(item.get("valor", "0").replace("R$", "").replace(",", ".").strip()) if item.get("valor") else 0
-                db.execute(
-                    "INSERT OR REPLACE INTO servicos (nome, preco) VALUES (?, ?)",
-                    (item.get("nome", ""), preco)
-                )
-            db.commit()
-            print(f"✅ {len(dados)} produtos restaurados do Baserow!")
-
-# Rotas de sincronização
-@app.route("/api/sincronizar/tudo", methods=["POST"])
-def sincronizar_tudo():
-    """Sincroniza todos os dados com Baserow"""
-    sincronizar_clientes_com_baserow()
-    sincronizar_barbeiros_com_baserow()
-    sincronizar_produtos_com_baserow()
-    return jsonify({"status": "ok", "mensagem": "Dados sincronizados com Baserow!"})
-
-@app.route("/api/restaurar/<tipo>", methods=["POST"])
-def restaurar_dados(tipo):
-    """Restaura dados do Baserow para o SQLite"""
-    if tipo not in ["clientes", "barbeiros", "produtos"]:
-        return jsonify({"erro": "Tipo inválido"}), 400
-    restaurar_do_baserow(tipo)
-    return jsonify({"status": "ok", "mensagem": f"Dados de {tipo} restaurados!"})
-
+            
+            if dados and len(dados) > 0:
+                count = 0
+                for item in dados:
+                    try:
+                        nome = str(item.get("nome", "")).strip()
+                        if not nome:
+                            continue
+                        
+                        valor_str = str(item.get("valor", "0")).replace("R$", "").replace(",", ".").strip()
+                        preco = float(valor_str) if valor_str else 0
+                        
+                        db.execute(
+                            "INSERT OR REPLACE INTO servicos (nome, preco) VALUES (?, ?)",
+                            (nome, preco)
+                        )
+                        count += 1
+                    except Exception as e:
+                        print(f"Erro ao inserir produto: {e}")
+                        continue
+                db.commit()
+                print(f"✅ {count} produtos restaurados do Baserow!")
+                return {"status": "ok", "mensagem": f"Dados de produtos restaurados! ({count} registros)"}
+            else:
+                print("⚠️ Baserow vazio, usando dados padrão")
+                produtos_padrao = [
+                    ('Corte Masculino', 45.00),
+                    ('Barba', 35.00),
+                    ('Corte + Barba', 70.00),
+                    ('Sobrancelha', 15.00),
+                    ('Hidratação', 50.00),
+                    ('Corte Infantil', 30.00),
+                    ('Luzes/Platinado', 60.00),
+                ]
+                for nome, preco in produtos_padrao:
+                    db.execute(
+                        "INSERT OR REPLACE INTO servicos (nome, preco) VALUES (?, ?)",
+                        (nome, preco)
+                    )
+                db.commit()
+                print(f"✅ {len(produtos_padrao)} produtos padrão restaurados!")
+                return {"status": "ok", "mensagem": f"Dados padrão de produtos restaurados! ({len(produtos_padrao)} registros)"}
+        
+        else:
+            return {"erro": "Tipo inválido. Use: clientes, barbeiros ou produtos"}, 400
+            
+    except Exception as e:
+        print(f"❌ Erro em restaurar_do_baserow: {e}")
+        return {"erro": str(e)}, 500
 
 if __name__ == "__main__":
     print("\n" + "="*60)
