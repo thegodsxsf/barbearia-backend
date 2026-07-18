@@ -946,28 +946,101 @@ function renderizarServicos(servicos) {
 }
 
 // ============ CARREGAR DADOS ============
+
+
+// ============ RENDERIZAR ASSINATURAS ============
+function renderizarAssinaturas(assinaturas) {
+    var container = document.getElementById('assinaturasList');
+    if (!container) {
+        console.error('❌ Container assinaturasList não encontrado!');
+        return;
+    }
+    
+    console.log('🔄 Renderizando', assinaturas ? assinaturas.length : 0, 'assinaturas');
+    
+    if (!assinaturas || assinaturas.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Nenhuma assinatura disponível.</div>';
+        return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < assinaturas.length; i++) {
+        var a = assinaturas[i];
+        var icone = a.icone || '⭐';
+        var isDestaque = a.destaque === 1;
+        var beneficios = a.beneficios ? a.beneficios.split('|') : [];
+        
+        html += '<div class="plan-card" style="' + (isDestaque ? 'border-color: var(--gold);' : '') + '" onclick="alert('📋 ' + (a.nome || 'Plano') + '\n💰 R$ ' + (a.preco || 0).toFixed(2) + '/mês\n' + (a.descricao || '') + '')">';
+        if (isDestaque) {
+            html += '<div class="badge-destaque">⭐ Destaque</div>';
+        }
+        html += '<div class="plan-header"><span class="plan-icon">' + icone + '</span>';
+        html += '<div><div class="plan-name">' + (a.nome || 'Plano') + '</div><div class="plan-desc">' + (a.descricao || '') + '</div></div></div>';
+        html += '<div class="plan-price-wrap"><span class="plan-price">R$ ' + (a.preco || 0).toFixed(2) + '</span><span class="plan-period">/mês</span></div>';
+        
+        if (beneficios.length > 0) {
+            html += '<div class="benefits-list">';
+            for (var j = 0; j < beneficios.length; j++) {
+                html += '<div class="benefit-item"><span class="benefit-check">✓</span><span>' + beneficios[j].trim() + '</span></div>';
+            }
+            html += '</div>';
+        }
+        
+        html += '<button class="btn-agendar" style="width:100%; padding:10px; background:var(--accent); color:#000; border:none; border-radius:8px; font-weight:700; cursor:pointer; margin-top:8px;" onclick="event.stopPropagation(); alert('📋 Assinar ' + (a.nome || 'Plano') + '\n💰 R$ ' + (a.preco || 0).toFixed(2) + '/mês')">📋 Assinar Agora</button>';
+        html += '</div>';
+    }
+    container.innerHTML = html;
+    console.log('✅ Assinaturas renderizadas:', assinaturas.length);
+}
+
+// ============ RENDERIZAR PRODUTOS ============
+function renderizarProdutos(produtos) {
+    var container = document.getElementById('produtosList');
+    if (!container) {
+        console.error('❌ Container produtosList não encontrado!');
+        return;
+    }
+    
+    console.log('🔄 Renderizando', produtos ? produtos.length : 0, 'produtos');
+    
+    if (!produtos || produtos.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Nenhum produto disponível.</div>';
+        return;
+    }
+    
+    var html = '';
+    for (var i = 0; i < produtos.length; i++) {
+        var p = produtos[i];
+        var nome = (p.nome || 'Produto').replace(/'/g, "\\'");
+        html += '<div class="card" onclick="alert('🧴 ' + (p.nome || 'Produto') + '\n💰 R$ ' + (p.preco || 0).toFixed(2) + '')">';
+        html += '<div class="thumb"><img src="' + (p.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div>';
+        html += '<div class="info"><h3>' + (p.nome || 'Produto') + '</h3>';
+        html += '<div class="price">R$ ' + (p.preco || 0).toFixed(2).replace('.', ',') + '</div></div>';
+        html += '</div>';
+    }
+    container.innerHTML = html;
+    console.log('✅ Produtos renderizados:', produtos.length);
+}
+
+
+
 async function carregarDados() {
     try {
         console.log('📡 Carregando dados da API...');
-        console.log('🔗 URL:', BACKEND_URL + '/api/servicos');
         
         // Buscar serviços
-        var response = await fetch(BACKEND_URL + '/api/servicos');
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
+        var servResponse = await fetch(BACKEND_URL + '/api/servicos');
+        if (servResponse.ok) {
+            var servicos = await servResponse.json();
+            console.log('✅ Serviços recebidos:', servicos.length);
+            renderizarServicos(servicos);
         }
-        var servicos = await response.json();
-        console.log('✅ Serviços recebidos:', servicos.length);
-        
-        // Renderizar
-        renderizarServicos(servicos);
         
         // Buscar profissionais
         var profResponse = await fetch(BACKEND_URL + '/api/profissionais');
         if (profResponse.ok) {
             var profissionais = await profResponse.json();
             console.log('✅ Profissionais recebidos:', profissionais.length);
-            
             var profContainer = document.getElementById('profissionaisList');
             if (profContainer && profissionais.length > 0) {
                 var html = '';
@@ -976,17 +1049,32 @@ async function carregarDados() {
                     html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
                 }
                 profContainer.innerHTML = html;
+                var profCount = document.getElementById('profCount');
+                if (profCount) profCount.textContent = profissionais.length + ' profissionais';
             }
+        }
+        
+        // Buscar assinaturas
+        var assResponse = await fetch(BACKEND_URL + '/api/assinaturas');
+        if (assResponse.ok) {
+            var assinaturas = await assResponse.json();
+            console.log('✅ Assinaturas recebidas:', assinaturas.length);
+            renderizarAssinaturas(assinaturas);
+        }
+        
+        // Buscar produtos
+        var prodResponse = await fetch(BACKEND_URL + '/api/produtos');
+        if (prodResponse.ok) {
+            var produtos = await prodResponse.json();
+            console.log('✅ Produtos recebidos:', produtos.length);
+            renderizarProdutos(produtos);
         }
         
     } catch (err) {
         console.error('❌ Erro:', err);
-        var container = document.getElementById('servicesList');
-        if (container) {
-            container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar: ' + err.message + '</div>';
-        }
     }
 }
+
 
 // ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', function() {
