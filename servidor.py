@@ -26,26 +26,28 @@ BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
 BASEROW_TABLE_ID = "1083808"
 BASEROW_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/?user_field_names=true"
 
+
 def enviar_pedido_baserow(pedido):
-    """Envia pedido para o Baserow quando concluído"""
+    """Envia pedido para o Baserow"""
     if not BASEROW_TOKEN:
-        print("⚠️ BASEROW_TOKEN não configurado")
         return False
     
     try:
-        # Preparar dados
-        data_hora = f"{pedido.get('data_agendada', '')} {pedido.get('hora_agendada', '')}".strip()
+        cliente = pedido.get('cliente_nome', '') or ''
+        servico = pedido.get('servico_nome', '') or ''
+        valor = pedido.get('valor', 0) or 0
+        data = pedido.get('data_agendada', '') or ''
+        hora = pedido.get('hora_agendada', '') or ''
+        data_hora = f"{data} {hora}".strip()
         if not data_hora:
             data_hora = datetime.now().strftime("%Y-%m-%d %H:%M")
         
         data = {
-            "Cliente": pedido.get('cliente_nome', '') or "Cliente não informado",
-            "Serviço": pedido.get('servico_nome', '') or "Serviço não informado",
+            "Cliente": cliente,
+            "Serviço": servico,
             "Data/Hora": data_hora,
-            "valor": f"R$ {float(pedido.get('valor', 0)):.2f}"
+            "valor": f"R$ {float(valor):.2f}"
         }
-        
-        print(f"📤 Enviando para Baserow: {data}")
         
         response = requests.post(
             BASEROW_URL,
@@ -58,18 +60,14 @@ def enviar_pedido_baserow(pedido):
         )
         
         if response.status_code == 200:
-            print(f"✅ Pedido {pedido.get('id')} enviado para Baserow!")
+            print(f"✅ Pedido enviado para Baserow!")
             return True
         else:
             print(f"⚠️ Erro Baserow: {response.status_code}")
-            print(f"   Resposta: {response.text[:200]}")
             return False
-            
     except Exception as e:
         print(f"⚠️ Erro ao enviar Baserow: {e}")
         return False
-
-# ============ SQLITE ============
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DB_PATH)
@@ -311,6 +309,7 @@ def gerente_listar_pedidos():
     return jsonify([dict(r) for r in rows])
 
 
+
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_pedido(pedido_id):
@@ -326,22 +325,37 @@ def gerente_atualizar_pedido(pedido_id):
         
         db = get_db_gerente()
         
+        # Buscar pedido - usar índices em vez de .get()
         pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
         if not pedido:
             return jsonify({"erro": "Pedido não encontrado"}), 404
         
+        # Acessar os dados pelo índice da coluna
+        # Colunas: id(0), tipo(1), servico_nome(2), valor(3), cliente_nome(4), ...
+        servico_nome = pedido[2]  # servico_nome
+        cliente_nome = pedido[4]  # cliente_nome
+        pagamento = pedido[13] if len(pedido) > 13 else "manual"  # pagamento
+        valor = pedido[3]  # valor
+        
         db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
         
         if novo_status == "concluido":
+            # Verificar se já foi lançado no caixa
             ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
             if not ja_lancado:
                 db.execute(
                     "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
-                    ("entrada", f"{pedido['servico_nome']} - {pedido['cliente_nome']}", 
-                     pedido.get('pagamento', 'manual'), pedido['valor'], pedido_id)
+                    ("entrada", f"{servico_nome} - {cliente_nome}", pagamento, valor, pedido_id)
                 )
+            # Enviar para Baserow
             try:
-                enviar_pedido_baserow(dict(pedido))
+                enviar_pedido_baserow({
+                    "cliente_nome": cliente_nome,
+                    "servico_nome": servico_nome,
+                    "valor": valor,
+                    "data_agendada": pedido[7] if len(pedido) > 7 else "",
+                    "hora_agendada": pedido[8] if len(pedido) > 8 else ""
+                })
             except:
                 pass
         
