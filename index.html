@@ -1,653 +1,632 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Leblon Studio - Barbearia</title>
-<style>
-  :root {
-    --bg: #0a0a0e;
-    --bg-card: #14141a;
-    --bg-elevated: #1c1c24;
-    --border: #2a2a32;
-    --text: #eeeeef;
-    --text-muted: #88889a;
-    --accent: #3ddc84;
-    --accent-green: #3ddc84;
-    --red: #e74c3c;
-    --blue: #4a9eff;
-    --gold: #ffd700;
-    --radius: 12px;
-  }
-  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body{ background:var(--bg); color:var(--text); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; min-height:100vh; padding-bottom:80px; overflow-x:hidden; }
-  ::-webkit-scrollbar{ width:4px; }
-  ::-webkit-scrollbar-track{ background:transparent; }
-  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
-  ::-webkit-scrollbar-thumb:hover{ background:var(--accent); }
-  a{ color:inherit; text-decoration:none; }
-  
-  .topbar{ background:var(--bg-card); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
-  .topbar .icon-group{ display:flex; gap:12px; align-items:center; }
-  .topbar .icon-group .icon-btn{ background:var(--bg-elevated); border:1px solid var(--border); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; color:var(--text); }
-  .topbar .icon-group .icon-btn:hover{ border-color:var(--accent); }
-  .topbar .icon-group .icon-btn svg{ width:20px; height:20px; fill:currentColor; }
-  
-  .banner{ background:var(--bg-card); border-bottom:1px solid var(--border); padding:20px 16px; text-align:center; }
-  .banner .banner-logo{ max-height:80px; border-radius:12px; }
-  .banner .banner-divider{ height:1px; background:var(--border); margin:12px auto 0; max-width:200px; }
-  
-  .business-info{ display:flex; align-items:center; gap:14px; padding:16px 20px; background:var(--bg-card); border-bottom:1px solid var(--border); }
-  .business-info .logo{ width:48px; height:48px; border-radius:50%; overflow:hidden; background:var(--bg-elevated); border:1px solid var(--border); flex-shrink:0; }
-  .business-info .logo img{ width:100%; height:100%; object-fit:cover; }
-  .business-info h1{ font-size:1.2rem; font-weight:700; }
-  .business-info p{ color:var(--text-muted); font-size:.8rem; }
-  
-  .horarios-topo{ display:flex; justify-content:center; gap:20px; padding:10px 16px; background:var(--bg-elevated); border-bottom:1px solid var(--border); font-size:.8rem; color:var(--text-muted); flex-wrap:wrap; }
-  
-  .tabs-wrapper{ background:var(--bg-card); border-bottom:1px solid var(--border); padding:0 12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .tabs{ display:flex; gap:4px; padding:8px 0; min-width:max-content; }
-  .tab{ padding:8px 14px; border-radius:8px; font-size:.75rem; font-weight:600; color:var(--text-muted); cursor:pointer; transition:.2s; white-space:nowrap; }
-  .tab:hover{ color:var(--text); background:var(--bg-elevated); }
-  .tab.active{ background:var(--accent); color:#000; }
-  
-  .section{ padding:16px; }
-  .hidden{ display:none !important; }
-  
-  .search-wrap{ margin-bottom:12px; }
-  .search-box{ display:flex; align-items:center; gap:10px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:8px 14px; }
-  .search-box input{ background:transparent; border:none; color:var(--text); font-size:.9rem; width:100%; outline:none; }
-  .search-box input::placeholder{ color:var(--text-muted); }
-  
-  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
-  .card{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:.2s; cursor:pointer; position:relative; }
-  .card:hover{ border-color:var(--accent); transform:translateY(-2px); }
-  .card .thumb{ width:100%; aspect-ratio:1/1; background:var(--bg-elevated); overflow:hidden; }
-  .card .thumb img{ width:100%; height:100%; object-fit:cover; }
-  .card .thumb.round{ border-radius:50%; aspect-ratio:1/1; width:64px; height:64px; margin:12px auto 0; border:2px solid var(--border); }
-  .card .info{ padding:12px; }
-  .card .info h3{ font-size:.9rem; font-weight:600; margin-bottom:2px; }
-  .card .info .price{ color:var(--accent); font-size:1rem; font-weight:700; }
-  .card .info .duration{ color:var(--text-muted); font-size:.7rem; display:flex; align-items:center; gap:4px; margin-top:4px; }
-  .card .info .sub{ color:var(--text-muted); font-size:.75rem; }
-  .card .btn-confirmar-card{ position:absolute; bottom:12px; right:12px; background:var(--accent); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:700; font-size:1.2rem; cursor:pointer; transition:.2s; }
-  .card .btn-confirmar-card:hover{ transform:scale(1.1); }
-  
-  .empty-msg{ text-align:center; padding:40px 0; color:var(--text-muted); }
-  
-  .plans-header{ text-align:center; margin-bottom:16px; }
-  .plans-header h2{ font-size:1.3rem; }
-  .plans-header p{ color:var(--text-muted); font-size:.85rem; }
-  
-  .plan-card{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; transition:.2s; cursor:pointer; position:relative; }
-  .plan-card:hover{ border-color:var(--accent); }
-  .plan-card .badge-destaque{ position:absolute; top:10px; right:10px; background:var(--gold); color:#000; font-size:.6rem; font-weight:700; padding:2px 10px; border-radius:20px; }
-  .plan-card .plan-header{ display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-  .plan-card .plan-icon{ font-size:1.5rem; }
-  .plan-card .plan-name{ font-size:1rem; font-weight:700; }
-  .plan-card .plan-desc{ font-size:.8rem; color:var(--text-muted); }
-  .plan-card .plan-price-wrap{ margin:8px 0; }
-  .plan-card .plan-price{ font-size:1.4rem; font-weight:700; color:var(--accent); }
-  .plan-card .plan-period{ font-size:.8rem; color:var(--text-muted); }
-  .plan-card .benefits-list{ margin:8px 0; }
-  .plan-card .benefit-item{ display:flex; align-items:center; gap:8px; font-size:.8rem; padding:2px 0; }
-  .plan-card .benefit-check{ color:var(--accent); font-weight:700; }
-  
-  .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; backdrop-filter:blur(4px); }
-  .modal-overlay.active{ display:flex; }
-  .modal{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; }
-  .modal .modal-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-  .modal .modal-header h2{ font-size:1.1rem; }
-  .modal .modal-close{ background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:4px 8px; border-radius:4px; }
-  .modal .modal-close:hover{ background:var(--bg-elevated); }
-  .modal .modal-service-info{ background:var(--bg-elevated); border-radius:8px; padding:12px; margin-bottom:16px; text-align:center; }
-  .modal .modal-service-info .service-name{ font-size:1rem; font-weight:700; }
-  .modal .modal-service-info .service-price{ color:var(--accent); font-size:1.1rem; font-weight:700; }
-  
-  .form-group{ margin-bottom:12px; }
-  .form-group label{ display:block; font-size:.75rem; font-weight:600; color:var(--text-muted); margin-bottom:4px; }
-  .form-group label .required{ color:var(--red); }
-  .form-group input, .form-group select, .form-group textarea{ width:100%; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.9rem; outline:none; transition:.2s; }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus{ border-color:var(--accent); }
-  .form-group textarea{ min-height:60px; resize:vertical; }
-  
-  .form-row{ display:flex; gap:10px; }
-  .form-row .form-group{ flex:1; }
-  
-  .payment-options{ display:flex; gap:8px; flex-wrap:wrap; }
-  .payment-option{ display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:.2s; flex:1; min-width:80px; justify-content:center; }
-  .payment-option:hover{ border-color:var(--accent); }
-  .payment-option.selected{ border-color:var(--accent); background:rgba(61,220,132,0.1); }
-  .payment-option .icon{ width:20px; height:20px; color:var(--text-muted); }
-  .payment-option .label{ font-size:.75rem; font-weight:600; }
-  
-  .btn-confirmar, .btn-confirmar-simples{ width:100%; padding:12px; background:var(--accent); color:#000; border:none; border-radius:8px; font-weight:700; font-size:.95rem; cursor:pointer; transition:.2s; margin-top:8px; }
-  .btn-confirmar:hover, .btn-confirmar-simples:hover{ opacity:.85; }
-  .btn-confirmar:disabled, .btn-confirmar-simples:disabled{ opacity:.4; cursor:not-allowed; }
-  
-  .success-modal{ text-align:center; }
-  .success-modal .success-icon{ font-size:3rem; margin-bottom:12px; }
-  .success-modal .detalhes{ text-align:left; background:var(--bg-elevated); border-radius:8px; padding:12px; margin:12px 0; }
-  .success-modal .detalhes .linha{ display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border); }
-  .success-modal .detalhes .linha:last-child{ border-bottom:none; }
-  .success-modal .detalhes .label{ color:var(--text-muted); font-size:.8rem; }
-  .success-modal .detalhes .valor{ font-weight:600; font-size:.85rem; }
-  
-  .btn-whatsapp{ display:inline-block; background:#25D366; color:#fff; padding:10px 20px; border-radius:8px; font-weight:700; text-decoration:none; transition:.2s; width:100%; text-align:center; margin:4px 0; }
-  .btn-whatsapp:hover{ opacity:.85; }
-  
-  .floating-whatsapp{ position:fixed; bottom:100px; right:16px; z-index:500; }
-  .floating-whatsapp .btn-float-whatsapp{ display:flex; align-items:center; justify-content:center; width:56px; height:56px; background:#25D366; border-radius:50%; box-shadow:0 4px 20px rgba(37,211,102,0.3); transition:.2s; position:relative; }
-  .floating-whatsapp .btn-float-whatsapp:hover{ transform:scale(1.05); }
-  .floating-whatsapp .badge-wpp{ position:absolute; top:-4px; right:-4px; background:var(--red); color:#fff; border-radius:50%; width:20px; height:20px; font-size:.6rem; display:flex; align-items:center; justify-content:center; font-weight:700; }
-  
-  .bottom-nav{ position:fixed; bottom:0; left:0; right:0; background:var(--bg-card); border-top:1px solid var(--border); display:flex; justify-content:space-around; padding:8px 0 16px; z-index:500; }
-  .bottom-nav .nav-item{ display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text-muted); font-size:.6rem; cursor:pointer; transition:.2s; padding:0 8px; }
-  .bottom-nav .nav-item:hover{ color:var(--text); }
-  .bottom-nav .nav-item.active{ color:var(--accent); }
-  .bottom-nav .nav-item svg{ width:24px; height:24px; fill:currentColor; }
-  
-  .imagens-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px; }
-  .imagem-item{ position:relative; border-radius:8px; overflow:hidden; aspect-ratio:1/1; cursor:pointer; border:1px solid var(--border); transition:.2s; }
-  .imagem-item:hover{ border-color:var(--accent); transform:scale(1.02); }
-  .imagem-item img{ width:100%; height:100%; object-fit:cover; }
-  .imagem-item .imagem-overlay{ position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(0,0,0,0.8)); padding:8px 12px; color:#fff; font-size:.75rem; font-weight:600; opacity:0; transition:.2s; }
-  .imagem-item:hover .imagem-overlay{ opacity:1; }
-  
-  .toast{ position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--bg-elevated); border:1px solid var(--border); color:var(--text); padding:10px 20px; border-radius:10px; font-weight:600; font-size:.85rem; z-index:2000; box-shadow:0 4px 20px rgba(0,0,0,0.4); max-width:90%; text-align:center; }
-  
-  @media(max-width:480px){ .grid{ grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); } .modal{ padding:16px; } .form-row{ flex-direction:column; gap:0; } .imagens-grid{ grid-template-columns:repeat(2,1fr); gap:8px; } .tabs{ gap:4px; } .tab{ font-size:.7rem; padding:6px 10px; } .banner{ padding:12px 16px; } .banner .banner-logo{ max-height:60px; } }
-  @media(min-width:481px){ .imagens-grid{ grid-template-columns:repeat(3,1fr); } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leblon Studio - Barbearia</title>
+    <style>
+        :root {
+            --bg: #0a0a0e;
+            --bg-card: #14141a;
+            --bg-elevated: #1c1c24;
+            --border: #2a2a32;
+            --text: #eeeeef;
+            --text-muted: #88889a;
+            --accent: #3ddc84;
+            --red: #e74c3c;
+            --blue: #4a9eff;
+            --gold: #ffd700;
+            --radius: 12px;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .topbar {
+            background: var(--bg-card);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .banner {
+            background: var(--bg-card);
+            padding: 20px 16px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .banner-logo {
+            max-height: 80px;
+            border-radius: 12px;
+        }
+        .business-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+        .business-info .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .business-info .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .business-info h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .business-info p {
+            color: var(--text-muted);
+            font-size: .8rem;
+        }
+        .horarios-topo {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px 16px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            font-size: .8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+        .tabs-wrapper {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 12px;
+            overflow-x: auto;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+            min-width: max-content;
+        }
+        .tab {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: .2s;
+            white-space: nowrap;
+        }
+        .tab:hover {
+            color: var(--text);
+            background: var(--bg-elevated);
+        }
+        .tab.active {
+            background: var(--accent);
+            color: #000;
+        }
+        .section {
+            padding: 16px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .search-wrap {
+            margin-bottom: 12px;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 14px;
+        }
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: .9rem;
+            width: 100%;
+            outline: none;
+        }
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: .2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .card .thumb {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: var(--bg-elevated);
+            overflow: hidden;
+        }
+        .card .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card .thumb.round {
+            border-radius: 50%;
+            aspect-ratio: 1/1;
+            width: 64px;
+            height: 64px;
+            margin: 12px auto 0;
+            border: 2px solid var(--border);
+        }
+        .card .info {
+            padding: 12px;
+        }
+        .card .info h3 {
+            font-size: .9rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .card .info .price {
+            color: var(--accent);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .card .info .duration {
+            color: var(--text-muted);
+            font-size: .7rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .card .info .sub {
+            color: var(--text-muted);
+            font-size: .75rem;
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+        }
+        .plan-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: .2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .plan-card:hover {
+            border-color: var(--accent);
+        }
+        .plan-card .badge-destaque {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--gold);
+            color: #000;
+            font-size: .6rem;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        .plan-card .plan-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .plan-card .plan-icon {
+            font-size: 1.5rem;
+        }
+        .plan-card .plan-name {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .plan-card .plan-desc {
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+        .plan-card .plan-price-wrap {
+            margin: 8px 0;
+        }
+        .plan-card .plan-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .plan-card .plan-period {
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+        .floating-whatsapp {
+            position: fixed;
+            bottom: 100px;
+            right: 16px;
+            z-index: 500;
+        }
+        .floating-whatsapp .btn-float-whatsapp {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            background: #25D366;
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+            transition: .2s;
+            position: relative;
+        }
+        .floating-whatsapp .btn-float-whatsapp:hover {
+            transform: scale(1.05);
+        }
+        .floating-whatsapp .badge-wpp {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--red);
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: .6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 16px;
+            z-index: 500;
+        }
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: var(--text-muted);
+            font-size: .6rem;
+            cursor: pointer;
+            transition: .2s;
+            padding: 0 8px;
+        }
+        .bottom-nav .nav-item:hover {
+            color: var(--text);
+        }
+        .bottom-nav .nav-item.active {
+            color: var(--accent);
+        }
+        .bottom-nav .nav-item svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="topbar"><div class="icon-group"></div></div>
-  <div class="banner" id="banner">
-    <div class="banner-content">
-      <img id="coverLogo" src="static/logo.jpeg" alt="Leblon Studio" class="banner-logo" onerror="this.style.display='none'">
-      <div class="banner-divider"></div>
-    </div>
-  </div>
-  <div class="business-info">
-    <div class="logo"><img id="infoLogo" src="static/logo.jpeg" alt="logo" onerror="this.style.display='none'"></div>
-    <div>
-      <h1 id="bizNome">Leblon Studio</h1>
-      <p id="bizEndereco">Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280</p>
-    </div>
-  </div>
-  
-  <div class="horarios-topo">
-    <span>🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</span>
-    <span>📅 Dom: 09:00-12:00</span>
-  </div>
 
-  <div class="tabs-wrapper" id="tabsWrapper">
-    <div class="tabs" id="tabsContainer">
-      <div class="tab active" data-tab="servicos">✂️ SERVIÇOS</div>
-      <div class="tab" data-tab="assinaturas">📋 ASSINATURAS</div>
-      <div class="tab" data-tab="profissionais">👤 PROFISSIONAIS</div>
-      <div class="tab" data-tab="produtos">🧴 PRODUTOS</div>
-      <div class="tab" data-tab="imagens">📷 FOTOS</div>
+    <div class="topbar">
+        <div class="icon-group"></div>
     </div>
-  </div>
-  
-  <div id="secServicos">
-    <div class="search-wrap">
-      <div class="search-box">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="searchInput" placeholder="Buscar serviços..." oninput="filterServices()">
-      </div>
-    </div>
-    <div class="section" id="servicesList"><div class="empty-msg">Carregando serviços...</div></div>
-  </div>
-  
-  <div id="secAssinaturas" class="section hidden" style="padding-top:16px;">
-    <div class="plans-header">
-      <h2>💈 Planos de Assinatura</h2>
-      <p>Escolha o plano ideal e economize</p>
-    </div>
-    <div id="assinaturasList"><div class="empty-msg">Carregando planos...</div></div>
-  </div>
-  
-  <div id="secProfissionais" class="section hidden" style="padding-top:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <h2 style="font-size:1.1rem;">👤 Nossa Equipe</h2>
-      <span style="font-size:.7rem; color:var(--text-muted);" id="profCount">0 profissionais</span>
-    </div>
-    <div id="profissionaisList"><div class="empty-msg">Carregando...</div></div>
-  </div>
-  
-  <div id="secProdutos" class="section hidden" style="padding-top:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <h2 style="font-size:1.1rem;">🧴 Nossos Produtos</h2>
-      <span style="font-size:.7rem; color:var(--text-muted);" id="prodCount">0 produtos</span>
-    </div>
-    <div id="produtosList"><div class="empty-msg">Carregando produtos...</div></div>
-  </div>
-  
-  <div id="secImagens" class="section hidden" style="padding-top:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-      <div>
-        <h2 style="font-size:1.2rem;">📷 Galeria</h2>
-        <p style="color:var(--text-muted); font-size:.8rem;">Conheça nosso espaço</p>
-      </div>
-      <span style="font-size:.7rem; color:var(--text-muted);" id="imagemCount">0 imagens</span>
-    </div>
-    <div id="imagensList" class="imagens-grid"><div class="empty-msg">Carregando imagens...</div></div>
-  </div>
-  
-<div class="floating-whatsapp">
-    <a href="https://wa.me/558181365730?text=Olá!%20Quero%20fazer%20um%20agendamento" target="_blank" class="btn-float-whatsapp" id="whatsappFloatBtn">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-        </svg>
-        <span class="badge-wpp">1</span>
-    </a>
-</div>
 
-  <!-- ====== MODAL SIMPLES ====== -->
-  <div class="modal-overlay" id="modalSimples">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>✂️ Confirmar Serviço</h2>
-        <button class="modal-close" onclick="fecharModalSimples()">✕</button>
-      </div>
-      <div class="modal-service-info" id="serviceInfoSimples">
-        <div class="service-name" id="modalSimplesServiceName">Corte de Cabelo</div>
-        <div class="service-price" id="modalSimplesServicePrice">R$ 30,00</div>
-      </div>
-      <div class="form-group">
-        <label>Seu nome <span class="required">*</span></label>
-        <input type="text" id="nomeSimples" placeholder="Digite seu nome" required>
-      </div>
-      <div class="form-group">
-        <label>Data <span class="required">*</span></label>
-        <input type="date" id="dataSimples" required>
-      </div>
-      <div class="form-group">
-        <label>Hora <span class="required">*</span></label>
-        <input type="time" id="horaSimples" required>
-      </div>
-      <div class="form-group">
-        <label>Escolha o profissional <span class="required">*</span></label>
-        <select id="profissionalSimples" required>
-          <option value="">Selecione um profissional</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Forma de pagamento <span class="required">*</span></label>
-        <div class="payment-options" id="paymentOptionsSimples">
-          <div class="payment-option" data-pagamento="pix" onclick="selecionarPagamentoSimples(this)">
-            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
-            <span class="label">PIX</span>
-          </div>
-          <div class="payment-option" data-pagamento="dinheiro" onclick="selecionarPagamentoSimples(this)">
-            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
-            <span class="label">Dinheiro</span>
-          </div>
-          <div class="payment-option" data-pagamento="cartao" onclick="selecionarPagamentoSimples(this)">
-            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
-            <span class="label">Cartão</span>
-          </div>
+    <div class="banner">
+        <img id="coverLogo" src="static/logo.jpeg" alt="Leblon Studio" class="banner-logo" onerror="this.style.display='none'">
+    </div>
+
+    <div class="business-info">
+        <div class="logo">
+            <img id="infoLogo" src="static/logo.jpeg" alt="logo" onerror="this.style.display='none'">
         </div>
-      </div>
-      <button class="btn-confirmar-simples" id="btnConfirmarSimples" onclick="confirmarSimples()" disabled>✅ Confirmar</button>
-    </div>
-  </div>
-
-  <!-- ====== MODAL ASSINATURA ====== -->
-  <div class="modal-overlay" id="modalAssinatura">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>📋 Assinar Plano</h2>
-        <button class="modal-close" onclick="fecharModalAssinatura()">✕</button>
-      </div>
-      <div class="modal-service-info" id="serviceInfoAssinatura">
-        <div class="service-name" id="modalAssinaturaNome">Plano Ouro</div>
-        <div class="service-price" id="modalAssinaturaPreco">R$ 55,00/mês</div>
-      </div>
-      <div class="form-group">
-        <label>Nome completo <span class="required">*</span></label>
-        <input type="text" id="assinaturaNome" placeholder="Digite seu nome completo" required>
-      </div>
-      <div class="form-group">
-        <label>WhatsApp <span class="required">*</span></label>
-        <input type="tel" id="assinaturaTelefone" placeholder="(81) 99999-9999" required>
-      </div>
-      <div class="form-group">
-        <label>CPF <span class="required">*</span></label>
-        <input type="text" id="assinaturaCpf" placeholder="000.000.000-00" maxlength="14" required oninput="mascaraCPF(this)">
-      </div>
-      <button class="btn-confirmar-simples" id="btnConfirmarAssinatura" onclick="confirmarAssinatura()" disabled>✅ Assinar Agora</button>
-    </div>
-  </div>
-
-  <!-- ====== MODAL AGENDAMENTO ====== -->
-  <div class="modal-overlay" id="modalAgendamento">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>📋 Agendamento</h2>
-        <button class="modal-close" onclick="fecharModalAgendamento()">✕</button>
-      </div>
-      <div class="modal-service-info">
-        <div class="service-name">Agendamento</div>
-        <div class="service-price">📍 Na barbearia</div>
-      </div>
-      <div class="form-group">
-        <label>Nome completo <span class="required">*</span></label>
-        <input type="text" id="agendaNome" placeholder="Digite seu nome completo" required>
-      </div>
-      <div class="form-group">
-        <label>Telefone (WhatsApp) <span class="required">*</span></label>
-        <input type="tel" id="agendaTelefone" placeholder="(81) 99999-9999" required>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Data <span class="required">*</span></label>
-          <input type="date" id="agendaData" required>
+        <div>
+            <h1 id="bizNome">Leblon Studio</h1>
+            <p id="bizEndereco">Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280</p>
         </div>
-        <div class="form-group">
-          <label>Hora <span class="required">*</span></label>
-          <input type="time" id="agendaHora" required>
+    </div>
+
+    <div class="horarios-topo">
+        <span>🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</span>
+        <span>📅 Dom: 09:00-12:00</span>
+    </div>
+
+    <div class="tabs-wrapper">
+        <div class="tabs">
+            <div class="tab active" data-tab="servicos">✂️ SERVIÇOS</div>
+            <div class="tab" data-tab="assinaturas">📋 ASSINATURAS</div>
+            <div class="tab" data-tab="profissionais">👤 PROFISSIONAIS</div>
+            <div class="tab" data-tab="produtos">🧴 PRODUTOS</div>
         </div>
-      </div>
-      <div class="form-group">
-        <label>Selecione o serviço</label>
-        <select id="agendaServico"><option value="">Não informado</option></select>
-      </div>
-      <div class="form-group">
-        <label>Escolha o profissional <span class="required">*</span></label>
-        <select id="profissionalAgenda" required>
-          <option value="">Selecione um profissional</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Observações</label>
-        <textarea id="agendaObservacoes" placeholder="Alguma observação?"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Forma de pagamento</label>
-        <div class="payment-options" id="paymentOptionsAgenda">
-          <div class="payment-option" data-pagamento="pix" onclick="selecionarPagamentoAgenda(this)">
-            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
-            <span class="label">PIX</span>
-          </div>
-          <div class="payment-option" data-pagamento="dinheiro" onclick="selecionarPagamentoAgenda(this)">
-            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
-            <span class="label">Dinheiro</span>
-          </div>
-          <div class="payment-option" data-pagamento="cartao" onclick="selecionarPagamentoAgenda(this)">
-            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
-            <span class="label">Cartão</span>
-          </div>
+    </div>
+
+    <div id="secServicos">
+        <div class="search-wrap">
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Buscar serviços..." oninput="filterServices()">
+            </div>
         </div>
-      </div>
-      <button class="btn-confirmar" id="btnConfirmarAgenda" onclick="confirmarAgendamento()" disabled>✅ Confirmar Agendamento</button>
+        <div class="section" id="servicesList">
+            <div class="empty-msg">Carregando serviços...</div>
+        </div>
     </div>
-  </div>
 
-  <!-- ====== MODAL DE SUCESSO ====== -->
-  <div class="modal-overlay" id="sucessoModal">
-    <div class="modal success-modal">
-      <div class="success-icon">✅</div>
-      <h2 id="sucessoTitulo">Pedido Confirmado!</h2>
-      <p id="sucessoMensagem">Seu pedido foi enviado para o gerente. Aguarde que você será atendido em breve.</p>
-      <div class="detalhes" id="detalhesAgendamento">
-        <div class="linha"><span class="label">Serviço</span><span class="valor" id="sucessoService">-</span></div>
-        <div class="linha"><span class="label">Cliente</span><span class="valor" id="sucessoCliente">-</span></div>
-        <div class="linha"><span class="label">Data/Hora</span><span class="valor" id="sucessoDataHora">-</span></div>
-        <div class="linha"><span class="label">Profissional</span><span class="valor" id="sucessoProfissional">-</span></div>
-        <div class="linha"><span class="label">Pagamento</span><span class="valor" id="sucessoPagamento">-</span></div>
-        <div class="linha"><span class="label">Valor</span><span class="valor" id="sucessoValor">-</span></div>
-      </div>
-      <p style="color:var(--accent-green); font-weight:600; margin:12px 0;">⏳ Aguarde, você será atendido em breve!</p>
-      <a href="#" target="_blank" class="btn-whatsapp" id="whatsappContato">💬 Falar com o Gerente</a>
-      <button class="btn-white" style="width:100%; margin-top:8px; padding:13px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border);" onclick="fecharSucesso()">Voltar ao início</button>
+    <div id="secAssinaturas" class="section hidden" style="padding-top:16px;">
+        <div class="plans-header">
+            <h2>💈 Planos de Assinatura</h2>
+            <p>Escolha o plano ideal e economize</p>
+        </div>
+        <div id="assinaturasList">
+            <div class="empty-msg">Carregando planos...</div>
+        </div>
     </div>
-  </div>
 
-  <!-- ====== FAQ ====== -->
-  <div class="modal-overlay" id="faqOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>❓ Ajuda &amp; FAQ</h2>
-        <button class="modal-close" onclick="fecharFAQ()">✕</button>
-      </div>
-      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
-        <h3 style="font-size:.9rem; margin-bottom:4px;">✂️ Como pedir um serviço?</h3>
-        <p style="color:var(--text-muted); font-size:.85rem;">Clique no botão "+" ao lado do serviço, escolha data, hora e profissional.</p>
-      </div>
-      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
-        <h3 style="font-size:.9rem; margin-bottom:4px;">📋 Como assinar um plano?</h3>
-        <p style="color:var(--text-muted); font-size:.85rem;">Clique no plano desejado, preencha nome, WhatsApp e CPF.</p>
-      </div>
-      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
-        <h3 style="font-size:.9rem; margin-bottom:4px;">📅 Como agendar?</h3>
-        <p style="color:var(--text-muted); font-size:.85rem;">Clique no botão "Agendar" no menu inferior, preencha os dados e confirme.</p>
-      </div>
-      <a href="#" target="_blank" class="btn-whatsapp" id="whatsappFaq" href="https://wa.me/558181365730?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20agendamento">💬 Falar com o Atendente</a>
-      <button class="btn-white" style="width:100%; margin-top:8px; padding:13px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border);" onclick="fecharFAQ()">Fechar</button>
+    <div id="secProfissionais" class="section hidden" style="padding-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h2 style="font-size:1.1rem;">👤 Nossa Equipe</h2>
+            <span style="font-size:.7rem; color:var(--text-muted);" id="profCount">0 profissionais</span>
+        </div>
+        <div id="profissionaisList">
+            <div class="empty-msg">Carregando...</div>
+        </div>
     </div>
-  </div>
 
-  <div class="bottom-nav">
-    <div class="nav-item active" onclick="scrollToTop()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-      Início
+    <div id="secProdutos" class="section hidden" style="padding-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h2 style="font-size:1.1rem;">🧴 Nossos Produtos</h2>
+            <span style="font-size:.7rem; color:var(--text-muted);" id="prodCount">0 produtos</span>
+        </div>
+        <div id="produtosList">
+            <div class="empty-msg">Carregando produtos...</div>
+        </div>
     </div>
-    <div class="nav-item" onclick="abrirAgendamentoCompleto()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="15"/></svg>
-      Agendar
+
+    <div class="floating-whatsapp">
+        <a href="https://wa.me/558181365730?text=Olá!%20Quero%20fazer%20um%20agendamento" target="_blank" class="btn-float-whatsapp">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            <span class="badge-wpp">1</span>
+        </a>
     </div>
-    <div class="nav-item" onclick="abrirFAQ()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      Ajuda
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="scrollToTop()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            </svg>
+            Início
+        </div>
+        <div class="nav-item" onclick="abrirAgendamento()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="15"/>
+            </svg>
+            Agendar
+        </div>
+        <div class="nav-item" onclick="abrirAjuda()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Ajuda
+        </div>
     </div>
-  </div>
 
-<script>
-const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
+    <script>
+        const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
+        let todosServicos = [];
+        let todasAssinaturas = [];
+        let todosProfissionais = [];
+        let todosProdutos = [];
 
-// ============ FUNÇÕES AUXILIARES ============
-function formatarPreco(v) { 
-    return "R$ " + Number(v || 0).toFixed(2).replace(".", ","); 
-}
-
-function showToast(msg, tempo) {
-    var old = document.querySelector('.toast');
-    if (old) old.remove();
-    var t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function() { t.remove(); }, tempo || 2500);
-}
-
-function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
-function mascaraCPF(input) {
-    var v = input.value.replace(/\D/g, '');
-    if (v.length > 11) v = v.slice(0, 11);
-    if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-    else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-    input.value = v;
-}
-
-// ============ RENDERIZAR SERVIÇOS ============
-function renderizarServicos(servicos) {
-    var container = document.getElementById('servicesList');
-    if (!container) return;
-    if (!servicos || servicos.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
-        return;
-    }
-    var html = '';
-    for (var i = 0; i < servicos.length; i++) {
-        var s = servicos[i];
-        var nome = (s.nome || 'Serviço').replace(/'/g, "\\'");
-        html += '<div class="card" onclick="abrirModalSimples({id:' + s.id + ', nome:\\'' + nome + '\\', preco:' + (s.preco || 0) + ', duracao_min:' + (s.duracao_min || 30) + '})">';
-        html += '<div class="thumb"><img src="' + (s.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\\'none\\'" loading="lazy"></div>';
-        html += '<div class="info"><h3>' + (s.nome || 'Serviço') + '</h3>';
-        html += '<div class="price">' + formatarPreco(s.preco) + '</div>';
-        html += '<div class="duration">⏱️ ' + (s.duracao_min || 30) + ' min</div></div>';
-        html += '<button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + s.id + ', nome:\\'' + nome + '\\', preco:' + (s.preco || 0) + ', duracao_min:' + (s.duracao_min || 30) + '})">+</button>';
-        html += '</div>';
-    }
-    container.innerHTML = html;
-}
-
-// ============ RENDERIZAR ASSINATURAS ============
-function renderizarAssinaturas(assinaturas) {
-    var container = document.getElementById('assinaturasList');
-    if (!container) return;
-    if (!assinaturas || assinaturas.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nenhuma assinatura disponível.</div>';
-        return;
-    }
-    var html = '';
-    for (var i = 0; i < assinaturas.length; i++) {
-        var a = assinaturas[i];
-        var isDestaque = a.destaque === 1;
-        html += '<div class="plan-card" style="' + (isDestaque ? 'border-color: var(--gold);' : '') + '" onclick="alert(\'📋 ' + (a.nome || 'Plano') + '\\n💰 R$ ' + (a.preco || 0).toFixed(2) + '/mês\\n' + (a.descricao || '') + '\')">';
-        if (isDestaque) {
-            html += '<div class="badge-destaque">⭐ Destaque</div>';
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        html += '<div class="plan-header"><span class="plan-icon">' + (a.icone || '⭐') + '</span>';
-        html += '<div><div class="plan-name">' + (a.nome || 'Plano') + '</div><div class="plan-desc">' + (a.descricao || '') + '</div></div></div>';
-        html += '<div class="plan-price-wrap"><span class="plan-price">R$ ' + (a.preco || 0).toFixed(2) + '</span><span class="plan-period">/mês</span></div>';
-        html += '<button class="btn-agendar" style="width:100%; padding:10px; background:var(--accent); color:#000; border:none; border-radius:8px; font-weight:700; cursor:pointer; margin-top:8px;" onclick="event.stopPropagation(); alert(\'📋 Assinar ' + (a.nome || 'Plano') + '\\n💰 R$ ' + (a.preco || 0).toFixed(2) + '/mês\')">📋 Assinar</button>';
-        html += '</div>';
-    }
-    container.innerHTML = html;
-}
 
-// ============ RENDERIZAR PRODUTOS ============
-function renderizarProdutos(produtos) {
-    var container = document.getElementById('produtosList');
-    if (!container) return;
-    if (!produtos || produtos.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nenhum produto disponível.</div>';
-        return;
-    }
-    var html = '';
-    for (var i = 0; i < produtos.length; i++) {
-        var p = produtos[i];
-        html += '<div class="card" onclick="alert(\'🧴 ' + (p.nome || 'Produto') + '\\n💰 R$ ' + (p.preco || 0).toFixed(2) + '\')">';
-        html += '<div class="thumb"><img src="' + (p.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\\'none\\'" loading="lazy"></div>';
-        html += '<div class="info"><h3>' + (p.nome || 'Produto') + '</h3>';
-        html += '<div class="price">' + formatarPreco(p.preco) + '</div></div>';
-        html += '</div>';
-    }
-    container.innerHTML = html;
-}
-
-// ============ RENDERIZAR PROFISSIONAIS ============
-function renderizarProfissionais(profissionais) {
-    var container = document.getElementById('profissionaisList');
-    if (!container) return;
-    if (!profissionais || profissionais.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nenhum profissional disponível.</div>';
-        return;
-    }
-    var html = '';
-    for (var i = 0; i < profissionais.length; i++) {
-        var p = profissionais[i];
-        html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\\'none\\'" loading="lazy"></div><div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
-    }
-    container.innerHTML = html;
-    var profCount = document.getElementById('profCount');
-    if (profCount) profCount.textContent = profissionais.length + ' profissionais';
-}
-
-// ============ CARREGAR DADOS ============
-async function carregarDados() {
-    try {
-        console.log('📡 Carregando dados da API...');
-        
-        // Serviços
-        var s = await fetch(BACKEND_URL + '/api/servicos');
-        var servicos = await s.json();
-        renderizarServicos(servicos);
-        console.log('✅ Serviços:', servicos.length);
-        
-        // Profissionais
-        var p = await fetch(BACKEND_URL + '/api/profissionais');
-        var profissionais = await p.json();
-        renderizarProfissionais(profissionais);
-        console.log('✅ Profissionais:', profissionais.length);
-        
-        // Assinaturas
-        var a = await fetch(BACKEND_URL + '/api/assinaturas');
-        var assinaturas = await a.json();
-        renderizarAssinaturas(assinaturas);
-        console.log('✅ Assinaturas:', assinaturas.length);
-        
-        // Produtos
-        var pr = await fetch(BACKEND_URL + '/api/produtos');
-        var produtos = await pr.json();
-        renderizarProdutos(produtos);
-        console.log('✅ Produtos:', produtos.length);
-        
-    } catch (e) {
-        console.error('❌ Erro:', e);
-        var container = document.getElementById('servicesList');
-        if (container) container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar dados</div>';
-    }
-}
-
-// ============ ABRIR MODAL ============
-function abrirModalSimples(servico) {
-    alert('✂️ ' + (servico.nome || 'Serviço') + '\\n💰 ' + formatarPreco(servico.preco) + '\\n⏱️ ' + (servico.duracao_min || 30) + ' min');
-}
-
-function abrirAgendamentoCompleto() {
-    alert('📅 Agendamento\\n📞 WhatsApp: (81) 99999-9999');
-}
-
-function abrirFAQ() {
-    alert('❓ Ajuda\\n\\n✂️ Como pedir um serviço?\\nClique no botão "+" ao lado do serviço.\\n\\n📋 Como assinar um plano?\\nClique no plano desejado.\\n\\n📅 Como agendar?\\nClique no botão "Agendar" no menu inferior.');
-}
-
-function fecharFAQ() { /* sem ação */ }
-function fecharModalSimples() { /* sem ação */ }
-function fecharModalAssinatura() { /* sem ação */ }
-function fecharModalAgendamento() { /* sem ação */ }
-function fecharSucesso() { /* sem ação */ }
-
-// ============ FILTRO ============
-function filterServices() {
-    var q = document.getElementById('searchInput').value.toLowerCase();
-    var cards = document.querySelectorAll('#servicesList .card');
-    for (var i = 0; i < cards.length; i++) {
-        var nome = cards[i].querySelector('h3')?.textContent?.toLowerCase() || '';
-        cards[i].style.display = nome.includes(q) ? '' : 'none';
-    }
-}
-
-// ============ TABS ============
-var tabs = document.querySelectorAll('.tab');
-var secs = {
-    servicos: document.getElementById('secServicos'),
-    assinaturas: document.getElementById('secAssinaturas'),
-    profissionais: document.getElementById('secProfissionais'),
-    produtos: document.getElementById('secProdutos'),
-    imagens: document.getElementById('secImagens')
-};
-
-for (var i = 0; i < tabs.length; i++) {
-    tabs[i].addEventListener('click', function() {
-        for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
-        this.classList.add('active');
-        var alvo = this.dataset.tab;
-        for (var key in secs) {
-            secs[key].classList.toggle('hidden', key !== alvo);
+        function abrirAgendamento() {
+            alert('📅 Agendamento\n📞 WhatsApp: (81) 99999-9999');
         }
-    });
-}
 
-// ============ INICIAR ============
-document.addEventListener('DOMContentLoaded', carregarDados);
-</script>
+        function abrirAjuda() {
+            alert('❓ Ajuda\n\n✂️ Serviços: Clique no card para ver detalhes\n📋 Assinaturas: Planos mensais\n👤 Profissionais: Nossa equipe\n🧴 Produtos: Produtos disponíveis');
+        }
+
+        function formatarPreco(v) {
+            return "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+        }
+
+        function renderizarServicos(lista) {
+            var container = document.getElementById('servicesList');
+            if (!container) return;
+            if (!lista || lista.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < lista.length; i++) {
+                var s = lista[i];
+                html += '<div class="card" onclick="alert(\'✂️ ' + (s.nome || 'Serviço') + '\\n💰 ' + formatarPreco(s.preco) + '\\n⏱️ ' + (s.duracao_min || 30) + ' min\')">';
+                html += '<div class="thumb"><img src="' + (s.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\\'none\\'" loading="lazy"></div>';
+                html += '<div class="info"><h3>' + (s.nome || 'Serviço') + '</h3>';
+                html += '<div class="price">' + formatarPreco(s.preco) + '</div>';
+                html += '<div class="duration">⏱️ ' + (s.duracao_min || 30) + ' min</div></div>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function renderizarAssinaturas(lista) {
+            var container = document.getElementById('assinaturasList');
+            if (!container) return;
+            if (!lista || lista.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Nenhuma assinatura disponível.</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < lista.length; i++) {
+                var a = lista[i];
+                html += '<div class="plan-card" onclick="alert(\'📋 ' + (a.nome || 'Plano') + '\\n💰 ' + formatarPreco(a.preco) + '/mês\\n' + (a.descricao || '') + '\')">';
+                if (a.destaque) html += '<div class="badge-destaque">⭐ Destaque</div>';
+                html += '<div class="plan-header"><span class="plan-icon">' + (a.icone || '⭐') + '</span>';
+                html += '<div><div class="plan-name">' + (a.nome || 'Plano') + '</div><div class="plan-desc">' + (a.descricao || '') + '</div></div></div>';
+                html += '<div class="plan-price-wrap"><span class="plan-price">' + formatarPreco(a.preco) + '</span><span class="plan-period">/mês</span></div>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function renderizarProfissionais(lista) {
+            var container = document.getElementById('profissionaisList');
+            if (!container) return;
+            if (!lista || lista.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Nenhum profissional disponível.</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < lista.length; i++) {
+                var p = lista[i];
+                html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\\'none\\'" loading="lazy"></div>';
+                html += '<div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
+            }
+            container.innerHTML = html;
+            var count = document.getElementById('profCount');
+            if (count) count.textContent = lista.length + ' profissionais';
+        }
+
+        function renderizarProdutos(lista) {
+            var container = document.getElementById('produtosList');
+            if (!container) return;
+            if (!lista || lista.length === 0) {
+                container.innerHTML = '<div class="empty-msg">Nenhum produto disponível.</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < lista.length; i++) {
+                var p = lista[i];
+                html += '<div class="card" onclick="alert(\'🧴 ' + (p.nome || 'Produto') + '\\n💰 ' + formatarPreco(p.preco) + '\')">';
+                html += '<div class="thumb"><img src="' + (p.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\\'none\\'" loading="lazy"></div>';
+                html += '<div class="info"><h3>' + (p.nome || 'Produto') + '</h3>';
+                html += '<div class="price">' + formatarPreco(p.preco) + '</div></div>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+            var count = document.getElementById('prodCount');
+            if (count) count.textContent = lista.length + ' produtos';
+        }
+
+        function filterServices() {
+            var q = document.getElementById('searchInput').value.toLowerCase();
+            var cards = document.querySelectorAll('#servicesList .card');
+            for (var i = 0; i < cards.length; i++) {
+                var nome = cards[i].querySelector('h3')?.textContent?.toLowerCase() || '';
+                cards[i].style.display = nome.includes(q) ? '' : 'none';
+            }
+        }
+
+        async function carregarDados() {
+            try {
+                console.log('📡 Carregando dados...');
+
+                // Serviços
+                var s = await fetch(BACKEND_URL + '/api/servicos');
+                todosServicos = await s.json();
+                renderizarServicos(todosServicos);
+                console.log('✅ Serviços:', todosServicos.length);
+
+                // Assinaturas
+                var a = await fetch(BACKEND_URL + '/api/assinaturas');
+                todasAssinaturas = await a.json();
+                renderizarAssinaturas(todasAssinaturas);
+                console.log('✅ Assinaturas:', todasAssinaturas.length);
+
+                // Profissionais
+                var p = await fetch(BACKEND_URL + '/api/profissionais');
+                todosProfissionais = await p.json();
+                renderizarProfissionais(todosProfissionais);
+                console.log('✅ Profissionais:', todosProfissionais.length);
+
+                // Produtos
+                var pr = await fetch(BACKEND_URL + '/api/produtos');
+                todosProdutos = await pr.json();
+                renderizarProdutos(todosProdutos);
+                console.log('✅ Produtos:', todosProdutos.length);
+
+            } catch (e) {
+                console.error('❌ Erro:', e);
+                document.getElementById('servicesList').innerHTML = '<div class="empty-msg">❌ Erro ao carregar dados</div>';
+            }
+        }
+
+        // Tabs
+        var tabs = document.querySelectorAll('.tab');
+        var secs = {
+            servicos: document.getElementById('secServicos'),
+            assinaturas: document.getElementById('secAssinaturas'),
+            profissionais: document.getElementById('secProfissionais'),
+            produtos: document.getElementById('secProdutos')
+        };
+
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].addEventListener('click', function() {
+                for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+                this.classList.add('active');
+                var alvo = this.dataset.tab;
+                for (var key in secs) {
+                    secs[key].classList.toggle('hidden', key !== alvo);
+                }
+            });
+        }
+
+        // Iniciar
+        document.addEventListener('DOMContentLoaded', carregarDados);
+    </script>
+
 </body>
 </html>
