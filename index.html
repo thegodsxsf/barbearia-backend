@@ -892,6 +892,7 @@
     </div>
   </div>
 
+<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";</script>
 <script>
 
 
@@ -901,7 +902,7 @@
 
 async function verificarHorario(data, hora) {
     try {
-        const response = await fetch('/api/verificar-horario', {
+        const response = await fetch(BACKEND_URL + '/api/verificar-horario', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({data: data, hora: hora})
@@ -916,7 +917,7 @@ async function verificarHorario(data, hora) {
 
 async function carregarHorariosOcupados(data) {
     try {
-        const response = await fetch('/api/horarios-ocupados', {
+        const response = await fetch(BACKEND_URL + '/api/horarios-ocupados', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({data: data})
@@ -1045,7 +1046,7 @@ async function mostrarHorariosOcupados(data) {
 
     async function salvarPedidoServidor(dados) {
       try {
-        await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
+        await fetch(BACKEND_URL + '/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
       } catch (e) { console.warn('Erro ao salvar:', e); }
     }
 
@@ -1076,7 +1077,7 @@ async function mostrarHorariosOcupados(data) {
 
     // ======== PREENCHER PROFISSIONAIS ========
     function preencherProfissionais() {
-      fetch('/api/profissionais')
+      fetch(BACKEND_URL + '/api/profissionais')
         .then(function(res) { return res.json(); })
         .then(function(profissionais) {
           todosProfissionais = profissionais;
@@ -1547,7 +1548,7 @@ async function mostrarHorariosOcupados(data) {
     // ======== CARREGAR DADOS ========
     async function carregarDados() {
       try {
-        var bizRes = await fetch('/api/barbearia');
+        var bizRes = await fetch(BACKEND_URL + '/api/barbearia');
         if (bizRes.ok) {
           var biz = await bizRes.json();
           document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
@@ -1561,11 +1562,11 @@ async function mostrarHorariosOcupados(data) {
           }
         }
         
-        var servRes = await fetch('/api/servicos');
-        var assRes = await fetch('/api/assinaturas');
-        var profRes = await fetch('/api/profissionais');
-        var prodRes = await fetch('/api/produtos');
-        var imgRes = await fetch('/api/imagens');
+        var servRes = await fetch(BACKEND_URL + '/api/servicos');
+        var assRes = await fetch(BACKEND_URL + '/api/assinaturas');
+        var profRes = await fetch(BACKEND_URL + '/api/profissionais');
+        var prodRes = await fetch(BACKEND_URL + '/api/produtos');
+        var imgRes = await fetch(BACKEND_URL + '/api/imagens');
 
         todosServicos = await servRes.json();
         var assinaturas = await assRes.json();
@@ -1617,6 +1618,7 @@ async function mostrarHorariosOcupados(data) {
     console.log('📋 WhatsApp:', bizWhatsapp);
     console.log('📍 Endereço: Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280');
   </script>
+<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";</script>
 <script>
 // Verificar horários quando a data for selecionada
 document.addEventListener('DOMContentLoaded', function() {

@@ -407,13 +407,13 @@
     </div>
   </div>
 
-<script>
+<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
+
 let filtroStatusAtual = '';
 let filtroComandaStatus = '';
 let itemEditando = null;
 let clienteEditandoId = null;
 let ultimoPedidoId = 0;
-let somAtivo = true;
 
 function formatarData(iso){
   if(!iso) return '-';
@@ -1000,6 +1000,89 @@ async function iniciar(){
 }
 
 iniciar();
+
+
+// ============ VERIFICAR NOVOS PEDIDOS (COM SOM) ============
+let ultimoPedidoIdGerente = 0;
+
+function tocarAlerta() {
+    if (!somAtivo) return;
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const beeps = [0, 300, 600, 900, 1200, 1500];
+        beeps.forEach((delay) => {
+            setTimeout(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            }, delay);
+        });
+    } catch(e) {
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU9vT18=');
+            audio.volume = 0.5;
+            audio.play();
+        } catch(err) {
+            console.log('Som indisponível');
+        }
+    }
+}
+
+function verificarNovosPedidosGerente() {
+    fetch('/api/gerente/pedidos?limit=1')
+        .then(res => res.json())
+        .then(pedidos => {
+            if (pedidos && pedidos.length > 0) {
+                const ultimo = pedidos[0];
+                if (ultimo.id > ultimoPedidoIdGerente) {
+                    ultimoPedidoIdGerente = ultimo.id;
+                    const agora = new Date();
+                    const criado = new Date(ultimo.criado_em.replace(' ', 'T'));
+                    const diff = (agora - criado) / 1000;
+                    if (diff < 30) {
+                        const profissional = ultimo.profissional ? ' - 👤 ' + ultimo.profissional : '';
+                        const msg = `🔔 NOVO PEDIDO! ${ultimo.cliente_nome} - ${ultimo.servico_nome}${profissional}`;
+                        tocarAlerta();
+                        showToast(msg);
+                        // Piscar título
+                        const titulo = document.getElementById('tituloSecao');
+                        if (titulo) {
+                            titulo.style.color = '#3ddc84';
+                            titulo.style.transition = 'color 0.5s';
+                            setTimeout(() => { titulo.style.color = ''; }, 3000);
+                        }
+                        // Mudar título da aba
+                        document.title = '🔔 NOVO PEDIDO! - Painel Gerente';
+                        setTimeout(() => {
+                            document.title = 'Painel Gerente - Barbearia Studio Leblon';
+                        }, 5000);
+                    }
+                }
+            }
+        })
+        .catch(() => {});
+}
+
+// Iniciar verificação a cada 10 segundos
+setInterval(verificarNovosPedidosGerente, 10000);
+
+// Carregar o último ID ao iniciar
+fetch('/api/gerente/pedidos?limit=1')
+    .then(res => res.json())
+    .then(pedidos => {
+        if (pedidos && pedidos.length > 0) {
+            ultimoPedidoIdGerente = pedidos[0].id;
+        }
+    })
+    .catch(() => {});
+
 </script>
 </body>
 </html>
