@@ -892,596 +892,108 @@
     </div>
   </div>
 
-<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
 
-    async function salvarPedidoServidor(dados) {
-      try {
-        await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
-      } catch (e) { console.warn('Erro ao salvar:', e); }
-    }
+<script>
+const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
 
-    var bizWhatsapp = "558181365730";
-    var servicoSelecionadoGlobal = null;
-    var pagamentoSelecionadoSimples = null;
-    var pagamentoSelecionadoAgenda = null;
-    var todosServicos = [];
-    var todosAssinaturas = [];
-    var todosProfissionais = [];
+// ============ FUNÇÕES PRINCIPAIS ============
+function formatarPreco(v) { 
+    return "R$ " + Number(v || 0).toFixed(2).replace(".", ","); 
+}
 
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    function showToast(m, d) {
-      if (!d) d = 2500;
-      var old = document.querySelector('.toast'); if(old) old.remove();
-      var t = document.createElement('div'); t.className='toast'; t.textContent=m;
-      document.body.appendChild(t); setTimeout(function(){ t.remove(); }, d);
-    }
-    function mascaraCPF(input) {
-      var v = input.value.replace(/\D/g, '');
-      if (v.length > 11) v = v.slice(0, 11);
-      if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-      else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-      else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-      input.value = v;
-    }
-    function formatarPreco(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
+function abrirModalSimples(servico) {
+    var nome = servico.nome || 'Serviço';
+    var preco = servico.preco || 0;
+    var duracao = servico.duracao_min || 30;
+    alert('✂️ ' + nome + '
+💰 ' + formatarPreco(preco) + '
+⏱️ ' + duracao + ' min');
+}
 
-    // ======== PREENCHER PROFISSIONAIS ========
-    function preencherProfissionais() {
-      fetch(BACKEND_URL + '/api/profissionais')
-        .then(function(res) { return res.json(); })
-        .then(function(profissionais) {
-          todosProfissionais = profissionais;
-          var options = '';
-          for (var i = 0; i < profissionais.length; i++) {
-            if (profissionais[i].ativo === 1) {
-              options += '<option value="' + profissionais[i].id + '">' + profissionais[i].nome + ' - ' + (profissionais[i].especialidade || '') + '</option>';
-            }
-          }
-          
-          var selectSimples = document.getElementById('profissionalSimples');
-          if (selectSimples) {
-            selectSimples.innerHTML = '<option value="">Selecione um profissional</option>' + options;
-          }
-          var selectAgenda = document.getElementById('profissionalAgenda');
-          if (selectAgenda) {
-            selectAgenda.innerHTML = '<option value="">Selecione um profissional</option>' + options;
-          }
-        })
-        .catch(function(err) { console.warn('Erro ao carregar profissionais:', err); });
-    }
-
-    // ======== SERVIÇOS ========
-    function abrirModalSimples(servico) {
-      servicoSelecionadoGlobal = servico;
-      document.getElementById('modalSimplesServiceName').textContent = servico.nome;
-      document.getElementById('modalSimplesServicePrice').textContent = formatarPreco(servico.preco);
-      document.getElementById('nomeSimples').value = '';
-      document.getElementById('dataSimples').value = '';
-      document.getElementById('horaSimples').value = '';
-      var opts = document.querySelectorAll('#paymentOptionsSimples .payment-option');
-      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
-      pagamentoSelecionadoSimples = null;
-      document.getElementById('btnConfirmarSimples').disabled = true;
-      document.getElementById('modalSimples').classList.add('active');
-      preencherProfissionais();
-      
-      var hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('dataSimples').min = hoje;
-    }
-
-    function fecharModalSimples() {
-      document.getElementById('modalSimples').classList.remove('active');
-    }
-
-    function selecionarPagamentoSimples(el) {
-      var opts = document.querySelectorAll('#paymentOptionsSimples .payment-option');
-      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
-      el.classList.add('selected');
-      pagamentoSelecionadoSimples = el.dataset.pagamento;
-      validarSimples();
-    }
-
-    function validarSimples() {
-      var nome = document.getElementById('nomeSimples').value.trim();
-      var data = document.getElementById('dataSimples').value;
-      var hora = document.getElementById('horaSimples').value;
-      var prof = document.getElementById('profissionalSimples').value;
-      var valido = nome && pagamentoSelecionadoSimples && data && hora && prof;
-      document.getElementById('btnConfirmarSimples').disabled = !valido;
-    }
-
-    document.getElementById('nomeSimples').addEventListener('input', validarSimples);
-    document.getElementById('dataSimples').addEventListener('change', validarSimples);
-    document.getElementById('horaSimples').addEventListener('input', validarSimples);
-    document.getElementById('profissionalSimples').addEventListener('change', validarSimples);
-
-    function confirmarSimples() {
-      var nome = document.getElementById('nomeSimples').value.trim();
-      var data = document.getElementById('dataSimples').value;
-      var hora = document.getElementById('horaSimples').value;
-      var profissionalId = document.getElementById('profissionalSimples').value;
-      
-      if (!nome || !pagamentoSelecionadoSimples || !data || !hora || !profissionalId) {
-        showToast('⚠️ Preencha todos os campos.', 2500);
+// ============ RENDERIZAR SERVIÇOS ============
+function renderizarServicos(servicos) {
+    var container = document.getElementById('servicesList');
+    if (!container) {
+        console.error('❌ Container servicesList não encontrado!');
         return;
-      }
-      
-      var dataFormatada = new Date(data + 'T' + hora);
-      var dataStr = dataFormatada.toLocaleDateString('pt-BR');
-      var horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      
-      var selectProf = document.getElementById('profissionalSimples');
-      var profNome = selectProf.options[selectProf.selectedIndex]?.text || 'Não informado';
-      var pagamentoLabels = { 'pix': 'PIX', 'dinheiro': 'Dinheiro', 'cartao': 'Cartão' };
-      
-      salvarPedidoServidor({
-        tipo: 'pedido',
-        servico_nome: servicoSelecionadoGlobal.nome,
-        valor: servicoSelecionadoGlobal.preco,
-        cliente_nome: nome,
-        pagamento: pagamentoSelecionadoSimples,
-        data_agendada: data,
-        hora_agendada: hora,
-        profissional: profNome
-      });
-      
-      document.getElementById('sucessoTitulo').textContent = '✅ Pedido Confirmado!';
-      document.getElementById('sucessoMensagem').textContent = 'Seu pedido foi enviado para o gerente. Aguarde que você será atendido em breve.';
-      document.getElementById('sucessoService').textContent = servicoSelecionadoGlobal.nome;
-      document.getElementById('sucessoCliente').textContent = nome;
-      document.getElementById('sucessoDataHora').textContent = dataStr + ' às ' + horaStr;
-      document.getElementById('sucessoProfissional').textContent = profNome;
-      document.getElementById('sucessoPagamento').textContent = pagamentoLabels[pagamentoSelecionadoSimples];
-      document.getElementById('sucessoValor').textContent = formatarPreco(servicoSelecionadoGlobal.preco);
-      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Acabei%20de%20fazer%20um%20pedido%20pelo%20site';
-      
-      fecharModalSimples();
-      document.getElementById('sucessoModal').classList.add('active');
     }
-
-    // ======== ASSINATURA ========
-    function abrirModalAssinatura(plano) {
-      servicoSelecionadoGlobal = plano;
-      document.getElementById('modalAssinaturaNome').textContent = plano.nome;
-      document.getElementById('modalAssinaturaPreco').textContent = 'R$ ' + plano.preco.toFixed(2) + '/mês';
-      document.getElementById('assinaturaNome').value = '';
-      document.getElementById('assinaturaTelefone').value = '';
-      document.getElementById('assinaturaCpf').value = '';
-      document.getElementById('btnConfirmarAssinatura').disabled = true;
-      document.getElementById('modalAssinatura').classList.add('active');
-    }
-
-    function fecharModalAssinatura() {
-      document.getElementById('modalAssinatura').classList.remove('active');
-    }
-
-    function validarCamposAssinatura() {
-      var nome = document.getElementById('assinaturaNome').value.trim();
-      var telefone = document.getElementById('assinaturaTelefone').value.trim();
-      var cpf = document.getElementById('assinaturaCpf').value.replace(/\D/g, '');
-      var valido = nome && telefone && cpf.length >= 11;
-      document.getElementById('btnConfirmarAssinatura').disabled = !valido;
-    }
-
-    document.getElementById('assinaturaNome').addEventListener('input', validarCamposAssinatura);
-    document.getElementById('assinaturaTelefone').addEventListener('input', validarCamposAssinatura);
-    document.getElementById('assinaturaCpf').addEventListener('input', validarCamposAssinatura);
-
-    function confirmarAssinatura() {
-      var nome = document.getElementById('assinaturaNome').value.trim();
-      var telefone = document.getElementById('assinaturaTelefone').value.trim();
-      var cpf = document.getElementById('assinaturaCpf').value.trim();
-      if (!nome || !telefone || cpf.replace(/\D/g, '').length < 11) {
-        showToast('⚠️ Preencha todos os campos corretamente.', 2500);
-        return;
-      }
-      salvarPedidoServidor({
-        tipo: 'assinatura',
-        servico_nome: servicoSelecionadoGlobal.nome,
-        valor: servicoSelecionadoGlobal.preco,
-        cliente_nome: nome,
-        cliente_telefone: telefone,
-        cliente_cpf: cpf,
-        data_assinatura: new Date().toISOString()
-      });
-      document.getElementById('sucessoTitulo').textContent = '✅ Assinatura Confirmada!';
-      document.getElementById('sucessoMensagem').textContent = 'Sua assinatura foi enviada para o gerente. Aguarde o contato.';
-      document.getElementById('sucessoService').textContent = servicoSelecionadoGlobal.nome;
-      document.getElementById('sucessoCliente').textContent = nome;
-      document.getElementById('sucessoDataHora').textContent = 'Assinatura realizada agora';
-      document.getElementById('sucessoProfissional').textContent = '-';
-      document.getElementById('sucessoPagamento').textContent = 'Mensal';
-      document.getElementById('sucessoValor').textContent = formatarPreco(servicoSelecionadoGlobal.preco);
-      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Quero%20assinar%20o%20plano%20' + servicoSelecionadoGlobal.nome;
-      fecharModalAssinatura();
-      document.getElementById('sucessoModal').classList.add('active');
-    }
-
-    // ======== AGENDAMENTO ========
-    function abrirAgendamentoCompleto() {
-      document.getElementById('modalAgendamento').classList.add('active');
-      document.getElementById('agendaNome').value = '';
-      document.getElementById('agendaTelefone').value = '';
-      document.getElementById('agendaData').value = '';
-      document.getElementById('agendaHora').value = '';
-      document.getElementById('agendaObservacoes').value = '';
-      var opts = document.querySelectorAll('#paymentOptionsAgenda .payment-option');
-      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
-      pagamentoSelecionadoAgenda = null;
-      document.getElementById('btnConfirmarAgenda').disabled = true;
-      preencherProfissionais();
-      
-      var hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('agendaData').min = hoje;
-      setTimeout(validarCamposAgenda, 200);
-    }
-
-    function fecharModalAgendamento() {
-      document.getElementById('modalAgendamento').classList.remove('active');
-    }
-
-    function selecionarPagamentoAgenda(el) {
-      var opts = document.querySelectorAll('#paymentOptionsAgenda .payment-option');
-      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
-      el.classList.add('selected');
-      pagamentoSelecionadoAgenda = el.dataset.pagamento;
-      validarCamposAgenda();
-    }
-
-    function validarCamposAgenda() {
-      var nome = document.getElementById('agendaNome').value.trim();
-      var telefone = document.getElementById('agendaTelefone').value.trim();
-      var data = document.getElementById('agendaData').value;
-      var hora = document.getElementById('agendaHora').value;
-      var prof = document.getElementById('profissionalAgenda').value;
-      
-      var valido = true;
-      if (!nome) valido = false;
-      if (!telefone || telefone.replace(/[^0-9]/g, '').length < 10) valido = false;
-      if (!data) valido = false;
-      if (!hora) valido = false;
-      if (!prof) valido = false;
-      
-      var btn = document.getElementById('btnConfirmarAgenda');
-      if (btn) {
-        btn.disabled = !valido;
-        if (valido) {
-          btn.style.opacity = '1';
-          btn.style.cursor = 'pointer';
-        } else {
-          btn.style.opacity = '0.5';
-          btn.style.cursor = 'not-allowed';
-        }
-      }
-    }
-
-    document.getElementById('agendaNome').addEventListener('input', validarCamposAgenda);
-    document.getElementById('agendaTelefone').addEventListener('input', validarCamposAgenda);
-    document.getElementById('agendaData').addEventListener('change', validarCamposAgenda);
-    document.getElementById('agendaHora').addEventListener('change', validarCamposAgenda);
-    document.getElementById('profissionalAgenda').addEventListener('change', validarCamposAgenda);
-
-    function confirmarAgendamento() {
-      var nome = document.getElementById('agendaNome').value.trim();
-      var telefone = document.getElementById('agendaTelefone').value.trim();
-      var data = document.getElementById('agendaData').value;
-      var hora = document.getElementById('agendaHora').value;
-      var servicoValue = document.getElementById('agendaServico').value;
-      var profissionalId = document.getElementById('profissionalAgenda').value;
-      var observacoes = document.getElementById('agendaObservacoes').value.trim();
-      
-      if (!nome || !telefone || !data || !hora || !profissionalId) {
-        showToast('⚠️ Preencha todos os campos obrigatórios.', 2500);
-        return;
-      }
-      
-      if (telefone.replace(/[^0-9]/g, '').length < 10) {
-        showToast('⚠️ Digite um telefone válido (com DDD).', 2500);
-        return;
-      }
-      
-      var servicoNome = 'Agendamento Geral';
-      var valor = 0;
-      if (servicoValue) {
-        for (var i = 0; i < todosServicos.length; i++) {
-          if (todosServicos[i].id == servicoValue) {
-            servicoNome = todosServicos[i].nome;
-            valor = todosServicos[i].preco;
-            break;
-          }
-        }
-      }
-      
-      var selectProf = document.getElementById('profissionalAgenda');
-      var profNome = selectProf.options[selectProf.selectedIndex]?.text || 'Não informado';
-      
-      var dataFormatada = new Date(data + 'T' + hora);
-      var dataStr = dataFormatada.toLocaleDateString('pt-BR');
-      var horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      
-      var pagamentoLabels = { 'pix': 'PIX', 'dinheiro': 'Dinheiro', 'cartao': 'Cartão' };
-      
-      salvarPedidoServidor({
-        tipo: 'agendamento',
-        servico_nome: servicoNome,
-        valor: valor,
-        cliente_nome: nome,
-        cliente_telefone: telefone,
-        data_agendada: data,
-        hora_agendada: hora,
-        corte_em_casa: 'nao',
-        endereco: document.getElementById('bizEndereco').textContent || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280',
-        observacoes: observacoes,
-        pagamento: pagamentoSelecionadoAgenda || '',
-        profissional: profNome
-      });
-      
-      document.getElementById('sucessoTitulo').textContent = '✅ Agendamento Confirmado!';
-      document.getElementById('sucessoMensagem').textContent = 'Seu agendamento foi enviado para o gerente. Aguarde que você será atendido em breve.';
-      document.getElementById('sucessoService').textContent = servicoNome + (valor ? ' (' + formatarPreco(valor) + ')' : '');
-      document.getElementById('sucessoCliente').textContent = nome;
-      document.getElementById('sucessoDataHora').textContent = dataStr + ' às ' + horaStr;
-      document.getElementById('sucessoProfissional').textContent = profNome;
-      document.getElementById('sucessoPagamento').textContent = pagamentoSelecionadoAgenda ? pagamentoLabels[pagamentoSelecionadoAgenda] : 'Não informado';
-      document.getElementById('sucessoValor').textContent = valor ? formatarPreco(valor) : 'Consulte o gerente';
-      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Acabei%20de%20agendar%20um%20serviço%20pelo%20site';
-      
-      fecharModalAgendamento();
-      document.getElementById('sucessoModal').classList.add('active');
-    }
-
-    // ======== FAQ ========
-    function abrirFAQ() { document.getElementById('faqOverlay').classList.add('active'); }
-    function fecharFAQ() { document.getElementById('faqOverlay').classList.remove('active'); }
-
-    // ======== FILTRO ========
-    function filterServices() {
-      var q = document.getElementById('searchInput').value.toLowerCase();
-      var filtered = [];
-      for (var i = 0; i < todosServicos.length; i++) {
-        if (todosServicos[i].nome.toLowerCase().includes(q)) {
-          filtered.push(todosServicos[i]);
-        }
-      }
-      renderServicos(filtered);
-    }
-
-    // ======== FECHAR SUCESSO ========
-    function fecharSucesso() {
-      document.getElementById('sucessoModal').classList.remove('active');
-      servicoSelecionadoGlobal = null;
-    }
-
-    // ======== RENDERIZAÇÃO ========
-    function cardServicoHTML(s) {
-      var img = s.imagem || "static/logo.jpeg";
-      return '<div class="card" onclick="abrirModalSimples({id:' + s.id + ', nome:\'' + s.nome.replace(/'/g, "\\'") + '\', preco:' + s.preco + ', duracao_min:' + s.duracao_min + '})">' +
-        '<div class="thumb"><img src="' + img + '" onerror="this.style.display=\'none\'" loading="lazy"></div>' +
-        '<div class="info"><h3>' + s.nome + '</h3><div class="price">' + formatarPreco(s.preco) + '</div>' +
-        '<div class="duration"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' + s.duracao_min + ' min</div></div>' +
-        '<button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + s.id + ', nome:\'' + s.nome.replace(/'/g, "\\'") + '\', preco:' + s.preco + ', duracao_min:' + s.duracao_min + '})"></button>' +
-      '</div>';
-    }
-
-    function renderServicos(lista) {
-      var c = document.getElementById('servicesList');
-      if (!c) return;
-      if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-          html += cardServicoHTML(lista[i]);
-        }
-        c.innerHTML = html;
-      } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum serviço encontrado.</div>';
-      }
-    }
-
-    function renderAssinaturas(lista) {
-      var container = document.getElementById('assinaturasList');
-      if (!container) return;
-      todosAssinaturas = lista || [];
-      if (!lista || lista.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nenhum plano disponível no momento.</div>';
-        return;
-      }
-      var sorted = lista.slice().sort(function(a, b) {
-        if (a.destaque !== b.destaque) return b.destaque - a.destaque;
-        return (a.ordem || 0) - (b.ordem || 0);
-      });
-      var html = '';
-      for (var i = 0; i < sorted.length; i++) {
-        var plano = sorted[i];
-        var beneficios = plano.beneficios ? plano.beneficios.split('|') : [];
-        var isDestaque = plano.destaque === 1;
-        var icone = plano.icone || '⭐';
-        html += '<div class="plan-card" onclick="abrirModalAssinatura({id:' + plano.id + ', nome:\'' + plano.nome.replace(/'/g, "\\'") + '\', preco:' + plano.preco + '})">' +
-          (isDestaque ? '<div class="badge-destaque">⭐ Destaque</div>' : '') +
-          '<div class="plan-header"><span class="plan-icon">' + icone + '</span>' +
-            '<div><div class="plan-name">' + plano.nome + '</div><div class="plan-desc">' + (plano.descricao || 'Plano personalizado') + '</div></div>' +
-          '</div>' +
-          '<div class="plan-price-wrap"><span class="plan-price">' + formatarPreco(plano.preco) + '</span><span class="plan-period">/mês</span></div>' +
-          (beneficios.length > 0 ? '<div class="benefits-list">' + beneficios.map(function(b) { return '<div class="benefit-item"><span class="benefit-check">✓</span><span>' + b.trim() + '</span></div>'; }).join('') + '</div>' : '') +
-          '<button class="btn-agendar" style="width:100%; padding:13px; border-radius:12px; background:var(--accent-green); color:#000; border:none; font-weight:700; cursor:pointer;" onclick="event.stopPropagation(); abrirModalAssinatura({id:' + plano.id + ', nome:\'' + plano.nome.replace(/'/g, "\\'") + '\', preco:' + plano.preco + '})">📋 Assinar Agora</button>' +
-        '</div>';
-      }
-      container.innerHTML = html;
-    }
-
-    function renderProfissionais(lista) {
-      var c = document.getElementById('profissionaisList');
-      if (!c) return;
-      document.getElementById('profCount').textContent = (lista && lista.length || 0) + ' profissionais';
-      if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-          var p = lista[i];
-          html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + p.nome + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
-        }
-        c.innerHTML = html;
-      } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum profissional cadastrado.</div>';
-      }
-    }
-
-    function renderProdutos(lista) {
-      var c = document.getElementById('produtosList');
-      if (!c) return;
-      document.getElementById('prodCount').textContent = (lista && lista.length || 0) + ' produtos';
-      if (lista && lista.length > 0) {
-        var html = '';
-        for (var i = 0; i < lista.length; i++) {
-          var p = lista[i];
-          html += '<div class="card" onclick="abrirModalSimples({id:' + p.id + ', nome:\'' + p.nome.replace(/'/g, "\\'") + ' (Produto)\', preco:' + p.preco + ', duracao_min:0})"><div class="thumb"><img src="' + (p.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + p.nome + '</h3><div class="price">' + formatarPreco(p.preco) + '</div></div><button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + p.id + ', nome:\'' + p.nome.replace(/'/g, "\\'") + ' (Produto)\', preco:' + p.preco + ', duracao_min:0})"></button></div>';
-        }
-        c.innerHTML = html;
-      } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum produto cadastrado.</div>';
-      }
-    }
-
-    function renderImagens(lista) {
-      var container = document.getElementById('imagensList');
-      if (!container) return;
-      if (!lista || lista.length === 0) {
-        container.innerHTML = '<div class="empty-msg">Nenhuma imagem disponível.</div>';
-        document.getElementById('imagemCount').textContent = '0 imagens';
-        return;
-      }
-      document.getElementById('imagemCount').textContent = lista.length + ' imagens';
-      var html = '';
-      for (var i = 0; i < lista.length; i++) {
-        var img = lista[i];
-        html += '<div class="imagem-item" onclick="window.open(\'fotos/' + img.arquivo + '\', \'_blank\')"><img src="fotos/' + img.arquivo + '" alt="' + img.nome + '" loading="lazy" onerror="this.src=\'static/logo.jpeg\'"><div class="imagem-overlay"><div>' + img.nome + '</div>' + (img.descricao ? '<div style="font-size:.7rem; opacity:0.8;">' + img.descricao + '</div>' : '') + '</div></div>';
-      }
-      container.innerHTML = html;
-    }
-
-    // ======== PREENCHER SELECT AGENDAMENTO ========
-    function preencherSelectAgendamento() {
-      var select = document.getElementById('agendaServico');
-      if (!select) return;
-      select.innerHTML = '<option value="">Não informado</option>';
-      if (todosServicos && todosServicos.length > 0) {
-        for (var i = 0; i < todosServicos.length; i++) {
-          var option = document.createElement('option');
-          option.value = todosServicos[i].id;
-          option.textContent = todosServicos[i].nome + ' - ' + formatarPreco(todosServicos[i].preco);
-          select.appendChild(option);
-        }
-      }
-    }
-
-    // ======== TABS ========
-    var secoes = {
-      servicos: document.getElementById('secServicos'),
-      assinaturas: document.getElementById('secAssinaturas'),
-      profissionais: document.getElementById('secProfissionais'),
-      produtos: document.getElementById('secProdutos'),
-      imagens: document.getElementById('secImagens'),
-    };
-
-    var tabs = document.querySelectorAll('.tab');
-    for (var i = 0; i < tabs.length; i++) {
-      tabs[i].addEventListener('click', function() {
-        var allTabs = document.querySelectorAll('.tab');
-        for (var j = 0; j < allTabs.length; j++) { allTabs[j].classList.remove('active'); }
-        this.classList.add('active');
-        var alvo = this.dataset.tab;
-        var keys = Object.keys(secoes);
-        for (var k = 0; k < keys.length; k++) {
-          secoes[keys[k]].classList.toggle('hidden', keys[k] !== alvo);
-        }
-      });
-    }
-
-    // ======== CARREGAR DADOS ========
     
+    console.log('🔄 Renderizando', servicos ? servicos.length : 0, 'serviços');
     
+    if (!servicos || servicos.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
+        return;
+    }
     
-    async function carregarDados() {
-      try {
+    var html = '';
+    for (var i = 0; i < servicos.length; i++) {
+        var s = servicos[i];
+        var nome = (s.nome || 'Serviço').replace(/'/g, "\'");
+        var preco = s.preco || 0;
+        var duracao = s.duracao_min || 30;
+        var imagem = s.imagem || 'static/logo.jpeg';
+        
+        html += '<div class="card" onclick="abrirModalSimples({id:' + s.id + ', nome:\'' + nome + '\', preco:' + preco + ', duracao_min:' + duracao + '})">';
+        html += '<div class="thumb"><img src="' + imagem + '" onerror="this.style.display=\'none\'" loading="lazy"></div>';
+        html += '<div class="info"><h3>' + (s.nome || 'Serviço') + '</h3>';
+        html += '<div class="price">' + formatarPreco(preco) + '</div>';
+        html += '<div class="duration">⏱️ ' + duracao + ' min</div></div>';
+        html += '<button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + s.id + ', nome:\'' + nome + '\', preco:' + preco + ', duracao_min:' + duracao + '})">+</button>';
+        html += '</div>';
+    }
+    container.innerHTML = html;
+    console.log('✅ Serviços renderizados:', servicos.length);
+}
+
+// ============ CARREGAR DADOS ============
+async function carregarDados() {
+    try {
         console.log('📡 Carregando dados da API...');
-        console.log('🔗 BACKEND_URL:', BACKEND_URL);
+        console.log('🔗 URL:', BACKEND_URL + '/api/servicos');
         
         // Buscar serviços
-        var servRes = await fetch(BACKEND_URL + '/api/servicos');
-        var servicos = await servRes.json();
-        
-        console.log('✅ Serviços carregados:', servicos.length);
-        
-        // Renderizar serviços
-        var container = document.getElementById('servicesList');
-        if (container) {
-          if (servicos && servicos.length > 0) {
-            var html = '';
-            for (var i = 0; i < servicos.length; i++) {
-              var s = servicos[i];
-              html += '<div class="card" onclick="abrirModalSimples({id:' + s.id + ', nome:\'' + (s.nome || '').replace(/'/g, "\'") + '\', preco:' + (s.preco || 0) + ', duracao_min:' + (s.duracao_min || 30) + '})">';
-              html += '<div class="thumb"><img src="' + (s.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div>';
-              html += '<div class="info"><h3>' + (s.nome || 'Serviço') + '</h3>';
-              html += '<div class="price">R$ ' + (s.preco || 0).toFixed(2).replace('.', ',') + '</div>';
-              html += '<div class="duration">⏱️ ' + (s.duracao_min || 30) + ' min</div></div>';
-              html += '<button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + s.id + ', nome:\'' + (s.nome || '').replace(/'/g, "\'") + '\', preco:' + (s.preco || 0) + ', duracao_min:' + (s.duracao_min || 30) + '})">+</button>';
-              html += '</div>';
-            }
-            container.innerHTML = html;
-            console.log('✅ Serviços renderizados:', servicos.length);
-          } else {
-            container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
-          }
+        var response = await fetch(BACKEND_URL + '/api/servicos');
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
         }
+        var servicos = await response.json();
+        console.log('✅ Serviços recebidos:', servicos.length);
+        
+        // Renderizar
+        renderizarServicos(servicos);
         
         // Buscar profissionais
-        var profRes = await fetch(BACKEND_URL + '/api/profissionais');
-        var profissionais = await profRes.json();
-        console.log('✅ Profissionais carregados:', profissionais.length);
-        
-        // Renderizar profissionais
-        var profContainer = document.getElementById('profissionaisList');
-        if (profContainer && profissionais && profissionais.length > 0) {
-          var html = '';
-          for (var i = 0; i < profissionais.length; i++) {
-            var p = profissionais[i];
-            html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
-          }
-          profContainer.innerHTML = html;
-          var profCount = document.getElementById('profCount');
-          if (profCount) profCount.textContent = profissionais.length + ' profissionais';
+        var profResponse = await fetch(BACKEND_URL + '/api/profissionais');
+        if (profResponse.ok) {
+            var profissionais = await profResponse.json();
+            console.log('✅ Profissionais recebidos:', profissionais.length);
+            
+            var profContainer = document.getElementById('profissionaisList');
+            if (profContainer && profissionais.length > 0) {
+                var html = '';
+                for (var i = 0; i < profissionais.length; i++) {
+                    var p = profissionais[i];
+                    html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
+                }
+                profContainer.innerHTML = html;
+            }
         }
         
-      } catch (err) {
-        console.error('❌ Erro ao carregar dados:', err);
+    } catch (err) {
+        console.error('❌ Erro:', err);
         var container = document.getElementById('servicesList');
-        if (container) container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços: ' + err.message + '</div>';
-      }
+        if (container) {
+            container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar: ' + err.message + '</div>';
+        }
     }
+}
 
-
-
-
-    // ======== FECHAR MODAIS ========
-    document.getElementById('modalSimples').addEventListener('click', function(e) {
-      if (e.target === this) fecharModalSimples();
-    });
-    document.getElementById('modalAssinatura').addEventListener('click', function(e) {
-      if (e.target === this) fecharModalAssinatura();
-    });
-    document.getElementById('modalAgendamento').addEventListener('click', function(e) {
-      if (e.target === this) fecharModalAgendamento();
-    });
-    document.getElementById('sucessoModal').addEventListener('click', function(e) {
-      if (e.target === this) fecharSucesso();
-    });
-    document.getElementById('faqOverlay').addEventListener('click', function(e) {
-      if (e.target === this) fecharFAQ();
-    });
-
-    // ======== INICIAR ========
+// ============ INICIAR ============
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Iniciando...');
     carregarDados();
-    console.log('✂️ Leblon Studio carregado!');
-    console.log('📋 WhatsApp:', bizWhatsapp);
-    console.log('📍 Endereço: Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280');
-  </script>
+});
+</script>
+
 </body>
 </html>
