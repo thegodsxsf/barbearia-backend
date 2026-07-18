@@ -14,7 +14,12 @@ DB_PATH = os.path.join(BASE_DIR, "banco.db")
 DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
 
 app = Flask(__name__, static_folder="static")
+from flask_cors import CORS
+CORS(app, supports_credentials=True, origins=["https://barbearia-backend-m1uy.onrender.com", "http://localhost:5000"])
 app.secret_key = "chave-secreta-barbearia"
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 # ============ BASEROW ============
 BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
