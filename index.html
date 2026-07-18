@@ -5,83 +5,326 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barbearia Studio Leblon</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0e;color:#eeeeef;min-height:100vh}
-        .container{max-width:1200px;margin:0 auto;padding:20px}
-        header{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #2a2a32;flex-wrap:wrap;gap:16px}
-        .logo h1{font-size:1.5rem;color:#3ddc84}
-        .logo p{color:#88889a;font-size:.8rem}
-        .nav-links{display:flex;gap:16px;flex-wrap:wrap}
-        .nav-links a{color:#88889a;text-decoration:none;padding:8px 16px;border-radius:8px;transition:.3s;cursor:pointer}
-        .nav-links a:hover,.nav-links a.active{background:#1c1c24;color:#fff}
-        .btn-agendar{background:#3ddc84;color:#000!important;font-weight:600}
-        .btn-agendar:hover{opacity:.85}
-        .hero{text-align:center;padding:40px 0}
-        .hero h2{font-size:2rem;margin-bottom:8px}
-        .hero p{color:#88889a;font-size:1.1rem}
-        .tabs{display:flex;gap:8px;margin:20px 0;flex-wrap:wrap;border-bottom:1px solid #2a2a32;padding-bottom:8px}
-        .tab{padding:10px 20px;border-radius:8px 8px 0 0;cursor:pointer;color:#88889a;transition:.3s}
-        .tab:hover{color:#fff}
-        .tab.active{background:#1c1c24;color:#fff}
-        .tab-content{display:none;padding:20px 0}
-        .tab-content.active{display:block}
-        .services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
-        .service-card{background:#14141a;border:1px solid #2a2a32;border-radius:12px;padding:20px;transition:.3s;cursor:pointer}
-        .service-card:hover{transform:translateY(-4px);border-color:#3ddc84}
-        .service-card h3{font-size:1rem;margin-bottom:8px}
-        .service-card .price{color:#3ddc84;font-size:1.2rem;font-weight:700}
-        .service-card .duration{color:#88889a;font-size:.8rem}
-        .empty-msg{text-align:center;padding:40px;color:#88889a}
-        footer{margin-top:40px;padding:20px 0;border-top:1px solid #2a2a32;text-align:center;color:#88889a;font-size:.8rem}
-        @media(max-width:768px){header{flex-direction:column;text-align:center}.services-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+        :root {
+            --bg: #0a0a0e;
+            --bg-card: #14141a;
+            --border: #2a2a32;
+            --text: #eeeeef;
+            --text-muted: #88889a;
+            --accent: #3ddc84;
+            --red: #e74c3c;
+            --blue: #4a9eff;
+            --gold: #ffd700;
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header .brand img {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #fff;
+        }
+        .header .brand .nome {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .header .brand .sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .header .nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .header .nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .header .nav a:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+        .header .nav a.active {
+            background: var(--accent);
+            color: #000;
+            font-weight: 600;
+        }
+        .btn-agendar {
+            background: var(--accent) !important;
+            color: #000 !important;
+            font-weight: 600;
+        }
+        .btn-agendar:hover {
+            opacity: 0.8;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+        .hero {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .hero p {
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin: 20px 0 16px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        .tab {
+            padding: 8px 18px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+        .tab:hover {
+            color: var(--text);
+        }
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+        .tab-content {
+            display: none;
+            padding: 10px 0 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+        .card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .card .preco {
+            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .card .info {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+        }
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <header>
-        <div class="logo"><h1>✂️ Leblon Studio</h1><p>Av. Liberdade, 1477 - Totó, Recife - PE</p></div>
-        <div class="nav-links">
-            <a class="active" onclick="mostrarTab('servicos')">Serviços</a>
-            <a onclick="mostrarTab('assinaturas')">Assinaturas</a>
-            <a onclick="mostrarTab('profissionais')">Profissionais</a>
-            <a onclick="mostrarTab('produtos')">Produtos</a>
+
+    <header class="header">
+        <div class="brand">
+            <img src="/static/logo.jpeg" alt="Logo" onerror="this.style.display='none'">
+            <div>
+                <div class="nome">Barbearia</div>
+                <div class="sub">Studio Leblon</div>
+            </div>
+        </div>
+        <div class="nav">
+            <a class="active" onclick="mostrarTab('servicos')">✂️ Serviços</a>
+            <a onclick="mostrarTab('assinaturas')">📋 Assinaturas</a>
+            <a onclick="mostrarTab('profissionais')">👤 Profissionais</a>
+            <a onclick="mostrarTab('produtos')">🧴 Produtos</a>
             <a class="btn-agendar" onclick="abrirAgendamento()">📅 Agendar</a>
         </div>
     </header>
-    <div class="hero"><h2>Bem-vindo à Barbearia Studio Leblon</h2><p>🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</p></div>
-    <div class="tabs">
-        <div class="tab active" data-tab="servicos" onclick="mostrarTab('servicos')">✂️ Serviços</div>
-        <div class="tab" data-tab="assinaturas" onclick="mostrarTab('assinaturas')">📋 Assinaturas</div>
-        <div class="tab" data-tab="profissionais" onclick="mostrarTab('profissionais')">👤 Profissionais</div>
-        <div class="tab" data-tab="produtos" onclick="mostrarTab('produtos')">🧴 Produtos</div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Barbearia Studio Leblon</h1>
+            <p>Av. Liberdade, 1477 - Totó, Recife - PE</p>
+            <p style="font-size:0.85rem; margin-top:6px;">🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="servicos" onclick="mostrarTab('servicos')">✂️ Serviços</div>
+            <div class="tab" data-tab="assinaturas" onclick="mostrarTab('assinaturas')">📋 Assinaturas</div>
+            <div class="tab" data-tab="profissionais" onclick="mostrarTab('profissionais')">👤 Profissionais</div>
+            <div class="tab" data-tab="produtos" onclick="mostrarTab('produtos')">🧴 Produtos</div>
+        </div>
+
+        <div id="servicos" class="tab-content active">
+            <div id="servicesList" class="grid"><div class="empty-msg">Carregando serviços...</div></div>
+        </div>
+
+        <div id="assinaturas" class="tab-content">
+            <div id="assinaturasList" class="grid"><div class="empty-msg">Carregando assinaturas...</div></div>
+        </div>
+
+        <div id="profissionais" class="tab-content">
+            <div id="profissionaisList" class="grid"><div class="empty-msg">Carregando profissionais...</div></div>
+        </div>
+
+        <div id="produtos" class="tab-content">
+            <div id="produtosList" class="grid"><div class="empty-msg">Carregando produtos...</div></div>
+        </div>
+
+        <footer>
+            <p>© 2026 Barbearia Studio Leblon - Todos os direitos reservados</p>
+        </footer>
     </div>
-    <div id="servicos" class="tab-content active"><div id="servicesList" class="services-grid"><div class="empty-msg">Carregando serviços...</div></div></div>
-    <div id="assinaturas" class="tab-content"><div id="assinaturasList" class="services-grid"><div class="empty-msg">Carregando assinaturas...</div></div></div>
-    <div id="profissionais" class="tab-content"><div id="profissionaisList" class="services-grid"><div class="empty-msg">Carregando profissionais...</div></div></div>
-    <div id="produtos" class="tab-content"><div id="produtosList" class="services-grid"><div class="empty-msg">Carregando produtos...</div></div></div>
-    <footer><p>© 2026 Barbearia Studio Leblon - Todos os direitos reservados</p></footer>
-</div>
+
 <script>
+// ============ BACKEND URL ============
 const BACKEND_URL = '';
-let todosServicos=[];
 
-function cardServicoHTML(s){return `<div class="service-card" onclick="alert('✂️ ${s.nome}\\n💰 R$ ${(s.preco||0).toFixed(2)}')"><h3>${s.nome||'Serviço'}</h3><div class="price">R$ ${(s.preco||0).toFixed(2)}</div><div class="duration">⏱️ ${s.duracao_min||30} min</div></div>`}
+// ============ RENDER ============
+function renderizar(lista, containerId, template) {
+    var c = document.getElementById(containerId);
+    if (!c) return;
+    if (lista && lista.length > 0) {
+        var html = '';
+        for (var i = 0; i < lista.length; i++) {
+            html += template(lista[i]);
+        }
+        c.innerHTML = html;
+    } else {
+        c.innerHTML = '<div class="empty-msg">Nenhum item disponível.</div>';
+    }
+}
 
-function renderServicos(lista){var c=document.getElementById('servicesList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=cardServicoHTML(lista[i]);c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhum serviço disponível.</div>'}}
+function cardServico(item) {
+    return `<div class="card" onclick="alert('✂️ ${item.nome || ''}\\n💰 R$ ${(item.preco || 0).toFixed(2)}')">
+        <h3>${item.nome || 'Serviço'}</h3>
+        <div class="preco">R$ ${(item.preco || 0).toFixed(2)}</div>
+        <div class="info">⏱️ ${item.duracao_min || 30} min</div>
+    </div>`;
+}
 
-function renderAssinaturas(lista){var c=document.getElementById('assinaturasList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=`<div class="service-card"><h3>${lista[i].nome||'Plano'}</h3><div class="price">R$ ${(lista[i].preco||0).toFixed(2)}/mês</div></div>`;c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhuma assinatura disponível.</div>'}}
+function cardAssinatura(item) {
+    return `<div class="card">
+        <h3>${item.nome || 'Plano'}</h3>
+        <div class="preco">R$ ${(item.preco || 0).toFixed(2)}/mês</div>
+        <div class="info">${item.descricao || ''}</div>
+    </div>`;
+}
 
-function renderProfissionais(lista){var c=document.getElementById('profissionaisList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=`<div class="service-card"><h3>${lista[i].nome||'Profissional'}</h3><div class="duration">${lista[i].especialidade||''}</div></div>`;c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhum profissional disponível.</div>'}}
+function cardProfissional(item) {
+    return `<div class="card">
+        <h3>${item.nome || 'Profissional'}</h3>
+        <div class="info">${item.especialidade || ''}</div>
+    </div>`;
+}
 
-function renderProdutos(lista){var c=document.getElementById('produtosList');if(!c)return;if(lista&&lista.length>0){var html='';for(var i=0;i<lista.length;i++)html+=`<div class="service-card"><h3>${lista[i].nome||'Produto'}</h3><div class="price">R$ ${(lista[i].preco||0).toFixed(2)}</div></div>`;c.innerHTML=html}else{c.innerHTML='<div class="empty-msg">Nenhum produto disponível.</div>'}}
+function cardProduto(item) {
+    return `<div class="card">
+        <h3>${item.nome || 'Produto'}</h3>
+        <div class="preco">R$ ${(item.preco || 0).toFixed(2)}</div>
+    </div>`;
+}
 
-async function carregarDados(){try{var s=await fetch('/api/servicos');var a=await fetch('/api/assinaturas');var p=await fetch('/api/profissionais');var pr=await fetch('/api/produtos');todosServicos=await s.json();var ass=await a.json();var prof=await p.json();var prod=await pr.json();renderServicos(todosServicos);renderAssinaturas(ass);renderProfissionais(prof);renderProdutos(prod)}catch(e){document.getElementById('servicesList').innerHTML='<div class="empty-msg">❌ Erro ao carregar.</div>'}}
+// ============ CARREGAR ============
+async function carregarDados() {
+    try {
+        var s = await fetch('/api/servicos');
+        var a = await fetch('/api/assinaturas');
+        var p = await fetch('/api/profissionais');
+        var pr = await fetch('/api/produtos');
 
-function mostrarTab(tab){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.getElementById(tab)?.classList.add('active');document.querySelector(`.tab[data-tab="${tab}"]`)?.classList.add('active')}
+        var servicos = await s.json();
+        var assinaturas = await a.json();
+        var profissionais = await p.json();
+        var produtos = await pr.json();
 
-function abrirAgendamento(){alert('📅 Agendamento\nWhatsApp: (81) 99999-9999')}
+        renderizar(servicos, 'servicesList', cardServico);
+        renderizar(assinaturas, 'assinaturasList', cardAssinatura);
+        renderizar(profissionais, 'profissionaisList', cardProfissional);
+        renderizar(produtos, 'produtosList', cardProduto);
+    } catch (e) {
+        document.getElementById('servicesList').innerHTML = '<div class="empty-msg">❌ Erro ao carregar dados</div>';
+    }
+}
 
-document.addEventListener('DOMContentLoaded',carregarDados);
+// ============ NAVEGAÇÃO ============
+function mostrarTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    var el = document.getElementById(tab);
+    if (el) el.classList.add('active');
+    var btn = document.querySelector('.tab[data-tab="' + tab + '"]');
+    if (btn) btn.classList.add('active');
+}
+
+function abrirAgendamento() {
+    alert('📅 Agendamento\n📞 WhatsApp: (81) 99999-9999');
+}
+
+// ============ INICIAR ============
+document.addEventListener('DOMContentLoaded', carregarDados);
 </script>
+
 </body>
 </html>
