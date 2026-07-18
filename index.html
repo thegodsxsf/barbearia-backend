@@ -1413,14 +1413,32 @@ async function mostrarHorariosOcupados(data) {
       '</div>';
     }
 
+    
     function renderServicos(lista) {
+      console.log('🔍 renderServicos chamado com:', lista ? lista.length : 0, 'itens');
       var c = document.getElementById('servicesList');
-      if (!c) return;
+      console.log('📦 Elemento servicesList:', c);
+      
+      if (!c) {
+        console.error('❌ Elemento servicesList não encontrado!');
+        return;
+      }
+      
       if (lista && lista.length > 0) {
+        console.log('✅ Renderizando', lista.length, 'serviços');
         var html = '';
         for (var i = 0; i < lista.length; i++) {
+          console.log('📝 Serviço:', lista[i].nome, 'R$', lista[i].preco);
           html += cardServicoHTML(lista[i]);
         }
+        c.innerHTML = html;
+        console.log('✅ HTML inserido com sucesso!');
+      } else {
+        console.warn('⚠️ Lista de serviços vazia!');
+        c.innerHTML = '<div class="empty-msg">Nenhum serviço encontrado.</div>';
+      }
+    }
+
         c.innerHTML = html;
       } else {
         c.innerHTML = '<div class="empty-msg">Nenhum serviço encontrado.</div>';
