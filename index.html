@@ -1397,48 +1397,67 @@
 
     // ======== CARREGAR DADOS ========
     
+    
     async function carregarDados() {
       try {
-        console.log('📡 Carregando dados do SQLite...');
+        console.log('📡 Carregando dados da API...');
         
-        // Buscar serviços do backend
+        // Buscar serviços
         var servRes = await fetch('/api/servicos');
-        var profRes = await fetch('/api/profissionais');
-        var assRes = await fetch('/api/assinaturas');
-        var prodRes = await fetch('/api/produtos');
-        var imgRes = await fetch('/api/imagens');
-
         var servicos = await servRes.json();
-        var profissionais = await profRes.json();
-        var assinaturas = await assRes.json();
-        var produtos = await prodRes.json();
-        var imagens = await imgRes.json();
-
-        console.log('✅ Dados carregados:', {
-          servicos: servicos.length,
-          profissionais: profissionais.length,
-          assinaturas: assinaturas.length,
-          produtos: produtos.length,
-          imagens: imagens.length
-        });
+        
+        console.log('✅ Serviços carregados:', servicos.length);
+        console.log('📦 Primeiro serviço:', servicos[0]);
         
         // Renderizar serviços
-        renderServicos(servicos);
-        renderAssinaturas(assinaturas);
-        renderProfissionais(profissionais);
-        renderProdutos(produtos);
-        renderImagens(imagens);
+        var container = document.getElementById('servicesList');
+        if (container) {
+          if (servicos && servicos.length > 0) {
+            var html = '';
+            for (var i = 0; i < servicos.length; i++) {
+              var s = servicos[i];
+              html += '<div class="card" onclick="abrirModalSimples({id:' + s.id + ', nome:\'' + (s.nome || '').replace(/'/g, "\'") + '\', preco:' + (s.preco || 0) + ', duracao_min:' + (s.duracao_min || 30) + '})">';
+              html += '<div class="thumb"><img src="' + (s.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div>';
+              html += '<div class="info"><h3>' + (s.nome || 'Serviço') + '</h3>';
+              html += '<div class="price">R$ ' + (s.preco || 0).toFixed(2).replace('.', ',') + '</div>';
+              html += '<div class="duration">⏱️ ' + (s.duracao_min || 30) + ' min</div></div>';
+              html += '<button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + s.id + ', nome:\'' + (s.nome || '').replace(/'/g, "\'") + '\', preco:' + (s.preco || 0) + ', duracao_min:' + (s.duracao_min || 30) + '})">+</button>';
+              html += '</div>';
+            }
+            container.innerHTML = html;
+            console.log('✅ Serviços renderizados:', servicos.length);
+          } else {
+            container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
+            console.warn('⚠️ Nenhum serviço para renderizar');
+          }
+        } else {
+          console.error('❌ Container servicesList não encontrado!');
+        }
         
-        // Preencher selects
-        preencherSelectAgendamento();
-        preencherProfissionais();
+        // Buscar profissionais
+        var profRes = await fetch('/api/profissionais');
+        var profissionais = await profRes.json();
+        console.log('✅ Profissionais carregados:', profissionais.length);
+        
+        // Renderizar profissionais
+        var profContainer = document.getElementById('profissionaisList');
+        if (profContainer && profissionais && profissionais.length > 0) {
+          var html = '';
+          for (var i = 0; i < profissionais.length; i++) {
+            var p = profissionais[i];
+            html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
+          }
+          profContainer.innerHTML = html;
+          document.getElementById('profCount').textContent = profissionais.length + ' profissionais';
+        }
         
       } catch (err) {
         console.error('❌ Erro ao carregar dados:', err);
-        var c = document.getElementById('servicesList');
-        if (c) c.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços</div>';
+        var container = document.getElementById('servicesList');
+        if (container) container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços</div>';
       }
     }
+
 
 
     // ======== FECHAR MODAIS ========
