@@ -1396,54 +1396,50 @@
     }
 
     // ======== CARREGAR DADOS ========
+    
     async function carregarDados() {
       try {
-        var bizRes = await fetch('/api/barbearia');
-        if (bizRes.ok) {
-          var biz = await bizRes.json();
-          document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
-          document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
-          if (biz.logo) {
-            document.getElementById('coverLogo').src = biz.logo;
-            document.getElementById('infoLogo').src = biz.logo;
-          }
-          if (biz.whatsapp) {
-            bizWhatsapp = biz.whatsapp;
-          }
-        }
+        console.log('📡 Carregando dados do SQLite...');
         
+        // Buscar serviços do backend
         var servRes = await fetch('/api/servicos');
-        var assRes = await fetch('/api/assinaturas');
         var profRes = await fetch('/api/profissionais');
+        var assRes = await fetch('/api/assinaturas');
         var prodRes = await fetch('/api/produtos');
         var imgRes = await fetch('/api/imagens');
 
-        todosServicos = await servRes.json();
-        var assinaturas = await assRes.json();
+        var servicos = await servRes.json();
         var profissionais = await profRes.json();
+        var assinaturas = await assRes.json();
         var produtos = await prodRes.json();
         var imagens = await imgRes.json();
 
-        renderServicos(todosServicos);
-        renderAssinaturas(assinaturas);
-        renderProfissionais(profissionais);
-        renderProdutos(produtos);
-        renderImagens(imagens);
-        preencherSelectAgendamento();
-        preencherProfissionais();
-        
         console.log('✅ Dados carregados:', {
-          servicos: todosServicos.length,
+          servicos: servicos.length,
           profissionais: profissionais.length,
           assinaturas: assinaturas.length,
           produtos: produtos.length,
           imagens: imagens.length
         });
         
+        // Renderizar serviços
+        renderServicos(servicos);
+        renderAssinaturas(assinaturas);
+        renderProfissionais(profissionais);
+        renderProdutos(produtos);
+        renderImagens(imagens);
+        
+        // Preencher selects
+        preencherSelectAgendamento();
+        preencherProfissionais();
+        
       } catch (err) {
-        console.error('Erro ao carregar dados:', err);
+        console.error('❌ Erro ao carregar dados:', err);
+        var c = document.getElementById('servicesList');
+        if (c) c.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços</div>';
       }
     }
+
 
     // ======== FECHAR MODAIS ========
     document.getElementById('modalSimples').addEventListener('click', function(e) {
