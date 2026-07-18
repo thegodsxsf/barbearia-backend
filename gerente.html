@@ -13,23 +13,16 @@
     --text: #eeeeef;
     --text-muted: #88889a;
     --accent: #3ddc84;
-    --accent-dark: #2d9d6b;
     --red: #e74c3c;
     --blue: #4a9eff;
     --gold: #ffd700;
     --radius: 12px;
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
-  body{
-    background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    display:flex; min-height:100vh;
-  }
+  body{ background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display:flex; min-height:100vh; }
   a{ color:inherit; text-decoration:none; }
   ::-webkit-scrollbar{ width:4px; }
-  ::-webkit-scrollbar-track{ background:transparent; }
   ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
-  ::-webkit-scrollbar-thumb:hover{ background:var(--accent); }
 
   .sidebar{
     width: 260px; background: var(--bg-card); border-right:1px solid var(--border);
@@ -73,7 +66,6 @@
   .topo p{ color:var(--text-muted); font-size:.8rem; margin-top:2px; }
   .btn-refresh{ background: var(--bg-elevated); border:1px solid var(--border); color:var(--text); padding:8px 14px; border-radius:8px; cursor:pointer; font-size:.75rem; font-weight:600; transition:.2s; }
   .btn-refresh:hover{ border-color:var(--accent); }
-
   .hidden{ display:none !important; }
 
   .stats-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:24px; }
@@ -104,8 +96,6 @@
   .status-confirmado{ background: rgba(74,158,255,0.15); color:var(--blue); }
   .status-concluido{ background: rgba(61,220,132,0.15); color: var(--accent); }
   .status-cancelado{ background: rgba(231,76,60,0.15); color: var(--red); }
-  .status-aberta{ background: rgba(74,158,255,0.15); color:var(--blue); }
-  .status-paga{ background: rgba(61,220,132,0.15); color: var(--accent); }
 
   .tabela-scroll{ overflow-x:auto; }
   .acoes{ display:flex; gap:4px; flex-wrap:wrap; }
@@ -115,35 +105,27 @@
   .btn-mini.blue{ background: var(--blue); color:#fff; }
   .btn-mini.gray{ background: var(--bg-elevated); color:var(--text); border:1px solid var(--border); }
   .btn-mini.red{ background: var(--red); color:#fff; }
-  .btn-mini.gold{ background: var(--gold); color:#000; }
-
   .btn-add{ background: var(--accent); color:#000; border:none; padding:8px 14px; border-radius:8px; font-weight:700; font-size:.75rem; cursor:pointer; transition:.2s; }
   .btn-add:hover{ opacity:0.85; }
   .btn-add:active{ transform:scale(0.95); }
-
   .empty-msg{ text-align:center; color:var(--text-muted); padding:20px 0; font-size:.8rem; }
 
   .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; backdrop-filter:blur(4px); }
   .modal-overlay.active{ display:flex; }
   .modal{ background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:22px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; }
   .modal h2{ font-size:1.1rem; margin-bottom:16px; }
-  .modal .subtitulo{ color:var(--text-muted); font-size:.8rem; margin-bottom:12px; }
   .form-group{ margin-bottom:12px; }
   .form-group label{ display:block; font-size:.75rem; font-weight:600; color:var(--text-muted); margin-bottom:4px; }
   .form-group label .required{ color:var(--red); }
   .form-group input, .form-group select, .form-group textarea{ width:100%; padding:8px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.85rem; outline:none; transition:.2s; }
   .form-group input:focus, .form-group select:focus, .form-group textarea:focus{ border-color:var(--accent); }
   .form-group textarea{ min-height:50px; resize:vertical; }
-  .form-row{ display:flex; gap:10px; }
-  .form-row .form-group{ flex:1; }
   .modal-acoes{ display:flex; gap:10px; margin-top:6px; }
   .modal-acoes button{ flex:1; padding:10px; border-radius:8px; font-weight:700; font-size:.85rem; border:none; cursor:pointer; transition:.2s; }
   .modal-acoes button:active{ transform:scale(0.97); }
   .btn-salvar{ background: var(--accent); color:#000; }
   .btn-cancelar{ background: var(--bg-elevated); color:var(--text); border:1px solid var(--border) !important; }
-
   .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--bg-elevated); border:1px solid var(--border); color:var(--text); padding:10px 22px; border-radius:var(--radius); font-weight:600; font-size:.8rem; z-index:2000; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
-
   .btn-menu{ display:none; background:var(--bg-elevated); border:1px solid var(--border); color:var(--text); width:36px; height:36px; border-radius:8px; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; }
   .btn-menu:hover{ border-color:var(--accent); }
 
@@ -168,56 +150,25 @@
     </div>
 
     <div class="grupo-label">Operação</div>
-    <div class="nav-link active" data-secao="inicio">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Início
-    </div>
-    <div class="nav-link" data-secao="pedidos">
-      <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Pedidos &amp; Agenda
-      <span class="badge hidden" id="badgePendentes">0</span>
-    </div>
-
-    <div class="grupo-label">Clientes</div>
-    <div class="nav-link" data-secao="clientes">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Gerenciar Clientes
-    </div>
+    <div class="nav-link active" data-secao="inicio"><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> Início</div>
+    <div class="nav-link" data-secao="pedidos"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Pedidos & Agenda<span class="badge hidden" id="badgePendentes">0</span></div>
+    <div class="nav-link" data-secao="clientes"><span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Gerenciar Clientes</div>
 
     <div class="grupo-label">Catálogo</div>
-    <div class="nav-link" data-secao="servicos">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Serviços
-    </div>
-    <div class="nav-link" data-secao="produtos">
-      <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Produtos
-    </div>
-    <div class="nav-link" data-secao="equipe">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Equipe
-    </div>
-    <div class="nav-link" data-secao="assinaturas">
-      <span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> Planos
-    </div>
+    <div class="nav-link" data-secao="servicos"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Serviços</div>
+    <div class="nav-link" data-secao="produtos"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Produtos</div>
+    <div class="nav-link" data-secao="equipe"><span class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Equipe</div>
+    <div class="nav-link" data-secao="assinaturas"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> Planos</div>
 
     <div class="grupo-label">Financeiro</div>
-    <div class="nav-link" data-secao="comandas">
-      <span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Comandas
-      <span class="badge hidden" id="badgeComandas">0</span>
-    </div>
-    <div class="nav-link" data-secao="repasses">
-      <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Repasses
-      <span class="badge hidden" id="badgeRepasses">0</span>
-    </div>
-    <div class="nav-link" data-secao="caixa">
-      <span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span> Caixa
-    </div>
-    <div class="nav-link" data-secao="relatorios">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Relatórios
-    </div>
+    <div class="nav-link" data-secao="comandas"><span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Comandas<span class="badge hidden" id="badgeComandas">0</span></div>
+    <div class="nav-link" data-secao="repasses"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Repasses<span class="badge hidden" id="badgeRepasses">0</span></div>
+    <div class="nav-link" data-secao="caixa"><span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span> Caixa</div>
+    <div class="nav-link" data-secao="relatorios"><span class="icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Relatórios</div>
 
     <div class="grupo-label">Configurações</div>
-    <div class="nav-link" data-secao="horarios">
-      <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Horários
-    </div>
-    <div class="nav-link" data-secao="perfil">
-      <span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Minha Conta
-    </div>
+    <div class="nav-link" data-secao="horarios"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Horários</div>
+    <div class="nav-link" data-secao="perfil"><span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Minha Conta</div>
 
     <div class="sidebar-footer">
       <div class="nome" id="nomeGerente">👤 Gerente</div>
@@ -229,18 +180,15 @@
     <div class="topo">
       <div style="display:flex; align-items:center; gap:12px;">
         <button class="btn-menu" onclick="document.getElementById('sidebar').classList.toggle('aberta')">☰</button>
-        <div>
-          <h1 id="tituloSecao">Início</h1>
-          <p id="subtituloSecao">Visão geral da barbearia</p>
-        </div>
+        <div><h1 id="tituloSecao">Início</h1><p id="subtituloSecao">Visão geral da barbearia</p></div>
       </div>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000; border-color:var(--accent);">🔊 Som Ligado</button>
+        <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000;">🔊 Som Ligado</button>
         <button class="btn-refresh" onclick="recarregarSecaoAtual()">🔄 Atualizar</button>
       </div>
     </div>
 
-    <!-- ===== INÍCIO ===== -->
+    <!-- INÍCIO -->
     <div id="secInicio">
       <div class="stats-grid">
         <div class="stat-card"><div class="label">💰 Faturamento Total</div><div class="valor green" id="statFaturamento">R$ 0,00</div></div>
@@ -248,24 +196,19 @@
         <div class="stat-card"><div class="label">⏳ Pedidos Pendentes</div><div class="valor" id="statPendentes">0</div></div>
         <div class="stat-card"><div class="label">📅 Agendamentos Hoje</div><div class="valor" id="statHoje">0</div></div>
         <div class="stat-card"><div class="label">👥 Clientes Atendidos</div><div class="valor" id="statClientes">0</div></div>
-        <div class="stat-card"><div class="label">⭐ Assinaturas Ativas</div><div class="valor gold" id="statAssinaturas">0</div></div>
         <div class="stat-card"><div class="label">📋 Comandas Abertas</div><div class="valor blue" id="statComandas">0</div></div>
         <div class="stat-card"><div class="label">💰 Repasses Pendentes</div><div class="valor red" id="statRepasses">0</div></div>
       </div>
       <div class="card-secao">
         <div class="cabecalho"><h2>📋 Últimos pedidos recebidos</h2></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Recebido em</th></tr></thead>
-          <tbody id="tabelaInicioPedidos"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Recebido em</th></tr></thead><tbody id="tabelaInicioPedidos"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== PEDIDOS ===== -->
+    <!-- PEDIDOS -->
     <div id="secPedidos" class="hidden">
       <div class="card-secao">
-        <div class="cabecalho">
-          <h2>📋 Pedidos e Agendamentos</h2>
+        <div class="cabecalho"><h2>📋 Pedidos e Agendamentos</h2>
           <div class="filtros" id="filtrosPedidos">
             <div class="filtro-btn active" data-status="">Todos</div>
             <div class="filtro-btn" data-status="pendente">Pendentes</div>
@@ -274,98 +217,73 @@
             <div class="filtro-btn" data-status="cancelado">Cancelados</div>
           </div>
         </div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Cliente</th><th>Contato</th><th>CPF</th><th>Serviço</th><th>Profissional</th><th>Data/Hora</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaPedidos"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Cliente</th><th>Contato</th><th>CPF</th><th>Serviço</th><th>Profissional</th><th>Data/Hora</th><th>Valor</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tabelaPedidos"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== CLIENTES ===== -->
+    <!-- CLIENTES -->
     <div id="secClientes" class="hidden">
       <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
         <button class="btn-add" onclick="abrirModalCliente()" style="padding:12px 24px;">➕ NOVO CLIENTE</button>
         <div style="flex:1; display:flex; gap:8px;">
-          <input type="text" id="buscaCliente" placeholder="🔍 Buscar cliente por nome, telefone ou CPF..." 
-                 style="flex:1; padding:10px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.85rem;">
-          <button class="btn-add" onclick="carregarClientes()" style="padding:10px 20px;">Buscar</button>
-          <button class="btn-refresh" onclick="carregarClientes(); document.getElementById('buscaCliente').value='';" style="padding:10px 16px;">🔄</button>
+          <input type="text" id="buscaCliente" placeholder="🔍 Buscar cliente..." style="flex:1; padding:10px 14px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text);">
+          <button class="btn-add" onclick="carregarClientes()">Buscar</button>
+          <button class="btn-refresh" onclick="carregarClientes(); document.getElementById('buscaCliente').value='';">🔄</button>
         </div>
       </div>
       <div class="card-secao">
-        <div class="cabecalho"><h2>👥 Lista de Clientes Cadastrados</h2></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Nome</th><th>Telefone</th><th>CPF</th><th>Email</th><th>Endereço</th><th>Nascimento</th><th>Cadastro</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaClientes"></tbody>
-        </table></div>
+        <div class="cabecalho"><h2>👥 Lista de Clientes</h2></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Telefone</th><th>CPF</th><th>Email</th><th>Endereço</th><th>Nascimento</th><th>Cadastro</th><th>Ações</th></tr></thead><tbody id="tabelaClientes"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== SERVIÇOS ===== -->
+    <!-- SERVIÇOS -->
     <div id="secServicos" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>✂️ Serviços</h2><button class="btn-add" onclick="abrirModalItem('servicos')">+ Novo Serviço</button></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Nome</th><th>Preço</th><th>Duração</th><th>Ativo</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaServicos"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço</th><th>Duração</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaServicos"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== PRODUTOS ===== -->
+    <!-- PRODUTOS -->
     <div id="secProdutos" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>🧴 Produtos</h2><button class="btn-add" onclick="abrirModalItem('produtos')">+ Novo Produto</button></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Nome</th><th>Preço</th><th>Ativo</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaProdutos"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaProdutos"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== EQUIPE ===== -->
+    <!-- EQUIPE -->
     <div id="secEquipe" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>👤 Equipe</h2><button class="btn-add" onclick="abrirModalItem('profissionais')">+ Novo Profissional</button></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Nome</th><th>Especialidade</th><th>Ativo</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaEquipe"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Especialidade</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaEquipe"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== PLANOS ===== -->
+    <!-- PLANOS -->
     <div id="secAssinaturas" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>📋 Planos de Assinatura</h2><button class="btn-add" onclick="abrirModalItem('assinaturas')">+ Novo Plano</button></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Nome</th><th>Preço/mês</th><th>Destaque</th><th>Ativo</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaAssinaturas"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço/mês</th><th>Destaque</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaAssinaturas"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== COMANDAS ===== -->
+    <!-- COMANDAS -->
     <div id="secComandas" class="hidden">
       <div class="card-secao">
-        <div class="cabecalho">
-          <h2>📋 Comandas</h2>
-          <button class="btn-add" onclick="abrirModalComanda()">+ Nova Comanda</button>
-        </div>
+        <div class="cabecalho"><h2>📋 Comandas</h2><button class="btn-add" onclick="abrirModalComanda()">+ Nova Comanda</button></div>
         <div class="filtros" style="margin-bottom:12px;">
           <div class="filtro-btn active" data-status="">Todas</div>
           <div class="filtro-btn" data-status="aberta">Abertas</div>
           <div class="filtro-btn" data-status="paga">Pagas</div>
           <div class="filtro-btn" data-status="cancelada">Canceladas</div>
         </div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Ticket</th><th>Cliente</th><th>Profissional</th><th>Serviços</th><th>Valor</th><th>Status</th><th>Pagamento</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaComandas"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Ticket</th><th>Cliente</th><th>Profissional</th><th>Serviços</th><th>Valor</th><th>Status</th><th>Pagamento</th><th>Ações</th></tr></thead><tbody id="tabelaComandas"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== REPASSES ===== -->
+    <!-- REPASSES -->
     <div id="secRepasses" class="hidden">
       <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card"><div class="label">Total Pendente</div><div class="valor red" id="repTotalPendente">R$ 0,00</div></div>
@@ -373,18 +291,12 @@
         <div class="stat-card"><div class="label">Total Geral</div><div class="valor blue" id="repTotalGeral">R$ 0,00</div></div>
       </div>
       <div class="card-secao">
-        <div class="cabecalho">
-          <h2>💰 Repasses por Profissional</h2>
-          <button class="btn-add" onclick="abrirModalRepasse()">+ Adicionar Repasse</button>
-        </div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Profissional</th><th>Serviço</th><th>Valor Serviço</th><th>Comissão (50%)</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaRepasses"></tbody>
-        </table></div>
+        <div class="cabecalho"><h2>💰 Repasses</h2><button class="btn-add" onclick="abrirModalRepasse()">+ Adicionar Repasse</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Profissional</th><th>Serviço</th><th>Valor Serviço</th><th>Comissão</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead><tbody id="tabelaRepasses"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== CAIXA ===== -->
+    <!-- CAIXA -->
     <div id="secCaixa" class="hidden">
       <div class="stats-grid">
         <div class="stat-card"><div class="label">📈 Entradas</div><div class="valor green" id="caixaEntradas">R$ 0,00</div></div>
@@ -393,19 +305,16 @@
       </div>
       <div class="card-secao">
         <div class="cabecalho"><h2>💰 Movimentações</h2><button class="btn-add" onclick="abrirModalCaixa()">+ Lançamento</button></div>
-        <div class="tabela-scroll"><table>
-          <thead><tr><th>Tipo</th><th>Descrição</th><th>Pagamento</th><th>Valor</th><th>Data</th><th>Ações</th></tr></thead>
-          <tbody id="tabelaCaixa"></tbody>
-        </table></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Tipo</th><th>Descrição</th><th>Pagamento</th><th>Valor</th><th>Data</th><th>Ações</th></tr></thead><tbody id="tabelaCaixa"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ===== RELATÓRIOS ===== -->
+    <!-- RELATÓRIOS -->
     <div id="secRelatorios" class="hidden">
       <div class="card-secao" style="text-align:center; padding:30px;">
-        <h2 style="margin-bottom:16px;">📊 Relatórios</h2>
+        <h2>📊 Relatórios</h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Baixe relatórios completos do sistema</p>
-        <button class="btn-add" onclick="baixarRelatorio()" style="padding:12px 24px; font-size:.9rem;">📥 Baixar Relatório PDF</button>
+        <button class="btn-add" onclick="baixarRelatorio()" style="padding:12px 24px;">📥 Baixar Relatório PDF</button>
         <div style="margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px;">
           <div class="stat-card"><div class="label">Total Pedidos</div><div class="valor" id="relPedidos">0</div></div>
           <div class="stat-card"><div class="label">Total Comandas</div><div class="valor" id="relComandas">0</div></div>
@@ -415,55 +324,20 @@
       </div>
     </div>
 
-    <!-- ===== HORÁRIOS ===== -->
+    <!-- HORÁRIOS -->
     <div id="secHorarios" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>🕐 Horários de Atendimento</h2></div>
-        <p style="color:var(--text-muted); margin-bottom:16px;">Configure os dias e horários que você atende</p>
+        <p style="color:var(--text-muted); margin-bottom:16px;">Configure os dias e horários de atendimento</p>
         <div id="horariosGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:12px;"></div>
         <button class="btn-add" onclick="salvarHorarios()" style="width:100%; margin-top:16px;">💾 Salvar Horários</button>
       </div>
     </div>
 
-    <!-- ===== PERSONALIZAR ===== -->
-    <div id="secPersonalizar" class="hidden">
-      <div class="card-secao">
-        <div class="cabecalho"><h2>🎨 Personalizar Site</h2></div>
-        <p style="color:var(--text-muted); margin-bottom:14px;">Altere cores, textos e informações do site.</p>
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:14px;">
-          <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px;">
-            <h3 style="font-size:.85rem; margin-bottom:10px;">📌 Informações</h3>
-            <div class="form-group"><label>Nome da Barbearia</label><input type="text" id="configNome" placeholder="Nome"></div>
-            <div class="form-group"><label>Endereço</label><input type="text" id="configEndereco" placeholder="Endereço"></div>
-            <div class="form-group"><label>WhatsApp</label><input type="text" id="configWhatsapp" placeholder="5581999999999"></div>
-            <button class="btn-add" onclick="salvarConfigBasica()" style="width:100%;">💾 Salvar</button>
-          </div>
-          <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px;">
-            <h3 style="font-size:.85rem; margin-bottom:10px;">🎨 Cores</h3>
-            <div class="form-group"><label>Cor Principal</label><input type="color" id="configCorPrimaria" value="#3ddc84"></div>
-            <div class="form-group"><label>Cor de Fundo</label><input type="color" id="configCorFundo" value="#0a0a0e"></div>
-            <div class="form-group"><label>Cor do Texto</label><input type="color" id="configCorTexto" value="#eeeeef"></div>
-            <button class="btn-add" onclick="salvarCores()" style="width:100%;">💾 Salvar Cores</button>
-          </div>
-          <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px;">
-            <h3 style="font-size:.85rem; margin-bottom:10px;">🖼️ Logo</h3>
-            <div class="form-group"><label>URL da Logo</label><input type="text" id="configLogo" placeholder="static/logo.jpeg"></div>
-            <button class="btn-add" onclick="salvarLogo()" style="width:100%;">💾 Salvar</button>
-            <div style="margin-top:8px;">
-              <label style="font-size:.7rem; color:var(--text-muted);">Prévia:</label>
-              <div style="width:60px; height:60px; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-top:4px; background:#fff;">
-                <img id="previewLogo" src="/static/logo.jpeg" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== PERFIL ===== -->
+    <!-- PERFIL -->
     <div id="secPerfil" class="hidden">
       <div class="card-secao" style="max-width:500px;">
-        <h2 style="margin-bottom:16px;">👤 Minha Conta</h2>
+        <h2>👤 Minha Conta</h2>
         <div style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">
           <h3 style="font-size:.85rem; margin-bottom:8px;">📝 Alterar Nome</h3>
           <div class="form-group"><label>Novo nome</label><input type="text" id="novoNome" placeholder="Digite seu novo nome"></div>
@@ -481,164 +355,78 @@
     </div>
   </div>
 
-  <!-- ===== MODAL CLIENTE ===== -->
+  <!-- MODAL CLIENTE -->
   <div class="modal-overlay" id="modalCliente">
     <div class="modal" style="max-width:600px;">
       <h2 id="modalClienteTitulo">👤 Novo Cliente</h2>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <div class="form-group" style="grid-column: span 2;">
-          <label>Nome completo <span class="required">*</span></label>
-          <input type="text" id="clienteNomeModal" placeholder="Nome completo">
-        </div>
-        <div class="form-group">
-          <label>Telefone <span class="required">*</span></label>
-          <input type="tel" id="clienteTelefoneModal" placeholder="(81) 99999-9999">
-        </div>
-        <div class="form-group">
-          <label>CPF</label>
-          <input type="text" id="clienteCpfModal" placeholder="000.000.000-00" maxlength="14">
-        </div>
-        <div class="form-group" style="grid-column: span 2;">
-          <label>Email</label>
-          <input type="email" id="clienteEmailModal" placeholder="cliente@email.com">
-        </div>
-        <div class="form-group">
-          <label>Data de Nascimento</label>
-          <input type="date" id="clienteNascimentoModal">
-        </div>
-        <div class="form-group">
-          <label>Gênero</label>
-          <select id="clienteGeneroModal">
-            <option value="">Selecione</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Feminino">Feminino</option>
-            <option value="Outro">Outro</option>
-            <option value="Prefiro não informar">Prefiro não informar</option>
-          </select>
-        </div>
-        <div class="form-group" style="grid-column: span 2;">
-          <label>Endereço</label>
-          <input type="text" id="clienteEnderecoModal" placeholder="Rua, Avenida...">
-        </div>
-        <div class="form-group">
-          <label>Número</label>
-          <input type="text" id="clienteNumeroModal" placeholder="123">
-        </div>
-        <div class="form-group">
-          <label>Complemento</label>
-          <input type="text" id="clienteComplementoModal" placeholder="Apto, Bloco...">
-        </div>
-        <div class="form-group">
-          <label>Bairro</label>
-          <input type="text" id="clienteBairroModal" placeholder="Bairro">
-        </div>
-        <div class="form-group">
-          <label>Cidade</label>
-          <input type="text" id="clienteCidadeModal" placeholder="Cidade">
-        </div>
-        <div class="form-group">
-          <label>Estado</label>
-          <select id="clienteEstadoModal">
-            <option value="">Selecione</option>
-            <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
-            <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
-            <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
-            <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
-            <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
-            <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
-            <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
-            <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
-            <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>CEP</label>
-          <input type="text" id="clienteCepModal" placeholder="00000-000" maxlength="9">
-        </div>
-        <div class="form-group" style="grid-column: span 2;">
-          <label>Observações</label>
-          <textarea id="clienteObsModal" placeholder="Observações sobre o cliente" rows="2"></textarea>
-        </div>
+        <div class="form-group" style="grid-column: span 2;"><label>Nome completo <span class="required">*</span></label><input type="text" id="clienteNomeModal" placeholder="Nome completo"></div>
+        <div class="form-group"><label>Telefone <span class="required">*</span></label><input type="tel" id="clienteTelefoneModal" placeholder="(81) 99999-9999"></div>
+        <div class="form-group"><label>CPF</label><input type="text" id="clienteCpfModal" placeholder="000.000.000-00" maxlength="14"></div>
+        <div class="form-group" style="grid-column: span 2;"><label>Email</label><input type="email" id="clienteEmailModal" placeholder="cliente@email.com"></div>
+        <div class="form-group"><label>Data Nascimento</label><input type="date" id="clienteNascimentoModal"></div>
+        <div class="form-group"><label>Gênero</label><select id="clienteGeneroModal"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option></select></div>
+        <div class="form-group" style="grid-column: span 2;"><label>Endereço</label><input type="text" id="clienteEnderecoModal" placeholder="Rua, Avenida..."></div>
+        <div class="form-group"><label>Número</label><input type="text" id="clienteNumeroModal" placeholder="123"></div>
+        <div class="form-group"><label>Complemento</label><input type="text" id="clienteComplementoModal" placeholder="Apto"></div>
+        <div class="form-group"><label>Bairro</label><input type="text" id="clienteBairroModal" placeholder="Bairro"></div>
+        <div class="form-group"><label>Cidade</label><input type="text" id="clienteCidadeModal" placeholder="Cidade"></div>
+        <div class="form-group"><label>Estado</label><select id="clienteEstadoModal"><option value="">Selecione</option><option>PE</option><option>SP</option><option>RJ</option></select></div>
+        <div class="form-group"><label>CEP</label><input type="text" id="clienteCepModal" placeholder="00000-000" maxlength="9"></div>
+        <div class="form-group" style="grid-column: span 2;"><label>Observações</label><textarea id="clienteObsModal" rows="2"></textarea></div>
       </div>
-      <div class="modal-acoes">
-        <button class="btn-cancelar" onclick="fecharModalCliente()">Cancelar</button>
-        <button class="btn-salvar" onclick="salvarCliente()">Salvar</button>
-      </div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalCliente()">Cancelar</button><button class="btn-salvar" onclick="salvarCliente()">Salvar</button></div>
     </div>
   </div>
 
-  <!-- ===== MODAL ITEM ===== -->
+  <!-- MODAL ITEM -->
   <div class="modal-overlay" id="modalItem">
     <div class="modal">
       <h2 id="modalItemTitulo">Novo item</h2>
       <div id="modalItemCampos"></div>
-      <div class="modal-acoes">
-        <button class="btn-cancelar" onclick="fecharModalItem()">Cancelar</button>
-        <button class="btn-salvar" onclick="salvarItem()">Salvar</button>
-      </div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalItem()">Cancelar</button><button class="btn-salvar" onclick="salvarItem()">Salvar</button></div>
     </div>
   </div>
 
-  <!-- ===== MODAL COMANDA ===== -->
+  <!-- MODAL COMANDA -->
   <div class="modal-overlay" id="modalComanda">
     <div class="modal">
       <h2>📋 Nova Comanda</h2>
-      <div class="form-group"><label>Cliente <span class="required">*</span></label><input type="text" id="comandaCliente" placeholder="Nome do cliente"></div>
-      <div class="form-group"><label>Telefone</label><input type="tel" id="comandaTelefone" placeholder="(81) 99999-9999"></div>
-      <div class="form-group"><label>Profissional</label><input type="text" id="comandaProfissional" placeholder="Nome do profissional"></div>
-      <div class="form-group"><label>Serviços</label><textarea id="comandaServicos" placeholder="Serviços realizados"></textarea></div>
-      <div class="form-group"><label>Valor Total (R$)</label><input type="number" step="0.01" id="comandaValor" placeholder="0.00"></div>
-      <div class="form-group"><label>Pagamento</label>
-        <select id="comandaPagamento">
-          <option value="pendente">Pendente</option>
-          <option value="pago">Pago</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Observações</label><textarea id="comandaObs" placeholder="Observações"></textarea></div>
-      <div class="modal-acoes">
-        <button class="btn-cancelar" onclick="fecharModalComanda()">Cancelar</button>
-        <button class="btn-salvar" onclick="salvarComanda()">Salvar</button>
-      </div>
+      <div class="form-group"><label>Cliente *</label><input type="text" id="comandaCliente" placeholder="Nome"></div>
+      <div class="form-group"><label>Telefone</label><input type="tel" id="comandaTelefone"></div>
+      <div class="form-group"><label>Profissional</label><input type="text" id="comandaProfissional"></div>
+      <div class="form-group"><label>Serviços</label><textarea id="comandaServicos"></textarea></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="comandaValor"></div>
+      <div class="form-group"><label>Pagamento</label><select id="comandaPagamento"><option value="pendente">Pendente</option><option value="pago">Pago</option></select></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalComanda()">Cancelar</button><button class="btn-salvar" onclick="salvarComanda()">Salvar</button></div>
     </div>
   </div>
 
-  <!-- ===== MODAL REPASSE ===== -->
+  <!-- MODAL REPASSE -->
   <div class="modal-overlay" id="modalRepasse">
     <div class="modal">
       <h2>💰 Novo Repasse</h2>
-      <div class="form-group"><label>Profissional <span class="required">*</span></label><input type="text" id="repasseProfissional" placeholder="Nome do profissional"></div>
-      <div class="form-group"><label>Serviço <span class="required">*</span></label><input type="text" id="repasseServico" placeholder="Nome do serviço"></div>
-      <div class="form-group"><label>Valor do Serviço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="repasseValor" placeholder="0.00"></div>
-      <div class="form-group"><label>Porcentagem da Comissão (%)</label><input type="number" step="1" id="repassePorcentagem" value="50"></div>
-      <div class="form-group"><label>Status</label>
-        <select id="repasseStatus">
-          <option value="pendente">Pendente</option>
-          <option value="pago">Pago</option>
-        </select>
-      </div>
-      <div class="modal-acoes">
-        <button class="btn-cancelar" onclick="fecharModalRepasse()">Cancelar</button>
-        <button class="btn-salvar" onclick="salvarRepasse()">Salvar</button>
-      </div>
+      <div class="form-group"><label>Profissional *</label><input type="text" id="repasseProfissional"></div>
+      <div class="form-group"><label>Serviço *</label><input type="text" id="repasseServico"></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="repasseValor"></div>
+      <div class="form-group"><label>Comissão %</label><input type="number" id="repassePorcentagem" value="50"></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalRepasse()">Cancelar</button><button class="btn-salvar" onclick="salvarRepasse()">Salvar</button></div>
     </div>
   </div>
 
-  <!-- ===== MODAL CAIXA ===== -->
+  <!-- MODAL CAIXA -->
   <div class="modal-overlay" id="modalCaixa">
     <div class="modal">
       <h2>Novo lançamento</h2>
       <div class="form-group"><label>Tipo</label><select id="caixaTipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div>
-      <div class="form-group"><label>Descrição</label><input type="text" id="caixaDescricao" placeholder="Ex: Compra de produtos"></div>
-      <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="caixaValor" placeholder="0.00"></div>
-      <div class="modal-acoes">
-        <button class="btn-cancelar" onclick="fecharModalCaixa()">Cancelar</button>
-        <button class="btn-salvar" onclick="salvarCaixa()">Salvar</button>
-      </div>
+      <div class="form-group"><label>Descrição</label><input type="text" id="caixaDescricao"></div>
+      <div class="form-group"><label>Valor</label><input type="number" step="0.01" id="caixaValor"></div>
+      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalCaixa()">Cancelar</button><button class="btn-salvar" onclick="salvarCaixa()">Salvar</button></div>
     </div>
   </div>
 
 <script>
-// ============ VARIAVEIS GLOBAIS ============
+// ============ VARIAVEIS ============
 let filtroStatusAtual = '';
 let filtroComandaStatus = '';
 let itemEditando = null;
@@ -646,20 +434,13 @@ let clienteEditandoId = null;
 let ultimoPedidoId = 0;
 let somAtivo = true;
 
-// ============ FORMATADORES ============
+// ============ FUNÇÕES ============
 function formatarData(iso){
   if(!iso) return '-';
   try {
     const d = new Date(iso.replace(' ', 'T'));
     if(isNaN(d)) return iso;
-    return d.toLocaleString('pt-BR', {
-      timeZone: 'America/Recife',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return d.toLocaleString('pt-BR', { timeZone: 'America/Recife', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch(e) { return iso; }
 }
 
@@ -673,11 +454,6 @@ function showToast(msg){
 }
 
 async function api(url, options={}){
-  const res = await fetch(url, {
-    headers:{'Content-Type':'application/json'},
-    credentials: 'include',
-    ...options
-  });
   const res = await fetch(url, {headers:{'Content-Type':'application/json'}, ...options});
   if (res.status === 401){ window.location.href = '/gerente/login'; throw new Error('Não autenticado'); }
   const data = await res.json().catch(()=>({}));
@@ -697,27 +473,12 @@ document.querySelectorAll('.nav-link').forEach(link=>{
 });
 
 function mostrarSecao(secao){
-  const secoes = ['inicio','pedidos','clientes','servicos','produtos','equipe','assinaturas','comandas','repasses','caixa','relatorios','horarios','personalizar','perfil'];
+  const secoes = ['inicio','pedidos','clientes','servicos','produtos','equipe','assinaturas','comandas','repasses','caixa','relatorios','horarios','perfil'];
   secoes.forEach(s=>{
     const el = document.getElementById('sec' + s.charAt(0).toUpperCase() + s.slice(1));
     if(el) el.classList.toggle('hidden', s !== secao);
   });
-  const titulos = {
-    inicio: ['Início', 'Visão geral'],
-    pedidos: ['Pedidos & Agenda', 'Acompanhe os pedidos'],
-    clientes: ['Clientes', 'Gerencie seus clientes'],
-    servicos: ['Serviços', 'Gerencie os serviços'],
-    produtos: ['Produtos', 'Gerencie os produtos'],
-    equipe: ['Equipe', 'Gerencie os profissionais'],
-    assinaturas: ['Planos', 'Gerencie os planos'],
-    comandas: ['Comandas', 'Controle de comandas'],
-    repasses: ['Repasses', 'Comissões dos profissionais'],
-    caixa: ['Caixa', 'Controle financeiro'],
-    relatorios: ['Relatórios', 'Baixe relatórios'],
-    horarios: ['Horários', 'Configure os horários'],
-    personalizar: ['Personalizar', 'Altere o site'],
-    perfil: ['Minha Conta', 'Altere seus dados']
-  };
+  const titulos = { inicio:['Início','Visão geral'], pedidos:['Pedidos & Agenda','Acompanhe os pedidos'], clientes:['Clientes','Gerencie seus clientes'], servicos:['Serviços','Gerencie os serviços'], produtos:['Produtos','Gerencie os produtos'], equipe:['Equipe','Gerencie os profissionais'], assinaturas:['Planos','Gerencie os planos'], comandas:['Comandas','Controle de comandas'], repasses:['Repasses','Comissões'], caixa:['Caixa','Controle financeiro'], relatorios:['Relatórios','Baixe relatórios'], horarios:['Horários','Configure os horários'], perfil:['Minha Conta','Altere seus dados'] };
   const t = titulos[secao] || [secao, ''];
   document.getElementById('tituloSecao').textContent = t[0];
   document.getElementById('subtituloSecao').textContent = t[1];
@@ -740,95 +501,98 @@ function carregarSecao(secao){
   else if (secao === 'caixa') carregarCaixa();
   else if (secao === 'relatorios') carregarRelatorios();
   else if (secao === 'horarios') carregarHorarios();
-  else if (secao === 'personalizar') carregarConfiguracoes();
   else if (secao === 'perfil') { /* sem ação */ }
 }
 
 // ============ CATÁLOGO ============
 async function carregarCatalogo(tabela) {
   try {
-    const rotas = {
-      'servicos': '/api/servicos',
-      'produtos': '/api/produtos',
-      'profissionais': '/api/profissionais',
-      'assinaturas': '/api/assinaturas'
-    };
-    const elementos = {
-      'servicos': 'tabelaServicos',
-      'produtos': 'tabelaProdutos',
-      'profissionais': 'tabelaEquipe',
-      'assinaturas': 'tabelaAssinaturas'
-    };
-    
+    const rotas = { 'servicos': '/api/servicos', 'produtos': '/api/produtos', 'profissionais': '/api/profissionais', 'assinaturas': '/api/assinaturas' };
+    const elementos = { 'servicos': 'tabelaServicos', 'produtos': 'tabelaProdutos', 'profissionais': 'tabelaEquipe', 'assinaturas': 'tabelaAssinaturas' };
     const response = await fetch(rotas[tabela]);
     if (!response.ok) throw new Error('Erro ao buscar dados');
     const lista = await response.json();
     const el = document.getElementById(elementos[tabela]);
     if (!el) return;
+    console.log(`📋 ${tabela}: ${lista.length} registros`);
     
     if (tabela === 'servicos') {
-      el.innerHTML = lista.length ? lista.map(s => `
-        <tr>
-          <td>${s.nome}</td>
-          <td>${formatarPreco(s.preco)}</td>
-          <td>${s.duracao_min || 30} min</td>
-          <td>${s.ativo ? '✅' : '❌'}</td>
-          <td>
-            <div class="acoes">
-              <button class="btn-mini gray" onclick="showToast('Editar: ${s.nome}')">✏️</button>
-              <button class="btn-mini red" onclick="showToast('Excluir: ${s.nome}')">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum serviço.</td></tr>';
+      el.innerHTML = lista.length ? lista.map(s => `<tr><td>${s.nome}</td><td>${formatarPreco(s.preco)}</td><td>${s.duracao_min || 30} min</td><td>${s.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('servicos', ${JSON.stringify(s).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('servicos', ${s.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum serviço.</td></tr>';
     } else if (tabela === 'produtos') {
-      el.innerHTML = lista.length ? lista.map(p => `
-        <tr>
-          <td>${p.nome}</td>
-          <td>${formatarPreco(p.preco)}</td>
-          <td>${p.ativo ? '✅' : '❌'}</td>
-          <td>
-            <div class="acoes">
-              <button class="btn-mini gray" onclick="showToast('Editar: ${p.nome}')">✏️</button>
-              <button class="btn-mini red" onclick="showToast('Excluir: ${p.nome}')">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum produto.</td></tr>';
+      el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${formatarPreco(p.preco)}</td><td>${p.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('produtos', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('produtos', ${p.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum produto.</td></tr>';
     } else if (tabela === 'profissionais') {
-      el.innerHTML = lista.length ? lista.map(p => `
-        <tr>
-          <td>${p.nome}</td>
-          <td>${p.especialidade || '-'}</td>
-          <td>${p.ativo ? '✅' : '❌'}</td>
-          <td>
-            <div class="acoes">
-              <button class="btn-mini gray" onclick="showToast('Editar: ${p.nome}')">✏️</button>
-              <button class="btn-mini red" onclick="showToast('Excluir: ${p.nome}')">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum profissional.</td></tr>';
+      el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${p.especialidade || '-'}</td><td>${p.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('profissionais', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('profissionais', ${p.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum profissional.</td></tr>';
     } else if (tabela === 'assinaturas') {
-      el.innerHTML = lista.length ? lista.map(a => `
-        <tr>
-          <td>${a.icone || ''} ${a.nome}</td>
-          <td>${formatarPreco(a.preco)}</td>
-          <td>${a.destaque ? '⭐' : '-'}</td>
-          <td>${a.ativo ? '✅' : '❌'}</td>
-          <td>
-            <div class="acoes">
-              <button class="btn-mini gray" onclick="showToast('Editar: ${a.nome}')">✏️</button>
-              <button class="btn-mini red" onclick="showToast('Excluir: ${a.nome}')">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      `).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum plano.</td></tr>';
+      el.innerHTML = lista.length ? lista.map(a => `<tr><td>${a.icone || ''} ${a.nome}</td><td>${formatarPreco(a.preco)}</td><td>${a.destaque ? '⭐' : '-'}</td><td>${a.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('assinaturas', ${JSON.stringify(a).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('assinaturas', ${a.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum plano.</td></tr>';
     }
-  } catch(e) {
-    console.error('Erro ao carregar catálogo:', e);
-    showToast('Erro ao carregar ' + tabela);
+  } catch(e) { console.error('Erro ao carregar catálogo:', e); showToast('Erro ao carregar ' + tabela); }
+}
+
+// ============ ABRIR MODAL ITEM ============
+function abrirModalItem(tabela, item=null){
+  itemEditando = {tabela, id: item ? item.id : null};
+  const titulos = { 'servicos': '✂️ Serviço', 'produtos': '🧴 Produto', 'profissionais': '👤 Profissional', 'assinaturas': '⭐ Plano' };
+  document.getElementById('modalItemTitulo').textContent = item ? `✏️ Editar ${titulos[tabela]}` : `📋 Novo ${titulos[tabela]}`;
+  let campos = '';
+  if (tabela === 'servicos') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Duração (min)</label><input type="number" id="campo_duracao_min" value="${item ? item.duracao_min || 30 : 30}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'produtos') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'profissionais') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Especialidade</label><input type="text" id="campo_especialidade" value="${item ? item.especialidade || '' : ''}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'assinaturas') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Ícone</label><input type="text" id="campo_icone" value="${item ? item.icone || '⭐' : '⭐'}" maxlength="2"></div><div class="form-group"><label>Descrição</label><textarea id="campo_descricao" rows="2">${item ? item.descricao || '' : ''}</textarea></div><div class="form-group"><label>Destaque</label><select id="campo_destaque"><option value="1" ${item && item.destaque ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.destaque ? 'selected' : ''}>Não</option></select></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
   }
+  document.getElementById('modalItemCampos').innerHTML = campos;
+  document.getElementById('modalItem').classList.add('active');
+}
+
+function fecharModalItem(){ document.getElementById('modalItem').classList.remove('active'); itemEditando = null; }
+
+// ============ SALVAR ITEM ============
+async function salvarItem(){
+  const {tabela, id} = itemEditando;
+  if (!tabela) { showToast('❌ Erro: tabela não definida'); return; }
+  const nome = document.getElementById('campo_nome')?.value?.trim() || '';
+  const preco = parseFloat(document.getElementById('campo_preco')?.value) || 0;
+  const ativo = parseInt(document.getElementById('campo_ativo')?.value) || 1;
+  if (!nome) { showToast('⚠️ Nome é obrigatório.'); return; }
+  let dados = { nome, preco, ativo };
+  if (tabela === 'servicos') {
+    dados.duracao_min = parseInt(document.getElementById('campo_duracao_min')?.value) || 30;
+    dados.categoria = 'servicos'; dados.ordem = 0;
+  } else if (tabela === 'produtos') {
+    dados.ordem = 0;
+  } else if (tabela === 'profissionais') {
+    dados.especialidade = document.getElementById('campo_especialidade')?.value?.trim() || '';
+    dados.ordem = 0;
+  } else if (tabela === 'assinaturas') {
+    dados.icone = document.getElementById('campo_icone')?.value?.trim() || '⭐';
+    dados.descricao = document.getElementById('campo_descricao')?.value?.trim() || '';
+    dados.destaque = parseInt(document.getElementById('campo_destaque')?.value) || 0;
+    dados.ordem = 0; dados.beneficios = ''; dados.cor = '#3ddc84';
+  }
+  try {
+    let url = `/api/${tabela}`;
+    let method = 'POST';
+    if (id) { url = `/api/${tabela}/${id}`; method = 'PUT'; }
+    const response = await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados) });
+    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao salvar'); }
+    showToast('✅ Salvo com sucesso!');
+    fecharModalItem();
+    carregarCatalogo(tabela);
+  } catch(e) { showToast('❌ Erro: ' + e.message); console.error('Erro ao salvar:', e); }
+}
+
+// ============ EXCLUIR ITEM CATÁLOGO ============
+async function excluirItemCatalogo(tabela, id) {
+  if (!confirm(`Tem certeza que deseja excluir este item?`)) return;
+  try {
+    const response = await fetch(`/api/${tabela}/${id}`, { method: 'DELETE', headers: {'Content-Type': 'application/json'} });
+    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao excluir'); }
+    showToast('✅ Item excluído!');
+    carregarCatalogo(tabela);
+  } catch(e) { showToast('❌ Erro: ' + e.message); console.error('Erro ao excluir:', e); }
 }
 
 // ============ INÍCIO ============
@@ -840,33 +604,12 @@ async function carregarInicio(){
     document.getElementById('statPendentes').textContent = stats.pedidos_pendentes;
     document.getElementById('statHoje').textContent = stats.agendamentos_hoje;
     document.getElementById('statClientes').textContent = stats.total_clientes;
-    document.getElementById('statAssinaturas').textContent = stats.assinaturas_ativas || 0;
     document.getElementById('statComandas').textContent = stats.comandas_abertas || 0;
     document.getElementById('statRepasses').textContent = stats.repasses_pendentes || 0;
-    atualizarBadge('badgePendentes', stats.pedidos_pendentes);
-    atualizarBadge('badgeComandas', stats.comandas_abertas || 0);
-    atualizarBadge('badgeRepasses', stats.repasses_pendentes || 0);
-
     const pedidos = await api('/api/gerente/pedidos');
     const ultimos = pedidos.slice(0, 8);
-    document.getElementById('tabelaInicioPedidos').innerHTML = ultimos.length ? ultimos.map(p => `
-      <tr>
-        <td>${p.cliente_nome}</td>
-        <td>${p.servico_nome}</td>
-        <td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td>
-        <td>${formatarPreco(p.valor)}</td>
-        <td><span class="status-pill status-${p.status}">${p.status}</span></td>
-        <td>${formatarData(p.criado_em)}</td>
-      </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhum pedido ainda.</td></tr>';
+    document.getElementById('tabelaInicioPedidos').innerHTML = ultimos.length ? ultimos.map(p => `<tr><td>${p.cliente_nome}</td><td>${p.servico_nome}</td><td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td><td>${formatarPreco(p.valor)}</td><td><span class="status-pill status-${p.status}">${p.status}</span></td><td>${formatarData(p.criado_em)}</td></tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhum pedido ainda.</td></tr>';
   } catch(e){ showToast('Erro: ' + e.message); }
-}
-
-function atualizarBadge(id, qtd){
-  const badge = document.getElementById(id);
-  if (badge) {
-    if (qtd > 0){ badge.textContent = qtd; badge.classList.remove('hidden'); }
-    else { badge.classList.add('hidden'); }
-  }
 }
 
 // ============ PEDIDOS ============
@@ -883,89 +626,33 @@ async function carregarPedidos(){
   try{
     const url = filtroStatusAtual ? `/api/gerente/pedidos?status=${filtroStatusAtual}` : '/api/gerente/pedidos';
     const pedidos = await api(url);
-    document.getElementById('tabelaPedidos').innerHTML = pedidos.length ? pedidos.map(p => `
-      <tr>
-        <td><strong>${p.cliente_nome}</strong></td>
-        <td>${p.cliente_telefone || '-'}</td>
-        <td>${p.cliente_cpf || '-'}</td>
-        <td>${p.servico_nome}</td>
-        <td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td>
-        <td>${p.data_agendada ? (p.data_agendada.split('-').reverse().join('/') + ' ' + (p.hora_agendada||'')) : formatarData(p.criado_em)}</td>
-        <td>${formatarPreco(p.valor)}</td>
-        <td>${p.pagamento || '-'}</td>
-        <td><span class="status-pill status-${p.status}">${p.status}</span></td>
-        <td>
-          <div class="acoes">
-            ${p.status==='pendente' ? `<button class="btn-mini blue" onclick="atualizarStatusPedido(${p.id}, 'confirmado')">Confirmar</button>` : ''}
-            ${p.status!=='concluido' ? `<button class="btn-mini ok" onclick="atualizarStatusPedido(${p.id}, 'concluido')">Concluir</button>` : ''}
-            ${p.status!=='cancelado' ? `<button class="btn-mini gray" onclick="atualizarStatusPedido(${p.id}, 'cancelado')">Cancelar</button>` : ''}
-            <button class="btn-mini red" onclick="excluirPedido(${p.id})">Excluir</button>
-          </div>
-        </td>
-      </tr>`).join('') : '<tr><td colspan="10" class="empty-msg">Nenhum pedido encontrado.</td></tr>';
+    document.getElementById('tabelaPedidos').innerHTML = pedidos.length ? pedidos.map(p => `<tr>
+      <td><strong>${p.cliente_nome}</strong></td>
+      <td>${p.cliente_telefone || '-'}</td>
+      <td>${p.cliente_cpf || '-'}</td>
+      <td>${p.servico_nome}</td>
+      <td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td>
+      <td>${p.data_agendada ? (p.data_agendada.split('-').reverse().join('/') + ' ' + (p.hora_agendada||'')) : formatarData(p.criado_em)}</td>
+      <td>${formatarPreco(p.valor)}</td>
+      <td>${p.pagamento || '-'}</td>
+      <td><span class="status-pill status-${p.status}">${p.status}</span></td>
+      <td><div class="acoes">
+        ${p.status==='pendente' ? `<button class="btn-mini blue" onclick="atualizarStatusPedido(${p.id}, 'confirmado')">Confirmar</button>` : ''}
+        ${p.status!=='concluido' ? `<button class="btn-mini ok" onclick="atualizarStatusPedido(${p.id}, 'concluido')">Concluir</button>` : ''}
+        ${p.status!=='cancelado' ? `<button class="btn-mini gray" onclick="atualizarStatusPedido(${p.id}, 'cancelado')">Cancelar</button>` : ''}
+        <button class="btn-mini red" onclick="excluirPedido(${p.id})">Excluir</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="10" class="empty-msg">Nenhum pedido encontrado.</td></tr>';
   } catch(e){ 
     showToast('❌ Erro ao carregar pedidos: ' + e.message);
     console.error('Erro:', e);
   }
 }
 
-
+// ============ ATUALIZAR STATUS PEDIDO ============
 async function atualizarStatusPedido(id, status){
   try{
-    console.log('📤 Atualizando pedido:', id, 'para', status);
-    
-    const response = await fetch('/api/gerente/pedidos/' + id, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({status: status})
-    });
-    
-    console.log('📥 Resposta status:', response.status);
-    
-    if (response.status === 401) {
-      window.location.href = '/gerente/login';
-      return;
-    }
-    
-    const data = await response.json();
-    console.log('📥 Resposta data:', data);
-    
-    if (!response.ok) {
-      throw new Error(data.erro || 'Erro ao atualizar status');
-    }
-    
-    const statusMap = {
-      'pendente': '⏳ Pendente',
-      'confirmado': '✅ Confirmado',
-      'concluido': '🎯 Concluído',
-      'cancelado': '❌ Cancelado'
-    };
-    showToast('✅ Status alterado para: ' + (statusMap[status] || status));
-    carregarPedidos();
-    carregarInicio();
-  } catch(e){ 
-    console.error('❌ Erro:', e);
-    showToast('❌ Erro ao atualizar: ' + e.message);
-  }
-}
-`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({status: status})
-    });
-    
-    console.log('📥 Resposta status:', response.status);
-    
-    const data = await response.json();
-    console.log('📥 Resposta data:', data);
-    
-    if (!response.ok) {
-      throw new Error(data.erro || 'Erro ao atualizar status');
-    }
-    
+    await api(`/api/gerente/pedidos/${id}`, {method:'PUT', body: JSON.stringify({status})});
     const statusMap = {
       'pendente': '⏳ Pendente',
       'confirmado': '✅ Confirmado',
@@ -976,35 +663,16 @@ async function atualizarStatusPedido(id, status){
     carregarPedidos();
     carregarInicio();
   } catch(e){ 
-    console.error('❌ Erro:', e);
-    showToast('❌ Erro ao atualizar: ' + e.message);
+    showToast('❌ Erro: ' + e.message);
+    console.error('Erro ao atualizar status:', e);
   }
 }
 
-
+// ============ EXCLUIR PEDIDO ============
 async function excluirPedido(id){
   if(!confirm('Excluir este pedido?')) return;
   try{
-    const response = await fetch('/api/gerente/pedidos/' + id, {
-      method: 'DELETE',
-      headers: {'Content-Type': 'application/json'},
-      credentials: 'include'
-    });
-    if (response.status === 401) {
-      window.location.href = '/gerente/login';
-      return;
-    }
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.erro || 'Erro ao excluir');
-    showToast('✅ Pedido excluído.');
-    carregarPedidos();
-    carregarInicio();
-  } catch(e){ 
-    showToast('❌ Erro ao excluir: ' + e.message);
-    console.error('Erro ao excluir:', e);
-  }
-}
-`, {method:'DELETE'});
+    await api(`/api/gerente/pedidos/${id}`, {method:'DELETE'});
     showToast('✅ Pedido excluído.');
     carregarPedidos();
   } catch(e){ 
@@ -1034,10 +702,7 @@ function abrirModalCliente(cliente = null) {
   document.getElementById('modalCliente').classList.add('active');
 }
 
-function fecharModalCliente() {
-  document.getElementById('modalCliente').classList.remove('active');
-  clienteEditandoId = null;
-}
+function fecharModalCliente() { document.getElementById('modalCliente').classList.remove('active'); clienteEditandoId = null; }
 
 async function salvarCliente() {
   const dados = {
@@ -1056,17 +721,11 @@ async function salvarCliente() {
     genero: document.getElementById('clienteGeneroModal').value,
     observacoes: document.getElementById('clienteObsModal').value.trim()
   };
-  
   if (!dados.nome) { showToast('⚠️ Nome é obrigatório.'); return; }
   if (!dados.telefone) { showToast('⚠️ Telefone é obrigatório.'); return; }
-  
   try {
-    let url = '/api/gerente/clientes';
-    let method = 'POST';
-    if (clienteEditandoId) {
-      url = `/api/gerente/clientes/${clienteEditandoId}`;
-      method = 'PUT';
-    }
+    let url = '/api/gerente/clientes'; let method = 'POST';
+    if (clienteEditandoId) { url = `/api/gerente/clientes/${clienteEditandoId}`; method = 'PUT'; }
     await api(url, {method: method, body: JSON.stringify(dados)});
     showToast('✅ Cliente salvo!');
     fecharModalCliente();
@@ -1079,23 +738,7 @@ async function carregarClientes() {
     const busca = document.getElementById('buscaCliente')?.value || '';
     const url = busca ? `/api/gerente/clientes?busca=${encodeURIComponent(busca)}` : '/api/gerente/clientes';
     const clientes = await api(url);
-    document.getElementById('tabelaClientes').innerHTML = clientes.length ? clientes.map(c => `
-      <tr>
-        <td><strong>${c.nome}</strong></td>
-        <td>${c.telefone || '-'}</td>
-        <td>${c.cpf || '-'}</td>
-        <td>${c.email || '-'}</td>
-        <td>${c.endereco ? c.endereco + (c.numero ? ', ' + c.numero : '') : '-'}</td>
-        <td>${c.data_nascimento || '-'}</td>
-        <td>${formatarData(c.data_cadastro)}</td>
-        <td>
-          <div class="acoes">
-            <button class="btn-mini blue" onclick="editarCliente(${c.id})">✏️</button>
-            <button class="btn-mini red" onclick="excluirCliente(${c.id})">🗑️</button>
-          </div>
-        </td>
-      </tr>
-    `).join('') : '<tr><td colspan="8" class="empty-msg">Nenhum cliente.</td></tr>';
+    document.getElementById('tabelaClientes').innerHTML = clientes.length ? clientes.map(c => `<tr><td><strong>${c.nome}</strong></td><td>${c.telefone || '-'}</td><td>${c.cpf || '-'}</td><td>${c.email || '-'}</td><td>${c.endereco ? c.endereco + (c.numero ? ', ' + c.numero : '') : '-'}</td><td>${c.data_nascimento || '-'}</td><td>${formatarData(c.data_cadastro)}</td><td><div class="acoes"><button class="btn-mini blue" onclick="editarCliente(${c.id})">✏️</button><button class="btn-mini red" onclick="excluirCliente(${c.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-msg">Nenhum cliente.</td></tr>';
   } catch(e) { showToast('Erro: ' + e.message); }
 }
 
@@ -1120,21 +763,7 @@ async function excluirCliente(id) {
 async function carregarComandas(){
   try{
     const comandas = await api('/api/gerente/comandas');
-    document.getElementById('tabelaComandas').innerHTML = comandas.length ? comandas.map(c => `
-      <tr>
-        <td><strong>${c.ticket}</strong></td>
-        <td>${c.cliente_nome}</td>
-        <td>${c.profissional || '-'}</td>
-        <td>${c.servicos || '-'}</td>
-        <td>${formatarPreco(c.valor_total)}</td>
-        <td><span class="status-pill status-${c.status}">${c.status}</span></td>
-        <td>${c.pagamento}</td>
-        <td>
-          <div class="acoes">
-            <button class="btn-mini red" onclick="excluirComanda(${c.id})">Excluir</button>
-          </div>
-        </td>
-      </tr>`).join('') : '<tr><td colspan="8" class="empty-msg">Nenhuma comanda.</td></tr>';
+    document.getElementById('tabelaComandas').innerHTML = comandas.length ? comandas.map(c => `<tr><td><strong>${c.ticket}</strong></td><td>${c.cliente_nome}</td><td>${c.profissional || '-'}</td><td>${c.servicos || '-'}</td><td>${formatarPreco(c.valor_total)}</td><td><span class="status-pill status-${c.status}">${c.status}</span></td><td>${c.pagamento}</td><td><div class="acoes"><button class="btn-mini red" onclick="excluirComanda(${c.id})">Excluir</button></div></td></tr>`).join('') : '<tr><td colspan="8" class="empty-msg">Nenhuma comanda.</td></tr>';
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
@@ -1177,21 +806,7 @@ async function carregarRepasses(){
     document.getElementById('repTotalPendente').textContent = formatarPreco(resumo.total_pendente);
     document.getElementById('repTotalPago').textContent = formatarPreco(resumo.total_pago);
     document.getElementById('repTotalGeral').textContent = formatarPreco(resumo.total_pendente + resumo.total_pago);
-
-    document.getElementById('tabelaRepasses').innerHTML = repasses.length ? repasses.map(r => `
-      <tr>
-        <td>${r.profissional}</td>
-        <td>${r.servico_nome}</td>
-        <td>${formatarPreco(r.valor_servico)}</td>
-        <td>${formatarPreco(r.comissao)}</td>
-        <td><span class="status-pill ${r.status === 'pago' ? 'status-concluido' : 'status-pendente'}">${r.status}</span></td>
-        <td>${formatarData(r.criado_em)}</td>
-        <td>
-          <div class="acoes">
-            <button class="btn-mini red" onclick="excluirRepasse(${r.id})">Excluir</button>
-          </div>
-        </td>
-      </tr>`).join('') : '<tr><td colspan="7" class="empty-msg">Nenhum repasse.</td></tr>';
+    document.getElementById('tabelaRepasses').innerHTML = repasses.length ? repasses.map(r => `<tr><td>${r.profissional}</td><td>${r.servico_nome}</td><td>${formatarPreco(r.valor_servico)}</td><td>${formatarPreco(r.comissao)}</td><td><span class="status-pill ${r.status === 'pago' ? 'status-concluido' : 'status-pendente'}">${r.status}</span></td><td>${formatarData(r.criado_em)}</td><td><div class="acoes"><button class="btn-mini red" onclick="excluirRepasse(${r.id})">Excluir</button></div></td></tr>`).join('') : '<tr><td colspan="7" class="empty-msg">Nenhum repasse.</td></tr>';
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
@@ -1204,10 +819,9 @@ async function salvarRepasse(){
     servico_nome: document.getElementById('repasseServico').value.trim(),
     valor_servico: parseFloat(document.getElementById('repasseValor').value) || 0,
     porcentagem: parseFloat(document.getElementById('repassePorcentagem').value) || 50,
-    status: document.getElementById('repasseStatus').value,
-    data_servico: new Date().toISOString()
+    status: 'pendente'
   };
-  if (!dados.profissional || !dados.servico_nome) { showToast('⚠️ Profissional e serviço são obrigatórios.'); return; }
+  if (!dados.profissional || !dados.servico_nome) { showToast('⚠️ Profissional e serviço obrigatórios.'); return; }
   try{
     await api('/api/gerente/repasses', {method:'POST', body: JSON.stringify(dados)});
     showToast('✅ Repasse criado!');
@@ -1234,16 +848,7 @@ async function carregarCaixa(){
     document.getElementById('caixaEntradas').textContent = formatarPreco(entradas);
     document.getElementById('caixaSaidas').textContent = formatarPreco(saidas);
     document.getElementById('caixaSaldo').textContent = formatarPreco(entradas - saidas);
-
-    document.getElementById('tabelaCaixa').innerHTML = lista.length ? lista.map(c => `
-      <tr>
-        <td><span class="status-pill ${c.tipo==='entrada' ? 'status-concluido' : 'status-cancelado'}">${c.tipo}</span></td>
-        <td>${c.descricao || '-'}</td>
-        <td>${c.pagamento || '-'}</td>
-        <td>${formatarPreco(c.valor)}</td>
-        <td>${formatarData(c.criado_em)}</td>
-        <td><button class="btn-mini red" onclick="excluirCaixa(${c.id})">Excluir</button></td>
-      </tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhuma movimentação.</td></tr>';
+    document.getElementById('tabelaCaixa').innerHTML = lista.length ? lista.map(c => `<tr><td><span class="status-pill ${c.tipo==='entrada' ? 'status-concluido' : 'status-cancelado'}">${c.tipo}</span></td><td>${c.descricao || '-'}</td><td>${c.pagamento || '-'}</td><td>${formatarPreco(c.valor)}</td><td>${formatarData(c.criado_em)}</td><td><button class="btn-mini red" onclick="excluirCaixa(${c.id})">Excluir</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhuma movimentação.</td></tr>';
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
@@ -1295,7 +900,7 @@ async function baixarRelatorio(){
 }
 
 // ============ HORÁRIOS ============
-const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 let horariosData = [];
 
 async function carregarHorarios(){
@@ -1303,30 +908,7 @@ async function carregarHorarios(){
     const horarios = await api('/api/horarios');
     horariosData = horarios;
     const grid = document.getElementById('horariosGrid');
-    grid.innerHTML = horarios.map(h => `
-      <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:12px;">
-        <h4 style="font-size:.9rem; margin-bottom:8px;">${DIAS_SEMANA[h.dia_semana]}</h4>
-        <div class="form-group">
-          <label>Abertura</label>
-          <input type="time" id="hora_abertura_${h.dia_semana}" value="${h.abertura || ''}">
-        </div>
-        <div class="form-group">
-          <label>Fechamento</label>
-          <input type="time" id="hora_fechamento_${h.dia_semana}" value="${h.fechamento || ''}">
-        </div>
-        <div class="form-group">
-          <label>Pausa (opcional)</label>
-          <div style="display:flex; gap:8px;">
-            <input type="time" id="hora_pausa_inicio_${h.dia_semana}" value="${h.pausa_inicio || ''}" style="flex:1;" placeholder="Início">
-            <input type="time" id="hora_pausa_fim_${h.dia_semana}" value="${h.pausa_fim || ''}" style="flex:1;" placeholder="Fim">
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-          <input type="checkbox" id="hora_ativo_${h.dia_semana}" ${h.ativo ? 'checked' : ''}>
-          <label>Ativo</label>
-        </div>
-      </div>
-    `).join('');
+    grid.innerHTML = horarios.map(h => `<div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:12px;"><h4 style="font-size:.9rem; margin-bottom:8px;">${DIAS_SEMANA[h.dia_semana]}</h4><div class="form-group"><label>Abertura</label><input type="time" id="hora_abertura_${h.dia_semana}" value="${h.abertura || ''}"></div><div class="form-group"><label>Fechamento</label><input type="time" id="hora_fechamento_${h.dia_semana}" value="${h.fechamento || ''}"></div><div style="display:flex; align-items:center; gap:8px; margin-top:4px;"><input type="checkbox" id="hora_ativo_${h.dia_semana}" ${h.ativo ? 'checked' : ''}><label>Ativo</label></div></div>`).join('');
   } catch(e){ showToast('Erro ao carregar horários: ' + e.message); }
 }
 
@@ -1338,8 +920,6 @@ async function salvarHorarios(){
       dados[dia] = {
         abertura: document.getElementById(`hora_abertura_${dia}`).value,
         fechamento: document.getElementById(`hora_fechamento_${dia}`).value,
-        pausa_inicio: document.getElementById(`hora_pausa_inicio_${dia}`).value || null,
-        pausa_fim: document.getElementById(`hora_pausa_fim_${dia}`).value || null,
         ativo: document.getElementById(`hora_ativo_${dia}`).checked
       };
     });
@@ -1347,57 +927,6 @@ async function salvarHorarios(){
     showToast('✅ Horários salvos!');
     carregarHorarios();
   } catch(e){ showToast('Erro: ' + e.message); }
-}
-
-// ============ CONFIGURAÇÕES ============
-async function carregarConfiguracoes() {
-  try {
-    const config = await api('/api/gerente/configuracoes');
-    document.getElementById('configNome').value = config.nome || 'Barbearia Studio Leblon';
-    document.getElementById('configEndereco').value = config.endereco || 'Rua Maganel, nº 1477, Curado, Recife, PE';
-    document.getElementById('configWhatsapp').value = config.whatsapp || '5581995654683';
-    document.getElementById('configCorPrimaria').value = config.cor_primaria || '#3ddc84';
-    document.getElementById('configCorFundo').value = config.cor_fundo || '#0a0a0e';
-    document.getElementById('configCorTexto').value = config.cor_texto || '#eeeeef';
-    document.getElementById('configLogo').value = config.logo || '/static/logo.jpeg';
-    document.getElementById('previewLogo').src = config.logo || '/static/logo.jpeg';
-    document.getElementById('sidebarLogo').src = config.logo || '/static/logo.jpeg';
-  } catch(e) { console.error('Erro ao carregar configurações:', e); }
-}
-
-async function salvarConfigBasica() {
-  try {
-    await api('/api/gerente/configuracoes', {method:'PUT', body: JSON.stringify({
-      nome: document.getElementById('configNome').value.trim(),
-      endereco: document.getElementById('configEndereco').value.trim(),
-      whatsapp: document.getElementById('configWhatsapp').value.trim()
-    })});
-    showToast('✅ Informações salvas!');
-    carregarConfiguracoes();
-  } catch(e) { showToast('Erro: ' + e.message); }
-}
-
-async function salvarCores() {
-  try {
-    await api('/api/gerente/configuracoes', {method:'PUT', body: JSON.stringify({
-      cor_primaria: document.getElementById('configCorPrimaria').value,
-      cor_fundo: document.getElementById('configCorFundo').value,
-      cor_texto: document.getElementById('configCorTexto').value
-    })});
-    showToast('✅ Cores salvas! Recarregue a página.');
-    carregarConfiguracoes();
-  } catch(e) { showToast('Erro: ' + e.message); }
-}
-
-async function salvarLogo() {
-  try {
-    const logo = document.getElementById('configLogo').value.trim();
-    await api('/api/gerente/configuracoes', {method:'PUT', body: JSON.stringify({logo})});
-    document.getElementById('previewLogo').src = logo;
-    document.getElementById('sidebarLogo').src = logo;
-    showToast('✅ Logo salva!');
-    carregarConfiguracoes();
-  } catch(e) { showToast('Erro: ' + e.message); }
 }
 
 // ============ PERFIL ============
@@ -1420,124 +949,9 @@ async function alterarLogin(){
   if(!novo_usuario && !nova_senha){ showToast('⚠️ Digite pelo menos um campo.'); return; }
   try{
     await api('/api/gerente/alterar_login', {method:'POST', body: JSON.stringify({senha_atual, novo_usuario, nova_senha})});
-    showToast('✅ Login alterado! Faça login novamente.');
+    showToast('✅ Login alterado!');
     setTimeout(()=>{ window.location.href = '/gerente/login'; }, 2000);
   } catch(e){ showToast('Erro: ' + e.message); }
-}
-
-// ============ MODAL ITEM ============
-function abrirModalItem(tabela, item=null){
-  itemEditando = {tabela, id: item ? item.id : null};
-  const titulos = {
-    'servicos': '✂️ Serviço',
-    'produtos': '🧴 Produto',
-    'profissionais': '👤 Profissional',
-    'assinaturas': '⭐ Plano'
-  };
-  document.getElementById('modalItemTitulo').textContent = item ? `✏️ Editar ${titulos[tabela]}` : `📋 Novo ${titulos[tabela]}`;
-  
-  let campos = '';
-  if (tabela === 'servicos') {
-    campos = `
-      <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div>
-      <div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div>
-      <div class="form-group"><label>Duração (min)</label><input type="number" id="campo_duracao_min" value="${item ? item.duracao_min || 30 : 30}"></div>
-      <div class="form-group"><label>Ativo</label>
-        <select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select>
-      </div>
-    `;
-  } else if (tabela === 'produtos') {
-    campos = `
-      <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div>
-      <div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div>
-      <div class="form-group"><label>Ativo</label>
-        <select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select>
-      </div>
-    `;
-  } else if (tabela === 'profissionais') {
-    campos = `
-      <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div>
-      <div class="form-group"><label>Especialidade</label><input type="text" id="campo_especialidade" value="${item ? item.especialidade || '' : ''}"></div>
-      <div class="form-group"><label>Ativo</label>
-        <select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select>
-      </div>
-    `;
-  } else if (tabela === 'assinaturas') {
-    campos = `
-      <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div>
-      <div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div>
-      <div class="form-group"><label>Ícone</label><input type="text" id="campo_icone" value="${item ? item.icone || '⭐' : '⭐'}" maxlength="2"></div>
-      <div class="form-group"><label>Descrição</label><textarea id="campo_descricao" rows="2">${item ? item.descricao || '' : ''}</textarea></div>
-      <div class="form-group"><label>Destaque</label>
-        <select id="campo_destaque"><option value="1" ${item && item.destaque ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.destaque ? 'selected' : ''}>Não</option></select>
-      </div>
-      <div class="form-group"><label>Ativo</label>
-        <select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select>
-      </div>
-    `;
-  }
-  document.getElementById('modalItemCampos').innerHTML = campos;
-  document.getElementById('modalItem').classList.add('active');
-}
-
-function fecharModalItem(){ document.getElementById('modalItem').classList.remove('active'); itemEditando = null; }
-
-async function salvarItem(){
-  const {tabela, id} = itemEditando;
-  if (!tabela) { showToast('❌ Erro: tabela não definida'); return; }
-  
-  const nome = document.getElementById('campo_nome')?.value?.trim() || '';
-  const preco = parseFloat(document.getElementById('campo_preco')?.value) || 0;
-  const ativo = parseInt(document.getElementById('campo_ativo')?.value) || 1;
-  
-  if (!nome) { showToast('⚠️ Nome é obrigatório.'); return; }
-  
-  let dados = { nome, preco, ativo };
-  
-  if (tabela === 'servicos') {
-    dados.duracao_min = parseInt(document.getElementById('campo_duracao_min')?.value) || 30;
-    dados.categoria = 'servicos';
-    dados.ordem = 0;
-  } else if (tabela === 'produtos') {
-    dados.ordem = 0;
-  } else if (tabela === 'profissionais') {
-    dados.especialidade = document.getElementById('campo_especialidade')?.value?.trim() || '';
-    dados.ordem = 0;
-  } else if (tabela === 'assinaturas') {
-    dados.icone = document.getElementById('campo_icone')?.value?.trim() || '⭐';
-    dados.descricao = document.getElementById('campo_descricao')?.value?.trim() || '';
-    dados.destaque = parseInt(document.getElementById('campo_destaque')?.value) || 0;
-    dados.ordem = 0;
-    dados.beneficios = '';
-    dados.cor = '#3ddc84';
-  }
-  
-  try {
-    let url = `/api/${tabela}`;
-    let method = 'POST';
-    if (id) {
-      url = `/api/${tabela}/${id}`;
-      method = 'PUT';
-    }
-    
-    const response = await fetch(url, {
-      method: method,
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(dados)
-    });
-    
-    if (!response.ok) {
-      const erro = await response.json();
-      throw new Error(erro.erro || 'Erro ao salvar');
-    }
-    
-    showToast('✅ Salvo com sucesso!');
-    fecharModalItem();
-    carregarCatalogo(tabela);
-  } catch(e) { 
-    showToast('❌ Erro: ' + e.message);
-    console.error('Erro ao salvar:', e);
-  }
 }
 
 // ============ SOM ============
@@ -1577,19 +991,6 @@ function tocarAlerta() {
   } catch(e) { console.log('Som indisponível'); }
 }
 
-// ============ SAIR ============
-async function sair(){
-  await fetch('/api/gerente/logout', {method:'POST'});
-  window.location.href = '/gerente/login';
-}
-
-// ============ EVENTOS ============
-document.getElementById('modalCliente').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCliente(); });
-document.getElementById('modalItem').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalItem(); });
-document.getElementById('modalComanda').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalComanda(); });
-document.getElementById('modalRepasse').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalRepasse(); });
-document.getElementById('modalCaixa').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCaixa(); });
-
 // ============ VERIFICAR NOVOS PEDIDOS ============
 setInterval(() => {
   fetch('/api/gerente/pedidos?limit=1')
@@ -1607,7 +1008,6 @@ setInterval(() => {
             const tipo = ultimo.tipo === 'agendamento' ? '📅 AGENDAMENTO' : '📋 PEDIDO';
             const profissional = ultimo.profissional ? ' - 👤 ' + ultimo.profissional : '';
             showToast(`🔔 ${tipo} NOVO! ${ultimo.cliente_nome} - ${ultimo.servico_nome}${profissional}`);
-            
             const titulo = document.getElementById('tituloSecao');
             if (titulo) {
               titulo.style.color = 'var(--accent)';
@@ -1620,6 +1020,19 @@ setInterval(() => {
     })
     .catch(() => {});
 }, 10000);
+
+// ============ SAIR ============
+async function sair(){
+  await fetch('/api/gerente/logout', {method:'POST'});
+  window.location.href = '/gerente/login';
+}
+
+// ============ EVENTOS ============
+document.getElementById('modalCliente').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCliente(); });
+document.getElementById('modalItem').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalItem(); });
+document.getElementById('modalComanda').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalComanda(); });
+document.getElementById('modalRepasse').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalRepasse(); });
+document.getElementById('modalCaixa').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCaixa(); });
 
 // ============ INICIAR ============
 async function iniciar(){
