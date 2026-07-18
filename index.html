@@ -1396,17 +1396,76 @@
     }
 
     // ======== CARREGAR DADOS ========
+    
     async function carregarDados() {
-      try {
-        var bizRes = await fetch('/api/barbearia');
-        if (bizRes.ok) {
-          var biz = await bizRes.json();
-          document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
-          document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
-          if (biz.logo) {
-            document.getElementById('coverLogo').src = biz.logo;
-            document.getElementById('infoLogo').src = biz.logo;
-          }
+        try {
+            console.log('📡 Carregando dados da API...');
+            
+            // Buscar dados
+            var servRes = await fetch('/api/servicos');
+            var profRes = await fetch('/api/profissionais');
+            var assRes = await fetch('/api/assinaturas');
+            var prodRes = await fetch('/api/produtos');
+            
+            var servicos = await servRes.json();
+            var profissionais = await profRes.json();
+            var assinaturas = await assRes.json();
+            var produtos = await prodRes.json();
+            
+            console.log('✅ Dados carregados:', {
+                servicos: servicos.length,
+                profissionais: profissionais.length
+            });
+            
+            // Renderizar serviços
+            var cServicos = document.getElementById('servicesList');
+            if (cServicos) {
+                if (servicos && servicos.length > 0) {
+                    var html = '';
+                    for (var i = 0; i < servicos.length; i++) {
+                        var s = servicos[i];
+                        html += '<div class="card" onclick="alert('✂️ ' + (s.nome || 'Serviço') + '
+💰 R$ ' + (s.preco || 0).toFixed(2) + '
+⏱️ ' + (s.duracao_min || 30) + ' min')">';
+                        html += '<h3>' + (s.nome || 'Serviço') + '</h3>';
+                        html += '<div class="preco">R$ ' + (s.preco || 0).toFixed(2) + '</div>';
+                        html += '<div class="info">⏱️ ' + (s.duracao_min || 30) + ' min</div>';
+                        html += '</div>';
+                    }
+                    cServicos.innerHTML = html;
+                    console.log('✅ Serviços renderizados:', servicos.length);
+                } else {
+                    cServicos.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
+                }
+            }
+            
+            // Renderizar profissionais
+            var cProf = document.getElementById('profissionaisList');
+            if (cProf) {
+                if (profissionais && profissionais.length > 0) {
+                    var html = '';
+                    for (var i = 0; i < profissionais.length; i++) {
+                        var p = profissionais[i];
+                        html += '<div class="card" onclick="alert('👤 ' + (p.nome || 'Profissional') + '
+' + (p.especialidade || '') + '')">';
+                        html += '<h3>' + (p.nome || 'Profissional') + '</h3>';
+                        html += '<div class="info">' + (p.especialidade || '') + '</div>';
+                        html += '</div>';
+                    }
+                    cProf.innerHTML = html;
+                    console.log('✅ Profissionais renderizados:', profissionais.length);
+                } else {
+                    cProf.innerHTML = '<div class="empty-msg">Nenhum profissional disponível.</div>';
+                }
+            }
+            
+        } catch (e) {
+            console.error('❌ Erro ao carregar:', e);
+            var c = document.getElementById('servicesList');
+            if (c) c.innerHTML = '<div class="empty-msg">❌ Erro ao carregar dados</div>';
+        }
+    }
+
           if (biz.whatsapp) {
             bizWhatsapp = biz.whatsapp;
           }
