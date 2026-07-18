@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barbearia Studio Leblon</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Leblon Studio - Barbearia</title>
     <style>
         :root {
             --bg: #0a0a0e;
             --bg-card: #14141a;
+            --bg-elevated: #1c1c24;
             --border: #2a2a32;
             --text: #eeeeef;
             --text-muted: #88889a;
@@ -17,72 +18,76 @@
             --gold: #ffd700;
             --radius: 12px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             background: var(--bg);
             color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             min-height: 100vh;
         }
-        .header {
+        .topbar {
             background: var(--bg-card);
             border-bottom: 1px solid var(--border);
-            padding: 16px 24px;
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 12px;
         }
-        .header .brand {
+        .topbar .logo {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        .header .brand img {
-            width: 48px;
-            height: 48px;
+        .topbar .logo img {
+            width: 44px;
+            height: 44px;
             border-radius: 10px;
             object-fit: cover;
             background: #fff;
         }
-        .header .brand .nome {
-            font-size: 1.2rem;
+        .topbar .logo .nome {
+            font-size: 1.1rem;
             font-weight: 700;
         }
-        .header .brand .sub {
-            font-size: 0.7rem;
+        .topbar .logo .sub {
+            font-size: 0.65rem;
             color: var(--text-muted);
         }
-        .header .nav {
+        .topbar .nav {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
-        .header .nav a {
+        .topbar .nav a {
             color: var(--text-muted);
             text-decoration: none;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             transition: 0.3s;
             cursor: pointer;
         }
-        .header .nav a:hover {
+        .topbar .nav a:hover {
             background: var(--bg);
             color: var(--text);
         }
-        .header .nav a.active {
+        .topbar .nav a.active {
             background: var(--accent);
             color: #000;
             font-weight: 600;
         }
-        .btn-agendar {
+        .topbar .nav .btn-agendar {
             background: var(--accent) !important;
             color: #000 !important;
             font-weight: 600;
         }
-        .btn-agendar:hover {
+        .topbar .nav .btn-agendar:hover {
             opacity: 0.8;
         }
         .container {
@@ -92,30 +97,36 @@
         }
         .hero {
             text-align: center;
-            padding: 30px 0 20px;
+            padding: 24px 0 16px;
         }
         .hero h1 {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
         }
         .hero p {
             color: var(--text-muted);
             margin-top: 4px;
+            font-size: 0.9rem;
+        }
+        .hero .horario {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 6px;
         }
         .tabs {
             display: flex;
-            gap: 6px;
-            margin: 20px 0 16px;
+            gap: 4px;
+            margin: 16px 0 12px;
             flex-wrap: wrap;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
         .tab {
-            padding: 8px 18px;
+            padding: 6px 16px;
             border-radius: 8px 8px 0 0;
             cursor: pointer;
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
             transition: 0.3s;
         }
@@ -128,65 +139,115 @@
         }
         .tab-content {
             display: none;
-            padding: 10px 0 20px;
+            padding: 8px 0 16px;
         }
         .tab-content.active {
             display: block;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 12px;
         }
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 16px;
+            padding: 14px 16px;
             transition: 0.3s;
             cursor: pointer;
         }
         .card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-3px);
             border-color: var(--accent);
         }
         .card h3 {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             margin-bottom: 4px;
         }
         .card .preco {
             color: var(--accent);
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
         }
         .card .info {
             color: var(--text-muted);
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             margin-top: 4px;
         }
         .empty-msg {
             text-align: center;
-            padding: 40px 0;
+            padding: 30px 0;
             color: var(--text-muted);
+            font-size: 0.9rem;
         }
         footer {
             text-align: center;
-            padding: 20px 0;
+            padding: 16px 0;
             border-top: 1px solid var(--border);
             color: var(--text-muted);
-            font-size: 0.75rem;
-            margin-top: 20px;
+            font-size: 0.7rem;
+            margin-top: 16px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            max-width: 420px;
+            width: 100%;
+        }
+        .modal h2 {
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+        .modal p {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .modal .btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+        .modal .btn:hover {
+            opacity: 0.8;
+        }
+        .modal .btn-fechar {
+            background: var(--bg-elevated);
+            color: var(--text);
+            border: 1px solid var(--border);
+            margin-top: 8px;
         }
         @media (max-width: 768px) {
-            .header { flex-direction: column; text-align: center; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .topbar { flex-direction: column; text-align: center; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
         }
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="brand">
+    <div class="topbar">
+        <div class="logo">
             <img src="/static/logo.jpeg" alt="Logo" onerror="this.style.display='none'">
             <div>
                 <div class="nome">Barbearia</div>
@@ -200,13 +261,13 @@
             <a onclick="mostrarTab('produtos')">🧴 Produtos</a>
             <a class="btn-agendar" onclick="abrirAgendamento()">📅 Agendar</a>
         </div>
-    </header>
+    </div>
 
     <div class="container">
         <div class="hero">
             <h1>Barbearia Studio Leblon</h1>
             <p>Av. Liberdade, 1477 - Totó, Recife - PE</p>
-            <p style="font-size:0.85rem; margin-top:6px;">🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</p>
+            <div class="horario">🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</div>
         </div>
 
         <div class="tabs">
@@ -233,15 +294,32 @@
         </div>
 
         <footer>
-            <p>© 2026 Barbearia Studio Leblon - Todos os direitos reservados</p>
+            <p>© 2026 Barbearia Studio Leblon</p>
         </footer>
     </div>
 
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalInfo">
+        <div class="modal">
+            <h2 id="modalTitulo">Título</h2>
+            <p id="modalDescricao">Descrição</p>
+            <button class="btn" onclick="fecharModal()">Fechar</button>
+        </div>
+    </div>
+
 <script>
-// ============ BACKEND URL ============
 const BACKEND_URL = '';
 
-// ============ RENDER ============
+function mostrarModal(titulo, descricao) {
+    document.getElementById('modalTitulo').textContent = titulo;
+    document.getElementById('modalDescricao').textContent = descricao;
+    document.getElementById('modalInfo').classList.add('active');
+}
+
+function fecharModal() {
+    document.getElementById('modalInfo').classList.remove('active');
+}
+
 function renderizar(lista, containerId, template) {
     var c = document.getElementById(containerId);
     if (!c) return;
@@ -252,12 +330,12 @@ function renderizar(lista, containerId, template) {
         }
         c.innerHTML = html;
     } else {
-        c.innerHTML = '<div class="empty-msg">Nenhum item disponível.</div>';
+        c.innerHTML = '<div class="empty-msg">Nenhum item disponível no momento.</div>';
     }
 }
 
 function cardServico(item) {
-    return `<div class="card" onclick="alert('✂️ ${item.nome || ''}\\n💰 R$ ${(item.preco || 0).toFixed(2)}')">
+    return `<div class="card" onclick="mostrarModal('✂️ ${item.nome || ''}', '💰 R$ ${(item.preco || 0).toFixed(2)} - ⏱️ ${item.duracao_min || 30} min')">
         <h3>${item.nome || 'Serviço'}</h3>
         <div class="preco">R$ ${(item.preco || 0).toFixed(2)}</div>
         <div class="info">⏱️ ${item.duracao_min || 30} min</div>
@@ -265,7 +343,7 @@ function cardServico(item) {
 }
 
 function cardAssinatura(item) {
-    return `<div class="card">
+    return `<div class="card" onclick="mostrarModal('📋 ${item.nome || ''}', '💰 R$ ${(item.preco || 0).toFixed(2)}/mês\\n${item.descricao || ''}')">
         <h3>${item.nome || 'Plano'}</h3>
         <div class="preco">R$ ${(item.preco || 0).toFixed(2)}/mês</div>
         <div class="info">${item.descricao || ''}</div>
@@ -273,20 +351,19 @@ function cardAssinatura(item) {
 }
 
 function cardProfissional(item) {
-    return `<div class="card">
+    return `<div class="card" onclick="mostrarModal('👤 ${item.nome || ''}', '${item.especialidade || ''}')">
         <h3>${item.nome || 'Profissional'}</h3>
         <div class="info">${item.especialidade || ''}</div>
     </div>`;
 }
 
 function cardProduto(item) {
-    return `<div class="card">
+    return `<div class="card" onclick="mostrarModal('🧴 ${item.nome || ''}', '💰 R$ ${(item.preco || 0).toFixed(2)}')">
         <h3>${item.nome || 'Produto'}</h3>
         <div class="preco">R$ ${(item.preco || 0).toFixed(2)}</div>
     </div>`;
 }
 
-// ============ CARREGAR ============
 async function carregarDados() {
     try {
         var s = await fetch('/api/servicos');
@@ -308,7 +385,6 @@ async function carregarDados() {
     }
 }
 
-// ============ NAVEGAÇÃO ============
 function mostrarTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -319,10 +395,9 @@ function mostrarTab(tab) {
 }
 
 function abrirAgendamento() {
-    alert('📅 Agendamento\n📞 WhatsApp: (81) 99999-9999');
+    mostrarModal('📅 Agendamento', '📞 WhatsApp: (81) 99999-9999');
 }
 
-// ============ INICIAR ============
 document.addEventListener('DOMContentLoaded', carregarDados);
 </script>
 
