@@ -892,8 +892,7 @@
     </div>
   </div>
 
-<script>const BACKEND_URL = "https://barbearia-backend-m1uy.onrender.com";
-
+<script>
     async function salvarPedidoServidor(dados) {
       try {
         await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
@@ -1396,62 +1395,54 @@
     }
 
     // ======== CARREGAR DADOS ========
-    
-async function carregarDados() {
-    try {
-        console.log('📡 Carregando dados...');
-        
-        var servRes = await fetch(BACKEND_URL + '/api/servicos');
-        var profRes = await fetch(BACKEND_URL + '/api/profissionais');
-        var assRes = await fetch(BACKEND_URL + '/api/assinaturas');
-        var prodRes = await fetch(BACKEND_URL + '/api/produtos');
-        
-        var servicos = await servRes.json();
-        var profissionais = await profRes.json();
-        var assinaturas = await assRes.json();
-        var produtos = await prodRes.json();
-        
-        console.log('✅ Serviços carregados:', servicos.length);
-        
-        // Renderizar serviços
-        var container = document.getElementById('servicesList') || document.querySelector('.services-grid');
-        if (container && servicos && servicos.length > 0) {
-            var html = '';
-            for (var i = 0; i < servicos.length; i++) {
-                var s = servicos[i];
-                html += '<div class="card" onclick="alert(\'✂️ ' + (s.nome || 'Serviço') + '\n💰 R$ ' + (s.preco || 0).toFixed(2) + '\n⏱️ ' + (s.duracao_min || 30) + ' min\')">';
-                html += '<h3>' + (s.nome || 'Serviço') + '</h3>';
-                html += '<div class="preco">R$ ' + (s.preco || 0).toFixed(2) + '</div>';
-                html += '<div class="info">⏱️ ' + (s.duracao_min || 30) + ' min</div>';
-                html += '</div>';
-            }
-            container.innerHTML = html;
-            console.log('✅ Serviços renderizados:', servicos.length);
-        } else if (container) {
-            container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
+    async function carregarDados() {
+      try {
+        var bizRes = await fetch('/api/barbearia');
+        if (bizRes.ok) {
+          var biz = await bizRes.json();
+          document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
+          document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
+          if (biz.logo) {
+            document.getElementById('coverLogo').src = biz.logo;
+            document.getElementById('infoLogo').src = biz.logo;
+          }
+          if (biz.whatsapp) {
+            bizWhatsapp = biz.whatsapp;
+          }
         }
         
-        // Renderizar profissionais
-        var profContainer = document.getElementById('profissionaisList') || document.querySelector('.profissionais-grid');
-        if (profContainer && profissionais && profissionais.length > 0) {
-            var html = '';
-            for (var i = 0; i < profissionais.length; i++) {
-                var p = profissionais[i];
-                html += '<div class="card">';
-                html += '<h3>' + (p.nome || 'Profissional') + '</h3>';
-                html += '<div class="info">' + (p.especialidade || '') + '</div>';
-                html += '</div>';
-            }
-            profContainer.innerHTML = html;
-        }
-        
-    } catch (e) {
-        console.error('❌ Erro:', e);
-        var container = document.getElementById('servicesList') || document.querySelector('.services-grid');
-        if (container) container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços</div>';
-    }
-}
+        var servRes = await fetch('/api/servicos');
+        var assRes = await fetch('/api/assinaturas');
+        var profRes = await fetch('/api/profissionais');
+        var prodRes = await fetch('/api/produtos');
+        var imgRes = await fetch('/api/imagens');
 
+        todosServicos = await servRes.json();
+        var assinaturas = await assRes.json();
+        var profissionais = await profRes.json();
+        var produtos = await prodRes.json();
+        var imagens = await imgRes.json();
+
+        renderServicos(todosServicos);
+        renderAssinaturas(assinaturas);
+        renderProfissionais(profissionais);
+        renderProdutos(produtos);
+        renderImagens(imagens);
+        preencherSelectAgendamento();
+        preencherProfissionais();
+        
+        console.log('✅ Dados carregados:', {
+          servicos: todosServicos.length,
+          profissionais: profissionais.length,
+          assinaturas: assinaturas.length,
+          produtos: produtos.length,
+          imagens: imagens.length
+        });
+        
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+      }
+    }
 
     // ======== FECHAR MODAIS ========
     document.getElementById('modalSimples').addEventListener('click', function(e) {
