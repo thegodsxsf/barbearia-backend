@@ -125,6 +125,19 @@
   .business-info h1{ font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; word-break:break-word; }
   .business-info p{ font-size: .82rem; color: var(--text-muted); word-break:break-word; }
   
+  .horarios-topo {
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: .7rem;
+    color: var(--text-muted);
+  }
+  
   .tabs-wrapper {
     width: 100%;
     overflow-x: auto;
@@ -206,12 +219,11 @@
   .price{ color: var(--accent-green); font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
   .duration{ display:flex; align-items:center; gap: 4px; color: var(--text-muted); font-size: .78rem; flex-shrink:0; }
   
-  /* ====== BOTÃO POTINHO PEQUENO ====== */
   .btn-confirmar-card{ 
     background: var(--accent-green); 
     border: none; 
-    width: 22px; 
-    height: 22px; 
+    width: 18px; 
+    height: 18px; 
     border-radius: 50%; 
     cursor:pointer; 
     flex-shrink:0; 
@@ -220,15 +232,15 @@
     align-items:center;
     justify-content:center;
     position:relative;
-    box-shadow: 0 0 10px rgba(61, 220, 132, 0.3);
+    box-shadow: 0 0 15px rgba(61, 220, 132, 0.5), 0 0 30px rgba(61, 220, 132, 0.2);
     padding: 0;
   }
   .btn-confirmar-card::after {
     content: '+';
-    font-size: 1rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: #000;
-    animation: brilho 2s ease-in-out infinite;
+    animation: brilho 1.2s ease-in-out infinite;
     line-height: 1;
   }
   .btn-confirmar-card:active{ transform: scale(0.8); }
@@ -238,12 +250,8 @@
   }
   
   @keyframes brilho {
-    0%, 100% { 
-      text-shadow: 0 0 5px rgba(255,255,255,0.3); 
-    }
-    50% { 
-      text-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 30px rgba(61, 220, 132, 0.3); 
-    }
+    0%, 100% { text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+    50% { text-shadow: 0 0 15px rgba(255,255,255,0.8), 0 0 30px rgba(61, 220, 132, 0.3); }
   }
   
   .floating-whatsapp {
@@ -293,7 +301,6 @@
     50% { transform: scale(1.15); }
   }
   
-  /* ====== MODAL SIMPLES (CLICANDO NO SERVIÇO) ====== */
   .modal-overlay{ 
     position: fixed; 
     top:0; left:0; right:0; bottom:0; 
@@ -365,31 +372,6 @@
   .form-row{ display:flex; gap:12px; }
   .form-row .form-group{ flex:1; }
   
-  .radio-group{ display:flex; gap:16px; flex-wrap:wrap; margin-top:4px; }
-  .radio-option{ display:flex; align-items:center; gap:8px; cursor:pointer; }
-  .radio-option input[type="radio"]{ 
-    width:18px; 
-    height:18px; 
-    accent-color: var(--accent-green);
-    cursor:pointer;
-  }
-  .radio-option label{ 
-    color:var(--text); 
-    font-weight:400; 
-    font-size:.9rem;
-    cursor:pointer;
-  }
-  
-  .endereco-fields{ 
-    display:none; 
-    padding:12px; 
-    background:var(--bg-elevated); 
-    border-radius:10px; 
-    border:1px solid var(--border);
-    margin-top:8px;
-  }
-  .endereco-fields.visible{ display:block; animation:fadeIn 0.3s ease; }
-  
   .payment-options{ display:flex; flex-direction:column; gap:10px; margin:8px 0 16px; }
   .payment-option{ 
     display:flex; 
@@ -404,7 +386,29 @@
   }
   .payment-option:active{ transform:scale(0.97); }
   .payment-option.selected{ border-color: var(--accent-green); background: rgba(61,220,132,0.05); }
-  .payment-option .icon{ font-size:1.8rem; flex-shrink:0; }
+  .payment-option .icon{ 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    flex-shrink: 0;
+  }
+  .payment-option .icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: #000;
+    stroke-width: 2;
+    fill: none;
+  }
+  .payment-option.selected .icon {
+    background: var(--accent-green-dark);
+  }
+  .payment-option.selected .icon svg {
+    stroke: #fff;
+  }
   .payment-option .label{ flex:1; font-weight:600; }
   
   .btn-confirmar{ 
@@ -604,30 +608,26 @@
 </style>
 </head>
 <body>
-
-  <!-- ====== TOPBAR ====== -->
-  <div class="topbar">
-    <div class="icon-group"></div>
-  </div>
-
-  <!-- ====== BANNER ====== -->
+  <div class="topbar"><div class="icon-group"></div></div>
   <div class="banner" id="banner">
     <div class="banner-content">
       <img id="coverLogo" src="static/logo.jpeg" alt="Leblon Studio" class="banner-logo" onerror="this.style.display='none'">
       <div class="banner-divider"></div>
     </div>
   </div>
-
-  <!-- ====== INFO ====== -->
   <div class="business-info">
     <div class="logo"><img id="infoLogo" src="static/logo.jpeg" alt="logo" onerror="this.style.display='none'"></div>
     <div>
       <h1 id="bizNome">Leblon Studio</h1>
-      <p id="bizEndereco">Rua Maganel, nº 1477, Curado, Recife, PE</p>
+      <p id="bizEndereco">Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280</p>
     </div>
   </div>
+  
+  <div class="horarios-topo">
+    <span>🕐 Seg-Sáb: 09:00-12:00 | 14:30-19:00</span>
+    <span>📅 Dom: 09:00-12:00</span>
+  </div>
 
-  <!-- ====== TABS ====== -->
   <div class="tabs-wrapper" id="tabsWrapper">
     <div class="tabs" id="tabsContainer">
       <div class="tab active" data-tab="servicos">✂️ SERVIÇOS</div>
@@ -637,8 +637,7 @@
       <div class="tab" data-tab="imagens">📷 FOTOS</div>
     </div>
   </div>
-
-  <!-- ====== SERVIÇOS ====== -->
+  
   <div id="secServicos">
     <div class="search-wrap">
       <div class="search-box">
@@ -648,8 +647,7 @@
     </div>
     <div class="section" id="servicesList"><div class="empty-msg">Carregando serviços...</div></div>
   </div>
-
-  <!-- ====== ASSINATURAS ====== -->
+  
   <div id="secAssinaturas" class="section hidden" style="padding-top:16px;">
     <div class="plans-header">
       <h2>💈 Planos de Assinatura</h2>
@@ -657,8 +655,7 @@
     </div>
     <div id="assinaturasList"><div class="empty-msg">Carregando planos...</div></div>
   </div>
-
-  <!-- ====== PROFISSIONAIS ====== -->
+  
   <div id="secProfissionais" class="section hidden" style="padding-top:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
       <h2 style="font-size:1.1rem;">👤 Nossa Equipe</h2>
@@ -666,17 +663,15 @@
     </div>
     <div id="profissionaisList"><div class="empty-msg">Carregando...</div></div>
   </div>
-
-  <!-- ====== PRODUTOS ====== -->
+  
   <div id="secProdutos" class="section hidden" style="padding-top:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
       <h2 style="font-size:1.1rem;">🧴 Nossos Produtos</h2>
       <span style="font-size:.7rem; color:var(--text-muted);" id="prodCount">0 produtos</span>
     </div>
-    <div id="produtosList"><div class="empty-msg">Carregando...</div></div>
+    <div id="produtosList"><div class="empty-msg">Carregando produtos...</div></div>
   </div>
-
-  <!-- ====== IMAGENS ====== -->
+  
   <div id="secImagens" class="section hidden" style="padding-top:16px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
       <div>
@@ -687,153 +682,154 @@
     </div>
     <div id="imagensList" class="imagens-grid"><div class="empty-msg">Carregando imagens...</div></div>
   </div>
-
-  <!-- ====== WHATSAPP FLUTUANTE ====== -->
-  <div class="floating-whatsapp">
-    <a href="#" target="_blank" class="btn-float-whatsapp" id="whatsappFloatBtn">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-      <span class="badge-wpp">1</span>
+  
+<div class="floating-whatsapp">
+    <a href="https://wa.me/558181365730?text=Olá!%20Quero%20fazer%20um%20agendamento" target="_blank" class="btn-float-whatsapp" id="whatsappFloatBtn">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        <span class="badge-wpp">1</span>
     </a>
-  </div>
+</div>
 
-  <!-- ====== MODAL SIMPLES (CLICANDO NO SERVIÇO) ====== -->
+  <!-- ====== MODAL SIMPLES ====== -->
   <div class="modal-overlay" id="modalSimples">
     <div class="modal">
       <div class="modal-header">
         <h2>✂️ Confirmar Serviço</h2>
         <button class="modal-close" onclick="fecharModalSimples()">✕</button>
       </div>
-      
       <div class="modal-service-info" id="serviceInfoSimples">
         <div class="service-name" id="modalSimplesServiceName">Corte de Cabelo</div>
         <div class="service-price" id="modalSimplesServicePrice">R$ 30,00</div>
       </div>
-      
       <div class="form-group">
         <label>Seu nome <span class="required">*</span></label>
         <input type="text" id="nomeSimples" placeholder="Digite seu nome" required>
       </div>
-      
+      <div class="form-group">
+        <label>Data <span class="required">*</span></label>
+        <input type="date" id="dataSimples" required>
+      </div>
+      <div class="form-group">
+        <label>Hora <span class="required">*</span></label>
+        <input type="time" id="horaSimples" required>
+      </div>
+      <div class="form-group">
+        <label>Escolha o profissional <span class="required">*</span></label>
+        <select id="profissionalSimples" required>
+          <option value="">Selecione um profissional</option>
+        </select>
+      </div>
       <div class="form-group">
         <label>Forma de pagamento <span class="required">*</span></label>
         <div class="payment-options" id="paymentOptionsSimples">
           <div class="payment-option" data-pagamento="pix" onclick="selecionarPagamentoSimples(this)">
-            <span class="icon">💰</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
             <span class="label">PIX</span>
           </div>
           <div class="payment-option" data-pagamento="dinheiro" onclick="selecionarPagamentoSimples(this)">
-            <span class="icon">💵</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
             <span class="label">Dinheiro</span>
           </div>
           <div class="payment-option" data-pagamento="cartao" onclick="selecionarPagamentoSimples(this)">
-            <span class="icon">💳</span>
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
             <span class="label">Cartão</span>
           </div>
         </div>
       </div>
-      
-      <button class="btn-confirmar-simples" id="btnConfirmarSimples" onclick="confirmarSimples()" disabled>
-        ✅ Confirmar
-      </button>
+      <button class="btn-confirmar-simples" id="btnConfirmarSimples" onclick="confirmarSimples()" disabled>✅ Confirmar</button>
     </div>
   </div>
 
-  <!-- ====== MODAL COMPLETO (CLICANDO EM "AGENDAR" NO MENU) ====== -->
-  <div class="modal-overlay" id="modalCompleto">
+  <!-- ====== MODAL ASSINATURA ====== -->
+  <div class="modal-overlay" id="modalAssinatura">
     <div class="modal">
       <div class="modal-header">
-        <h2>📋 Agendamento Completo</h2>
-        <button class="modal-close" onclick="fecharModalCompleto()">✕</button>
+        <h2>📋 Assinar Plano</h2>
+        <button class="modal-close" onclick="fecharModalAssinatura()">✕</button>
       </div>
-      
-      <div class="modal-service-info" id="serviceInfoCompleto">
-        <div class="service-name" id="modalCompletoServiceName">Agendamento</div>
-        <div class="service-price" id="modalCompletoServicePrice">Consulte o serviço</div>
+      <div class="modal-service-info" id="serviceInfoAssinatura">
+        <div class="service-name" id="modalAssinaturaNome">Plano Ouro</div>
+        <div class="service-price" id="modalAssinaturaPreco">R$ 55,00/mês</div>
       </div>
-      
       <div class="form-group">
         <label>Nome completo <span class="required">*</span></label>
-        <input type="text" id="clienteNome" placeholder="Digite seu nome completo" required>
+        <input type="text" id="assinaturaNome" placeholder="Digite seu nome completo" required>
       </div>
-      
+      <div class="form-group">
+        <label>WhatsApp <span class="required">*</span></label>
+        <input type="tel" id="assinaturaTelefone" placeholder="(81) 99999-9999" required>
+      </div>
+      <div class="form-group">
+        <label>CPF <span class="required">*</span></label>
+        <input type="text" id="assinaturaCpf" placeholder="000.000.000-00" maxlength="14" required oninput="mascaraCPF(this)">
+      </div>
+      <button class="btn-confirmar-simples" id="btnConfirmarAssinatura" onclick="confirmarAssinatura()" disabled>✅ Assinar Agora</button>
+    </div>
+  </div>
+
+  <!-- ====== MODAL AGENDAMENTO ====== -->
+  <div class="modal-overlay" id="modalAgendamento">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>📋 Agendamento</h2>
+        <button class="modal-close" onclick="fecharModalAgendamento()">✕</button>
+      </div>
+      <div class="modal-service-info">
+        <div class="service-name">Agendamento</div>
+        <div class="service-price">📍 Na barbearia</div>
+      </div>
+      <div class="form-group">
+        <label>Nome completo <span class="required">*</span></label>
+        <input type="text" id="agendaNome" placeholder="Digite seu nome completo" required>
+      </div>
       <div class="form-group">
         <label>Telefone (WhatsApp) <span class="required">*</span></label>
-        <input type="tel" id="clienteTelefone" placeholder="(81) 99999-9999" required>
+        <input type="tel" id="agendaTelefone" placeholder="(81) 99999-9999" required>
       </div>
-      
       <div class="form-row">
         <div class="form-group">
           <label>Data <span class="required">*</span></label>
-          <input type="date" id="dataAgendamento" required>
+          <input type="date" id="agendaData" required>
         </div>
         <div class="form-group">
           <label>Hora <span class="required">*</span></label>
-          <input type="time" id="horaAgendamento" required>
+          <input type="time" id="agendaHora" required>
         </div>
       </div>
-      
-      <!-- ====== SELECT DE SERVIÇOS NO AGENDAMENTO ====== -->
       <div class="form-group">
-        <label>Selecione o serviço <span class="required">*</span></label>
-        <select id="servicoSelecionado" required>
-          <option value="">Escolha um serviço</option>
+        <label>Selecione o serviço</label>
+        <select id="agendaServico"><option value="">Não informado</option></select>
+      </div>
+      <div class="form-group">
+        <label>Escolha o profissional <span class="required">*</span></label>
+        <select id="profissionalAgenda" required>
+          <option value="">Selecione um profissional</option>
         </select>
       </div>
-      
-      <div class="form-group">
-        <label>Corte em casa?</label>
-        <div class="radio-group">
-          <div class="radio-option">
-            <input type="radio" name="corteEmCasa" value="nao" id="casaNao" checked>
-            <label for="casaNao">Não</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" name="corteEmCasa" value="sim" id="casaSim">
-            <label for="casaSim">Sim</label>
-          </div>
-        </div>
-      </div>
-      
-      <div class="endereco-fields" id="enderecoFields">
-        <div class="form-group">
-          <label>Endereço completo <span class="required">*</span></label>
-          <input type="text" id="clienteEndereco" placeholder="Rua, número, bairro, cidade, CEP">
-        </div>
-        <div class="form-group">
-          <label>Complemento</label>
-          <input type="text" id="clienteComplemento" placeholder="Apartamento, bloco, referência">
-        </div>
-      </div>
-      
       <div class="form-group">
         <label>Observações</label>
-        <textarea id="observacoes" placeholder="Alguma observação adicional?"></textarea>
+        <textarea id="agendaObservacoes" placeholder="Alguma observação?"></textarea>
       </div>
-      
       <div class="form-group">
-        <label>Forma de pagamento <span class="required">*</span></label>
-        <div class="payment-options" id="paymentOptionsCompleto">
-          <div class="payment-option" data-pagamento="pix" onclick="selecionarPagamentoCompleto(this)">
-            <span class="icon">💰</span>
+        <label>Forma de pagamento</label>
+        <div class="payment-options" id="paymentOptionsAgenda">
+          <div class="payment-option" data-pagamento="pix" onclick="selecionarPagamentoAgenda(this)">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
             <span class="label">PIX</span>
-            <span style="color:var(--text-muted); font-size:.75rem;">Pagamento instantâneo</span>
           </div>
-          <div class="payment-option" data-pagamento="dinheiro" onclick="selecionarPagamentoCompleto(this)">
-            <span class="icon">💵</span>
+          <div class="payment-option" data-pagamento="dinheiro" onclick="selecionarPagamentoAgenda(this)">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
             <span class="label">Dinheiro</span>
-            <span style="color:var(--text-muted); font-size:.75rem;">Pagamento em espécie</span>
           </div>
-          <div class="payment-option" data-pagamento="cartao" onclick="selecionarPagamentoCompleto(this)">
-            <span class="icon">💳</span>
-            <span class="label">Cartão (Débito/Crédito)</span>
-            <span style="color:var(--text-muted); font-size:.75rem;">Aceitamos todas as bandeiras</span>
+          <div class="payment-option" data-pagamento="cartao" onclick="selecionarPagamentoAgenda(this)">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+            <span class="label">Cartão</span>
           </div>
         </div>
       </div>
-      
-      <button class="btn-confirmar" id="btnConfirmarCompleto" onclick="confirmarCompleto()" disabled>
-        ✅ Confirmar Agendamento
-      </button>
+      <button class="btn-confirmar" id="btnConfirmarAgenda" onclick="confirmarAgendamento()" disabled>✅ Confirmar Agendamento</button>
     </div>
   </div>
 
@@ -841,34 +837,46 @@
   <div class="modal-overlay" id="sucessoModal">
     <div class="modal success-modal">
       <div class="success-icon">✅</div>
-      <h2>Pedido Confirmado!</h2>
-      <p>Seu pedido foi enviado para o gerente. Aguarde que você será atendido em breve.</p>
-      
+      <h2 id="sucessoTitulo">Pedido Confirmado!</h2>
+      <p id="sucessoMensagem">Seu pedido foi enviado para o gerente. Aguarde que você será atendido em breve.</p>
       <div class="detalhes" id="detalhesAgendamento">
         <div class="linha"><span class="label">Serviço</span><span class="valor" id="sucessoService">-</span></div>
         <div class="linha"><span class="label">Cliente</span><span class="valor" id="sucessoCliente">-</span></div>
         <div class="linha"><span class="label">Data/Hora</span><span class="valor" id="sucessoDataHora">-</span></div>
-        <div class="linha"><span class="label">Corte em casa</span><span class="valor" id="sucessoCasa">-</span></div>
-        <div class="linha"><span class="label">Endereço</span><span class="valor" id="sucessoEndereco">-</span></div>
+        <div class="linha"><span class="label">Profissional</span><span class="valor" id="sucessoProfissional">-</span></div>
         <div class="linha"><span class="label">Pagamento</span><span class="valor" id="sucessoPagamento">-</span></div>
         <div class="linha"><span class="label">Valor</span><span class="valor" id="sucessoValor">-</span></div>
       </div>
-      
-      <p style="color:var(--accent-green); font-weight:600; margin:12px 0;">
-        ⏳ Aguarde, você será atendido em breve!
-      </p>
-      
-      <a href="#" target="_blank" class="btn-whatsapp" id="whatsappContato">
-        💬 Falar com o Gerente
-      </a>
-      
-      <button class="btn-white" style="width:100%; margin-top:8px; padding:13px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border);" onclick="fecharSucesso()">
-        Voltar ao início
-      </button>
+      <p style="color:var(--accent-green); font-weight:600; margin:12px 0;">⏳ Aguarde, você será atendido em breve!</p>
+      <a href="#" target="_blank" class="btn-whatsapp" id="whatsappContato">💬 Falar com o Gerente</a>
+      <button class="btn-white" style="width:100%; margin-top:8px; padding:13px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border);" onclick="fecharSucesso()">Voltar ao início</button>
     </div>
   </div>
 
-  <!-- ====== BOTTOM NAV ====== -->
+  <!-- ====== FAQ ====== -->
+  <div class="modal-overlay" id="faqOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>❓ Ajuda &amp; FAQ</h2>
+        <button class="modal-close" onclick="fecharFAQ()">✕</button>
+      </div>
+      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
+        <h3 style="font-size:.9rem; margin-bottom:4px;">✂️ Como pedir um serviço?</h3>
+        <p style="color:var(--text-muted); font-size:.85rem;">Clique no botão "+" ao lado do serviço, escolha data, hora e profissional.</p>
+      </div>
+      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
+        <h3 style="font-size:.9rem; margin-bottom:4px;">📋 Como assinar um plano?</h3>
+        <p style="color:var(--text-muted); font-size:.85rem;">Clique no plano desejado, preencha nome, WhatsApp e CPF.</p>
+      </div>
+      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
+        <h3 style="font-size:.9rem; margin-bottom:4px;">📅 Como agendar?</h3>
+        <p style="color:var(--text-muted); font-size:.85rem;">Clique no botão "Agendar" no menu inferior, preencha os dados e confirme.</p>
+      </div>
+      <a href="#" target="_blank" class="btn-whatsapp" id="whatsappFaq" href="https://wa.me/558181365730?text=Olá!%20Preciso%20de%20ajuda%20com%20o%20agendamento">💬 Falar com o Atendente</a>
+      <button class="btn-white" style="width:100%; margin-top:8px; padding:13px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border);" onclick="fecharFAQ()">Fechar</button>
+    </div>
+  </div>
+
   <div class="bottom-nav">
     <div class="nav-item active" onclick="scrollToTop()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -884,69 +892,80 @@
     </div>
   </div>
 
-  <!-- ====== FAQ MODAL ====== -->
-  <div class="modal-overlay" id="faqOverlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>❓ Ajuda &amp; FAQ</h2>
-        <button class="modal-close" onclick="fecharFAQ()">✕</button>
-      </div>
-      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
-        <h3 style="font-size:.9rem; margin-bottom:4px;">✂️ Como pedir um serviço?</h3>
-        <p style="color:var(--text-muted); font-size:.85rem;">Clique no botão "+" ao lado do serviço, digite seu nome, escolha a forma de pagamento e confirme.</p>
-      </div>
-      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
-        <h3 style="font-size:.9rem; margin-bottom:4px;">📋 Como agendar?</h3>
-        <p style="color:var(--text-muted); font-size:.85rem;">Clique no botão "Agendar" no menu inferior, escolha o serviço, preencha todos os dados e confirme.</p>
-      </div>
-      <div style="margin-bottom:12px; background:var(--bg-elevated); padding:12px; border-radius:10px;">
-        <h3 style="font-size:.9rem; margin-bottom:4px;">💳 Quais formas de pagamento?</h3>
-        <p style="color:var(--text-muted); font-size:.85rem;">Aceitamos PIX, dinheiro e cartão (débito/crédito).</p>
-      </div>
-      <a href="#" target="_blank" class="btn-whatsapp" id="whatsappFaq">
-        💬 Falar com o Atendente
-      </a>
-      <button class="btn-white" style="width:100%; margin-top:8px; padding:13px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border);" onclick="fecharFAQ()">Fechar</button>
-    </div>
-  </div>
-
-  <script>
-    // ======== CONFIGURAÇÕES ========
-    let bizWhatsapp = "5581995654683";
-    let servicoSelecionadoGlobal = null;
-    let pagamentoSelecionadoSimples = null;
-    let pagamentoSelecionadoCompleto = null;
-    let todosServicos = [];
-    let todosAssinaturas = [];
-
-    // ======== SCROLL TOP ========
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+<script>
+    async function salvarPedidoServidor(dados) {
+      try {
+        await fetch('/api/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
+      } catch (e) { console.warn('Erro ao salvar:', e); }
     }
 
-    // ======== TOAST ========
-    function showToast(mensagem, duracao = 2500) {
-      const existing = document.querySelector('.toast');
-      if (existing) existing.remove();
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.textContent = mensagem;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), duracao);
+    var bizWhatsapp = "558181365730";
+    var servicoSelecionadoGlobal = null;
+    var pagamentoSelecionadoSimples = null;
+    var pagamentoSelecionadoAgenda = null;
+    var todosServicos = [];
+    var todosAssinaturas = [];
+    var todosProfissionais = [];
+
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function showToast(m, d) {
+      if (!d) d = 2500;
+      var old = document.querySelector('.toast'); if(old) old.remove();
+      var t = document.createElement('div'); t.className='toast'; t.textContent=m;
+      document.body.appendChild(t); setTimeout(function(){ t.remove(); }, d);
+    }
+    function mascaraCPF(input) {
+      var v = input.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+      else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+      else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+      input.value = v;
+    }
+    function formatarPreco(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
+
+    // ======== PREENCHER PROFISSIONAIS ========
+    function preencherProfissionais() {
+      fetch('/api/profissionais')
+        .then(function(res) { return res.json(); })
+        .then(function(profissionais) {
+          todosProfissionais = profissionais;
+          var options = '';
+          for (var i = 0; i < profissionais.length; i++) {
+            if (profissionais[i].ativo === 1) {
+              options += '<option value="' + profissionais[i].id + '">' + profissionais[i].nome + ' - ' + (profissionais[i].especialidade || '') + '</option>';
+            }
+          }
+          
+          var selectSimples = document.getElementById('profissionalSimples');
+          if (selectSimples) {
+            selectSimples.innerHTML = '<option value="">Selecione um profissional</option>' + options;
+          }
+          var selectAgenda = document.getElementById('profissionalAgenda');
+          if (selectAgenda) {
+            selectAgenda.innerHTML = '<option value="">Selecione um profissional</option>' + options;
+          }
+        })
+        .catch(function(err) { console.warn('Erro ao carregar profissionais:', err); });
     }
 
-    // ======== MODAL SIMPLES (CLICANDO NO SERVIÇO) ========
+    // ======== SERVIÇOS ========
     function abrirModalSimples(servico) {
       servicoSelecionadoGlobal = servico;
       document.getElementById('modalSimplesServiceName').textContent = servico.nome;
-      document.getElementById('modalSimplesServicePrice').textContent = `R$ ${servico.preco.toFixed(2)}`;
-      
+      document.getElementById('modalSimplesServicePrice').textContent = formatarPreco(servico.preco);
       document.getElementById('nomeSimples').value = '';
-      document.querySelectorAll('#paymentOptionsSimples .payment-option').forEach(el => el.classList.remove('selected'));
+      document.getElementById('dataSimples').value = '';
+      document.getElementById('horaSimples').value = '';
+      var opts = document.querySelectorAll('#paymentOptionsSimples .payment-option');
+      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
       pagamentoSelecionadoSimples = null;
       document.getElementById('btnConfirmarSimples').disabled = true;
-      
       document.getElementById('modalSimples').classList.add('active');
+      preencherProfissionais();
+      
+      var hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataSimples').min = hoje;
     }
 
     function fecharModalSimples() {
@@ -954,364 +973,406 @@
     }
 
     function selecionarPagamentoSimples(el) {
-      document.querySelectorAll('#paymentOptionsSimples .payment-option').forEach(e => e.classList.remove('selected'));
+      var opts = document.querySelectorAll('#paymentOptionsSimples .payment-option');
+      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
       el.classList.add('selected');
       pagamentoSelecionadoSimples = el.dataset.pagamento;
-      
-      const nome = document.getElementById('nomeSimples').value.trim();
-      document.getElementById('btnConfirmarSimples').disabled = !(nome && pagamentoSelecionadoSimples);
+      validarSimples();
     }
 
+    function validarSimples() {
+      var nome = document.getElementById('nomeSimples').value.trim();
+      var data = document.getElementById('dataSimples').value;
+      var hora = document.getElementById('horaSimples').value;
+      var prof = document.getElementById('profissionalSimples').value;
+      var valido = nome && pagamentoSelecionadoSimples && data && hora && prof;
+      document.getElementById('btnConfirmarSimples').disabled = !valido;
+    }
+
+    document.getElementById('nomeSimples').addEventListener('input', validarSimples);
+    document.getElementById('dataSimples').addEventListener('change', validarSimples);
+    document.getElementById('horaSimples').addEventListener('input', validarSimples);
+    document.getElementById('profissionalSimples').addEventListener('change', validarSimples);
+
     function confirmarSimples() {
-      const nome = document.getElementById('nomeSimples').value.trim();
+      var nome = document.getElementById('nomeSimples').value.trim();
+      var data = document.getElementById('dataSimples').value;
+      var hora = document.getElementById('horaSimples').value;
+      var profissionalId = document.getElementById('profissionalSimples').value;
       
-      if (!nome) {
-        showToast('⚠️ Digite seu nome.', 2500);
+      if (!nome || !pagamentoSelecionadoSimples || !data || !hora || !profissionalId) {
+        showToast('⚠️ Preencha todos os campos.', 2500);
         return;
       }
       
-      if (!pagamentoSelecionadoSimples) {
-        showToast('⚠️ Selecione uma forma de pagamento.', 2500);
-        return;
-      }
+      var dataFormatada = new Date(data + 'T' + hora);
+      var dataStr = dataFormatada.toLocaleDateString('pt-BR');
+      var horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       
-      const pagamentoLabels = {
-        'pix': '💰 PIX',
-        'dinheiro': '💵 Dinheiro',
-        'cartao': '💳 Cartão'
-      };
+      var selectProf = document.getElementById('profissionalSimples');
+      var profNome = selectProf.options[selectProf.selectedIndex]?.text || 'Não informado';
+      var pagamentoLabels = { 'pix': 'PIX', 'dinheiro': 'Dinheiro', 'cartao': 'Cartão' };
       
-      const mensagem = `📋 *NOVO PEDIDO!*\n\n` +
-        `✂️ *Serviço:* ${servicoSelecionadoGlobal.nome}\n` +
-        `💰 *Valor:* R$ ${servicoSelecionadoGlobal.preco.toFixed(2)}\n\n` +
-        `👤 *Cliente:* ${nome}\n` +
-        `💳 *Pagamento:* ${pagamentoLabels[pagamentoSelecionadoSimples]}\n\n` +
-        `⏳ *Status:* Aguardando atendimento`;
+      salvarPedidoServidor({
+        tipo: 'pedido',
+        servico_nome: servicoSelecionadoGlobal.nome,
+        valor: servicoSelecionadoGlobal.preco,
+        cliente_nome: nome,
+        pagamento: pagamentoSelecionadoSimples,
+        data_agendada: data,
+        hora_agendada: hora,
+        profissional: profNome
+      });
       
-      const url = `https://wa.me/${bizWhatsapp}?text=${encodeURIComponent(mensagem)}`;
-      window.open(url, '_blank');
-      
-      // Mostrar sucesso simplificado
-      document.getElementById('sucessoService').textContent = `${servicoSelecionadoGlobal.nome} (R$ ${servicoSelecionadoGlobal.preco.toFixed(2)})`;
+      document.getElementById('sucessoTitulo').textContent = '✅ Pedido Confirmado!';
+      document.getElementById('sucessoMensagem').textContent = 'Seu pedido foi enviado para o gerente. Aguarde que você será atendido em breve.';
+      document.getElementById('sucessoService').textContent = servicoSelecionadoGlobal.nome;
       document.getElementById('sucessoCliente').textContent = nome;
-      document.getElementById('sucessoDataHora').textContent = 'Atendimento imediato';
-      document.getElementById('sucessoCasa').textContent = '❌ Não';
-      document.getElementById('sucessoEndereco').textContent = 'Não se aplica';
+      document.getElementById('sucessoDataHora').textContent = dataStr + ' às ' + horaStr;
+      document.getElementById('sucessoProfissional').textContent = profNome;
       document.getElementById('sucessoPagamento').textContent = pagamentoLabels[pagamentoSelecionadoSimples];
-      document.getElementById('sucessoValor').textContent = `R$ ${servicoSelecionadoGlobal.preco.toFixed(2)}`;
-      
-      document.getElementById('whatsappContato').href = `https://wa.me/${bizWhatsapp}?text=Olá!%20Acabei%20de%20fazer%20um%20pedido%20pelo%20site`;
+      document.getElementById('sucessoValor').textContent = formatarPreco(servicoSelecionadoGlobal.preco);
+      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Acabei%20de%20fazer%20um%20pedido%20pelo%20site';
       
       fecharModalSimples();
       document.getElementById('sucessoModal').classList.add('active');
     }
 
-    // ======== MODAL COMPLETO (CLICANDO EM "AGENDAR" NO MENU) ========
-    function abrirAgendamentoCompleto() {
-      document.getElementById('modalCompletoServiceName').textContent = 'Agendamento';
-      document.getElementById('modalCompletoServicePrice').textContent = 'Consulte o serviço';
-      
-      // Preencher select com todos os serviços
-      const select = document.getElementById('servicoSelecionado');
-      select.innerHTML = '<option value="">Escolha um serviço</option>';
-      
-      todosServicos.forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = `${s.nome} - R$ ${s.preco.toFixed(2)}`;
-        select.appendChild(option);
-      });
-      
-      todosAssinaturas.forEach(p => {
-        const option = document.createElement('option');
-        option.value = `assinatura_${p.id}`;
-        option.textContent = `📋 ${p.nome} - R$ ${p.preco.toFixed(2)}/mês`;
-        select.appendChild(option);
-      });
-      
-      // Limpar campos
-      document.getElementById('clienteNome').value = '';
-      document.getElementById('clienteTelefone').value = '';
-      document.getElementById('clienteEndereco').value = '';
-      document.getElementById('clienteComplemento').value = '';
-      document.getElementById('observacoes').value = '';
-      document.getElementById('enderecoFields').classList.remove('visible');
-      document.querySelector('input[name="corteEmCasa"][value="nao"]').checked = true;
-      
-      const hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('dataAgendamento').min = hoje;
-      
-      document.querySelectorAll('#paymentOptionsCompleto .payment-option').forEach(el => el.classList.remove('selected'));
-      pagamentoSelecionadoCompleto = null;
-      document.getElementById('btnConfirmarCompleto').disabled = true;
-      
-      document.getElementById('modalCompleto').classList.add('active');
+    // ======== ASSINATURA ========
+    function abrirModalAssinatura(plano) {
+      servicoSelecionadoGlobal = plano;
+      document.getElementById('modalAssinaturaNome').textContent = plano.nome;
+      document.getElementById('modalAssinaturaPreco').textContent = 'R$ ' + plano.preco.toFixed(2) + '/mês';
+      document.getElementById('assinaturaNome').value = '';
+      document.getElementById('assinaturaTelefone').value = '';
+      document.getElementById('assinaturaCpf').value = '';
+      document.getElementById('btnConfirmarAssinatura').disabled = true;
+      document.getElementById('modalAssinatura').classList.add('active');
     }
 
-    function fecharModalCompleto() {
-      document.getElementById('modalCompleto').classList.remove('active');
+    function fecharModalAssinatura() {
+      document.getElementById('modalAssinatura').classList.remove('active');
     }
 
-    function selecionarPagamentoCompleto(el) {
-      document.querySelectorAll('#paymentOptionsCompleto .payment-option').forEach(e => e.classList.remove('selected'));
-      el.classList.add('selected');
-      pagamentoSelecionadoCompleto = el.dataset.pagamento;
-      validarCamposCompleto();
+    function validarCamposAssinatura() {
+      var nome = document.getElementById('assinaturaNome').value.trim();
+      var telefone = document.getElementById('assinaturaTelefone').value.trim();
+      var cpf = document.getElementById('assinaturaCpf').value.replace(/\D/g, '');
+      var valido = nome && telefone && cpf.length >= 11;
+      document.getElementById('btnConfirmarAssinatura').disabled = !valido;
     }
 
-    function validarCamposCompleto() {
-      const nome = document.getElementById('clienteNome').value.trim();
-      const telefone = document.getElementById('clienteTelefone').value.trim();
-      const data = document.getElementById('dataAgendamento').value;
-      const hora = document.getElementById('horaAgendamento').value;
-      const servico = document.getElementById('servicoSelecionado').value;
-      const corteEmCasa = document.querySelector('input[name="corteEmCasa"]:checked');
-      const endereco = document.getElementById('clienteEndereco').value.trim();
-      
-      let valido = true;
-      if (!nome) valido = false;
-      if (!validarTelefone(telefone)) valido = false;
-      if (!data) valido = false;
-      if (!hora) valido = false;
-      if (!servico) valido = false;
-      if (!pagamentoSelecionadoCompleto) valido = false;
-      if (corteEmCasa && corteEmCasa.value === 'sim' && !endereco) valido = false;
-      
-      document.getElementById('btnConfirmarCompleto').disabled = !valido;
-    }
+    document.getElementById('assinaturaNome').addEventListener('input', validarCamposAssinatura);
+    document.getElementById('assinaturaTelefone').addEventListener('input', validarCamposAssinatura);
+    document.getElementById('assinaturaCpf').addEventListener('input', validarCamposAssinatura);
 
-    function validarTelefone(telefone) {
-      const numeros = telefone.replace(/\D/g, '');
-      return numeros.length >= 10 && numeros.length <= 11;
-    }
-
-    function confirmarCompleto() {
-      const nome = document.getElementById('clienteNome').value.trim();
-      const telefone = document.getElementById('clienteTelefone').value.trim();
-      const data = document.getElementById('dataAgendamento').value;
-      const hora = document.getElementById('horaAgendamento').value;
-      const servicoValue = document.getElementById('servicoSelecionado').value;
-      
-      let servico;
-      if (servicoValue.startsWith('assinatura_')) {
-        const id = servicoValue.replace('assinatura_', '');
-        servico = todosAssinaturas.find(p => p.id == id);
-        if (servico) {
-          servico = { ...servico, duracao_min: 0, nome: `📋 ${servico.nome}` };
-        }
-      } else {
-        servico = todosServicos.find(s => s.id == servicoValue);
-      }
-      
-      if (!servico) {
-        showToast('⚠️ Selecione um serviço válido.', 2500);
+    function confirmarAssinatura() {
+      var nome = document.getElementById('assinaturaNome').value.trim();
+      var telefone = document.getElementById('assinaturaTelefone').value.trim();
+      var cpf = document.getElementById('assinaturaCpf').value.trim();
+      if (!nome || !telefone || cpf.replace(/\D/g, '').length < 11) {
+        showToast('⚠️ Preencha todos os campos corretamente.', 2500);
         return;
       }
+      salvarPedidoServidor({
+        tipo: 'assinatura',
+        servico_nome: servicoSelecionadoGlobal.nome,
+        valor: servicoSelecionadoGlobal.preco,
+        cliente_nome: nome,
+        cliente_telefone: telefone,
+        cliente_cpf: cpf,
+        data_assinatura: new Date().toISOString()
+      });
+      document.getElementById('sucessoTitulo').textContent = '✅ Assinatura Confirmada!';
+      document.getElementById('sucessoMensagem').textContent = 'Sua assinatura foi enviada para o gerente. Aguarde o contato.';
+      document.getElementById('sucessoService').textContent = servicoSelecionadoGlobal.nome;
+      document.getElementById('sucessoCliente').textContent = nome;
+      document.getElementById('sucessoDataHora').textContent = 'Assinatura realizada agora';
+      document.getElementById('sucessoProfissional').textContent = '-';
+      document.getElementById('sucessoPagamento').textContent = 'Mensal';
+      document.getElementById('sucessoValor').textContent = formatarPreco(servicoSelecionadoGlobal.preco);
+      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Quero%20assinar%20o%20plano%20' + servicoSelecionadoGlobal.nome;
+      fecharModalAssinatura();
+      document.getElementById('sucessoModal').classList.add('active');
+    }
+
+    // ======== AGENDAMENTO ========
+    function abrirAgendamentoCompleto() {
+      document.getElementById('modalAgendamento').classList.add('active');
+      document.getElementById('agendaNome').value = '';
+      document.getElementById('agendaTelefone').value = '';
+      document.getElementById('agendaData').value = '';
+      document.getElementById('agendaHora').value = '';
+      document.getElementById('agendaObservacoes').value = '';
+      var opts = document.querySelectorAll('#paymentOptionsAgenda .payment-option');
+      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
+      pagamentoSelecionadoAgenda = null;
+      document.getElementById('btnConfirmarAgenda').disabled = true;
+      preencherProfissionais();
       
-      const corteEmCasa = document.querySelector('input[name="corteEmCasa"]:checked').value;
-      const endereco = document.getElementById('clienteEndereco').value.trim();
-      const complemento = document.getElementById('clienteComplemento').value.trim();
-      const observacoes = document.getElementById('observacoes').value.trim();
+      var hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('agendaData').min = hoje;
+      setTimeout(validarCamposAgenda, 200);
+    }
+
+    function fecharModalAgendamento() {
+      document.getElementById('modalAgendamento').classList.remove('active');
+    }
+
+    function selecionarPagamentoAgenda(el) {
+      var opts = document.querySelectorAll('#paymentOptionsAgenda .payment-option');
+      for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
+      el.classList.add('selected');
+      pagamentoSelecionadoAgenda = el.dataset.pagamento;
+      validarCamposAgenda();
+    }
+
+    function validarCamposAgenda() {
+      var nome = document.getElementById('agendaNome').value.trim();
+      var telefone = document.getElementById('agendaTelefone').value.trim();
+      var data = document.getElementById('agendaData').value;
+      var hora = document.getElementById('agendaHora').value;
+      var prof = document.getElementById('profissionalAgenda').value;
       
-      if (!nome || !validarTelefone(telefone) || !data || !hora) {
+      var valido = true;
+      if (!nome) valido = false;
+      if (!telefone || telefone.replace(/[^0-9]/g, '').length < 10) valido = false;
+      if (!data) valido = false;
+      if (!hora) valido = false;
+      if (!prof) valido = false;
+      
+      var btn = document.getElementById('btnConfirmarAgenda');
+      if (btn) {
+        btn.disabled = !valido;
+        if (valido) {
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+        } else {
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+        }
+      }
+    }
+
+    document.getElementById('agendaNome').addEventListener('input', validarCamposAgenda);
+    document.getElementById('agendaTelefone').addEventListener('input', validarCamposAgenda);
+    document.getElementById('agendaData').addEventListener('change', validarCamposAgenda);
+    document.getElementById('agendaHora').addEventListener('change', validarCamposAgenda);
+    document.getElementById('profissionalAgenda').addEventListener('change', validarCamposAgenda);
+
+    function confirmarAgendamento() {
+      var nome = document.getElementById('agendaNome').value.trim();
+      var telefone = document.getElementById('agendaTelefone').value.trim();
+      var data = document.getElementById('agendaData').value;
+      var hora = document.getElementById('agendaHora').value;
+      var servicoValue = document.getElementById('agendaServico').value;
+      var profissionalId = document.getElementById('profissionalAgenda').value;
+      var observacoes = document.getElementById('agendaObservacoes').value.trim();
+      
+      if (!nome || !telefone || !data || !hora || !profissionalId) {
         showToast('⚠️ Preencha todos os campos obrigatórios.', 2500);
         return;
       }
       
-      const pagamentoLabels = {
-        'pix': '💰 PIX',
-        'dinheiro': '💵 Dinheiro',
-        'cartao': '💳 Cartão'
-      };
-      
-      const dataFormatada = new Date(data + 'T' + hora);
-      const dataStr = dataFormatada.toLocaleDateString('pt-BR');
-      const horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      
-      let mensagem = `📋 *NOVO AGENDAMENTO!*\n\n` +
-        `✂️ *Serviço:* ${servico.nome}\n` +
-        `💰 *Valor:* R$ ${servico.preco.toFixed(2)}\n` +
-        `⏱️ *Duração:* ${servico.duracao_min > 0 ? servico.duracao_min + ' min' : 'Assinatura mensal'}\n\n` +
-        `👤 *Cliente:* ${nome}\n` +
-        `📱 *Telefone:* ${telefone}\n` +
-        `📅 *Data:* ${dataStr}\n` +
-        `⏰ *Hora:* ${horaStr}\n` +
-        `🏠 *Corte em casa:* ${corteEmCasa === 'sim' ? '✅ Sim' : '❌ Não'}`;
-      
-      if (corteEmCasa === 'sim') {
-        mensagem += `\n📍 *Endereço:* ${endereco}`;
-        if (complemento) mensagem += `\n📌 *Complemento:* ${complemento}`;
+      if (telefone.replace(/[^0-9]/g, '').length < 10) {
+        showToast('⚠️ Digite um telefone válido (com DDD).', 2500);
+        return;
       }
       
-      mensagem += `\n💳 *Pagamento:* ${pagamentoLabels[pagamentoSelecionadoCompleto]}`;
-      if (observacoes) mensagem += `\n📝 *Observações:* ${observacoes}`;
-      mensagem += `\n\n⏳ *Status:* Aguardando atendimento`;
+      var servicoNome = 'Agendamento Geral';
+      var valor = 0;
+      if (servicoValue) {
+        for (var i = 0; i < todosServicos.length; i++) {
+          if (todosServicos[i].id == servicoValue) {
+            servicoNome = todosServicos[i].nome;
+            valor = todosServicos[i].preco;
+            break;
+          }
+        }
+      }
       
-      const url = `https://wa.me/${bizWhatsapp}?text=${encodeURIComponent(mensagem)}`;
-      window.open(url, '_blank');
+      var selectProf = document.getElementById('profissionalAgenda');
+      var profNome = selectProf.options[selectProf.selectedIndex]?.text || 'Não informado';
       
-      document.getElementById('sucessoService').textContent = `${servico.nome} (R$ ${servico.preco.toFixed(2)})`;
+      var dataFormatada = new Date(data + 'T' + hora);
+      var dataStr = dataFormatada.toLocaleDateString('pt-BR');
+      var horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      
+      var pagamentoLabels = { 'pix': 'PIX', 'dinheiro': 'Dinheiro', 'cartao': 'Cartão' };
+      
+      salvarPedidoServidor({
+        tipo: 'agendamento',
+        servico_nome: servicoNome,
+        valor: valor,
+        cliente_nome: nome,
+        cliente_telefone: telefone,
+        data_agendada: data,
+        hora_agendada: hora,
+        corte_em_casa: 'nao',
+        endereco: document.getElementById('bizEndereco').textContent || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280',
+        observacoes: observacoes,
+        pagamento: pagamentoSelecionadoAgenda || '',
+        profissional: profNome
+      });
+      
+      document.getElementById('sucessoTitulo').textContent = '✅ Agendamento Confirmado!';
+      document.getElementById('sucessoMensagem').textContent = 'Seu agendamento foi enviado para o gerente. Aguarde que você será atendido em breve.';
+      document.getElementById('sucessoService').textContent = servicoNome + (valor ? ' (' + formatarPreco(valor) + ')' : '');
       document.getElementById('sucessoCliente').textContent = nome;
-      document.getElementById('sucessoDataHora').textContent = `${dataStr} às ${horaStr}`;
-      document.getElementById('sucessoCasa').textContent = corteEmCasa === 'sim' ? '✅ Sim' : '❌ Não';
-      document.getElementById('sucessoEndereco').textContent = corteEmCasa === 'sim' ? endereco : 'Não se aplica';
-      document.getElementById('sucessoPagamento').textContent = pagamentoLabels[pagamentoSelecionadoCompleto];
-      document.getElementById('sucessoValor').textContent = `R$ ${servico.preco.toFixed(2)}`;
+      document.getElementById('sucessoDataHora').textContent = dataStr + ' às ' + horaStr;
+      document.getElementById('sucessoProfissional').textContent = profNome;
+      document.getElementById('sucessoPagamento').textContent = pagamentoSelecionadoAgenda ? pagamentoLabels[pagamentoSelecionadoAgenda] : 'Não informado';
+      document.getElementById('sucessoValor').textContent = valor ? formatarPreco(valor) : 'Consulte o gerente';
+      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Acabei%20de%20agendar%20um%20serviço%20pelo%20site';
       
-      document.getElementById('whatsappContato').href = `https://wa.me/${bizWhatsapp}?text=Olá!%20Acabei%20de%20agendar%20um%20serviço%20pelo%20site`;
-      
-      fecharModalCompleto();
+      fecharModalAgendamento();
       document.getElementById('sucessoModal').classList.add('active');
     }
 
+    // ======== FAQ ========
+    function abrirFAQ() { document.getElementById('faqOverlay').classList.add('active'); }
+    function fecharFAQ() { document.getElementById('faqOverlay').classList.remove('active'); }
+
+    // ======== FILTRO ========
+    function filterServices() {
+      var q = document.getElementById('searchInput').value.toLowerCase();
+      var filtered = [];
+      for (var i = 0; i < todosServicos.length; i++) {
+        if (todosServicos[i].nome.toLowerCase().includes(q)) {
+          filtered.push(todosServicos[i]);
+        }
+      }
+      renderServicos(filtered);
+    }
+
+    // ======== FECHAR SUCESSO ========
     function fecharSucesso() {
       document.getElementById('sucessoModal').classList.remove('active');
       servicoSelecionadoGlobal = null;
     }
 
-    // ======== FAQ ========
-    function abrirFAQ() {
-      document.getElementById('faqOverlay').classList.add('active');
-    }
-
-    function fecharFAQ() {
-      document.getElementById('faqOverlay').classList.remove('active');
-    }
-
-    // ======== FILTRO ========
-    function filterServices() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = todosServicos.filter(s => s.nome.toLowerCase().includes(q));
-      renderServicos(filtered);
-    }
-
     // ======== RENDERIZAÇÃO ========
     function cardServicoHTML(s) {
-      const img = s.imagem || "static/logo.jpeg";
-      return `
-        <div class="card" onclick="abrirModalSimples({id:${s.id}, nome:'${s.nome.replace(/'/g, "\\'")}', preco:${s.preco}, duracao_min:${s.duracao_min}})">
-          <div class="thumb"><img src="${img}" onerror="this.style.display='none'" loading="lazy"></div>
-          <div class="info">
-            <h3>${s.nome}</h3>
-            <div class="price">${formatarPreco(s.preco)}</div>
-            <div class="duration">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              ${s.duracao_min} min
-            </div>
-          </div>
-          <button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:${s.id}, nome:'${s.nome.replace(/'/g, "\\'")}', preco:${s.preco}, duracao_min:${s.duracao_min}})"></button>
-        </div>`;
+      var img = s.imagem || "static/logo.jpeg";
+      return '<div class="card" onclick="abrirModalSimples({id:' + s.id + ', nome:\'' + s.nome.replace(/'/g, "\\'") + '\', preco:' + s.preco + ', duracao_min:' + s.duracao_min + '})">' +
+        '<div class="thumb"><img src="' + img + '" onerror="this.style.display=\'none\'" loading="lazy"></div>' +
+        '<div class="info"><h3>' + s.nome + '</h3><div class="price">' + formatarPreco(s.preco) + '</div>' +
+        '<div class="duration"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' + s.duracao_min + ' min</div></div>' +
+        '<button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + s.id + ', nome:\'' + s.nome.replace(/'/g, "\\'") + '\', preco:' + s.preco + ', duracao_min:' + s.duracao_min + '})"></button>' +
+      '</div>';
     }
 
     function renderServicos(lista) {
-      const c = document.getElementById('servicesList');
-      c.innerHTML = lista.length ? lista.map(cardServicoHTML).join('') : '<div class="empty-msg">Nenhum serviço encontrado.</div>';
+      var c = document.getElementById('servicesList');
+      if (!c) return;
+      if (lista && lista.length > 0) {
+        var html = '';
+        for (var i = 0; i < lista.length; i++) {
+          html += cardServicoHTML(lista[i]);
+        }
+        c.innerHTML = html;
+      } else {
+        c.innerHTML = '<div class="empty-msg">Nenhum serviço encontrado.</div>';
+      }
     }
 
     function renderAssinaturas(lista) {
-      const container = document.getElementById('assinaturasList');
+      var container = document.getElementById('assinaturasList');
+      if (!container) return;
       todosAssinaturas = lista || [];
-      
       if (!lista || lista.length === 0) {
         container.innerHTML = '<div class="empty-msg">Nenhum plano disponível no momento.</div>';
         return;
       }
-
-      const sorted = [...lista].sort((a, b) => {
+      var sorted = lista.slice().sort(function(a, b) {
         if (a.destaque !== b.destaque) return b.destaque - a.destaque;
         return (a.ordem || 0) - (b.ordem || 0);
       });
-
-      container.innerHTML = sorted.map((plano) => {
-        const beneficios = plano.beneficios ? plano.beneficios.split('|') : [];
-        const isDestaque = plano.destaque === 1;
-        const icone = plano.icone || '⭐';
-        
-        return `
-          <div class="plan-card" onclick="abrirModalSimples({id:${plano.id}, nome:'${plano.nome.replace(/'/g, "\\'")} (Assinatura)', preco:${plano.preco}, duracao_min:0})">
-            ${isDestaque ? `<div class="badge-destaque">⭐ Destaque</div>` : ''}
-            
-            <div class="plan-header">
-              <span class="plan-icon">${icone}</span>
-              <div>
-                <div class="plan-name">${plano.nome}</div>
-                <div class="plan-desc">${plano.descricao || 'Plano personalizado'}</div>
-              </div>
-            </div>
-            
-            <div class="plan-price-wrap">
-              <span class="plan-price">${formatarPreco(plano.preco)}</span>
-              <span class="plan-period">/mês</span>
-            </div>
-            
-            ${beneficios.length > 0 ? `
-              <div class="benefits-list">
-                ${beneficios.map(b => `
-                  <div class="benefit-item">
-                    <span class="benefit-check">✓</span>
-                    <span>${b.trim()}</span>
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
-            
-            <button class="btn-confirmar-card" style="width:100%; padding:13px; border-radius:12px; font-size:1rem; height:auto;" onclick="event.stopPropagation(); abrirModalSimples({id:${plano.id}, nome:'${plano.nome.replace(/'/g, "\\'")} (Assinatura)', preco:${plano.preco}, duracao_min:0})">📋 Assinar</button>
-          </div>
-        `;
-      }).join('');
+      var html = '';
+      for (var i = 0; i < sorted.length; i++) {
+        var plano = sorted[i];
+        var beneficios = plano.beneficios ? plano.beneficios.split('|') : [];
+        var isDestaque = plano.destaque === 1;
+        var icone = plano.icone || '⭐';
+        html += '<div class="plan-card" onclick="abrirModalAssinatura({id:' + plano.id + ', nome:\'' + plano.nome.replace(/'/g, "\\'") + '\', preco:' + plano.preco + '})">' +
+          (isDestaque ? '<div class="badge-destaque">⭐ Destaque</div>' : '') +
+          '<div class="plan-header"><span class="plan-icon">' + icone + '</span>' +
+            '<div><div class="plan-name">' + plano.nome + '</div><div class="plan-desc">' + (plano.descricao || 'Plano personalizado') + '</div></div>' +
+          '</div>' +
+          '<div class="plan-price-wrap"><span class="plan-price">' + formatarPreco(plano.preco) + '</span><span class="plan-period">/mês</span></div>' +
+          (beneficios.length > 0 ? '<div class="benefits-list">' + beneficios.map(function(b) { return '<div class="benefit-item"><span class="benefit-check">✓</span><span>' + b.trim() + '</span></div>'; }).join('') + '</div>' : '') +
+          '<button class="btn-agendar" style="width:100%; padding:13px; border-radius:12px; background:var(--accent-green); color:#000; border:none; font-weight:700; cursor:pointer;" onclick="event.stopPropagation(); abrirModalAssinatura({id:' + plano.id + ', nome:\'' + plano.nome.replace(/'/g, "\\'") + '\', preco:' + plano.preco + '})">📋 Assinar Agora</button>' +
+        '</div>';
+      }
+      container.innerHTML = html;
     }
 
     function renderProfissionais(lista) {
-      const c = document.getElementById('profissionaisList');
-      document.getElementById('profCount').textContent = `${lista.length} profissionais`;
-      c.innerHTML = lista.length ? lista.map(p => `
-        <div class="card" style="cursor:default;">
-          <div class="thumb round"><img src="${p.foto || 'static/logo.jpeg'}" onerror="this.style.display='none'" loading="lazy"></div>
-          <div class="info"><h3>${p.nome}</h3><p class="sub">${p.especialidade || ''}</p></div>
-          <button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:${p.id}, nome:'${p.nome.replace(/'/g, "\\'")} (Profissional)', preco:0, duracao_min:0})"></button>
-        </div>
-      `).join('') : '<div class="empty-msg">Nenhum profissional cadastrado.</div>';
+      var c = document.getElementById('profissionaisList');
+      if (!c) return;
+      document.getElementById('profCount').textContent = (lista && lista.length || 0) + ' profissionais';
+      if (lista && lista.length > 0) {
+        var html = '';
+        for (var i = 0; i < lista.length; i++) {
+          var p = lista[i];
+          html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + p.nome + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
+        }
+        c.innerHTML = html;
+      } else {
+        c.innerHTML = '<div class="empty-msg">Nenhum profissional cadastrado.</div>';
+      }
     }
 
     function renderProdutos(lista) {
-      const c = document.getElementById('produtosList');
-      document.getElementById('prodCount').textContent = `${lista.length} produtos`;
-      c.innerHTML = lista.length ? lista.map(p => `
-        <div class="card" onclick="abrirModalSimples({id:${p.id}, nome:'${p.nome.replace(/'/g, "\\'")} (Produto)', preco:${p.preco}, duracao_min:0})">
-          <div class="thumb"><img src="${p.imagem || 'static/logo.jpeg'}" onerror="this.style.display='none'" loading="lazy"></div>
-          <div class="info"><h3>${p.nome}</h3><div class="price">${formatarPreco(p.preco)}</div></div>
-          <button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:${p.id}, nome:'${p.nome.replace(/'/g, "\\'")} (Produto)', preco:${p.preco}, duracao_min:0})"></button>
-        </div>
-      `).join('') : '<div class="empty-msg">Nenhum produto cadastrado.</div>';
+      var c = document.getElementById('produtosList');
+      if (!c) return;
+      document.getElementById('prodCount').textContent = (lista && lista.length || 0) + ' produtos';
+      if (lista && lista.length > 0) {
+        var html = '';
+        for (var i = 0; i < lista.length; i++) {
+          var p = lista[i];
+          html += '<div class="card" onclick="abrirModalSimples({id:' + p.id + ', nome:\'' + p.nome.replace(/'/g, "\\'") + ' (Produto)\', preco:' + p.preco + ', duracao_min:0})"><div class="thumb"><img src="' + (p.imagem || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + p.nome + '</h3><div class="price">' + formatarPreco(p.preco) + '</div></div><button class="btn-confirmar-card" onclick="event.stopPropagation(); abrirModalSimples({id:' + p.id + ', nome:\'' + p.nome.replace(/'/g, "\\'") + ' (Produto)\', preco:' + p.preco + ', duracao_min:0})"></button></div>';
+        }
+        c.innerHTML = html;
+      } else {
+        c.innerHTML = '<div class="empty-msg">Nenhum produto cadastrado.</div>';
+      }
     }
 
     function renderImagens(lista) {
-      const container = document.getElementById('imagensList');
-      
+      var container = document.getElementById('imagensList');
+      if (!container) return;
       if (!lista || lista.length === 0) {
         container.innerHTML = '<div class="empty-msg">Nenhuma imagem disponível.</div>';
         document.getElementById('imagemCount').textContent = '0 imagens';
         return;
       }
-
-      document.getElementById('imagemCount').textContent = `${lista.length} imagens`;
-
-      container.innerHTML = lista.map(img => `
-        <div class="imagem-item" onclick="window.open('fotos/${img.arquivo}', '_blank')">
-          <img src="fotos/${img.arquivo}" alt="${img.nome}" loading="lazy" onerror="this.src='static/logo.jpeg'">
-          <div class="imagem-overlay">
-            <div>${img.nome}</div>
-            ${img.descricao ? `<div style="font-size:.7rem; opacity:0.8;">${img.descricao}</div>` : ''}
-          </div>
-        </div>
-      `).join('');
+      document.getElementById('imagemCount').textContent = lista.length + ' imagens';
+      var html = '';
+      for (var i = 0; i < lista.length; i++) {
+        var img = lista[i];
+        html += '<div class="imagem-item" onclick="window.open(\'fotos/' + img.arquivo + '\', \'_blank\')"><img src="fotos/' + img.arquivo + '" alt="' + img.nome + '" loading="lazy" onerror="this.src=\'static/logo.jpeg\'"><div class="imagem-overlay"><div>' + img.nome + '</div>' + (img.descricao ? '<div style="font-size:.7rem; opacity:0.8;">' + img.descricao + '</div>' : '') + '</div></div>';
+      }
+      container.innerHTML = html;
     }
 
-    // ======== UTILIDADES ========
-    function formatarPreco(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
+    // ======== PREENCHER SELECT AGENDAMENTO ========
+    function preencherSelectAgendamento() {
+      var select = document.getElementById('agendaServico');
+      if (!select) return;
+      select.innerHTML = '<option value="">Não informado</option>';
+      if (todosServicos && todosServicos.length > 0) {
+        for (var i = 0; i < todosServicos.length; i++) {
+          var option = document.createElement('option');
+          option.value = todosServicos[i].id;
+          option.textContent = todosServicos[i].nome + ' - ' + formatarPreco(todosServicos[i].preco);
+          select.appendChild(option);
+        }
+      }
+    }
 
     // ======== TABS ========
-    const secoes = {
+    var secoes = {
       servicos: document.getElementById('secServicos'),
       assinaturas: document.getElementById('secAssinaturas'),
       profissionais: document.getElementById('secProfissionais'),
@@ -1319,114 +1380,92 @@
       imagens: document.getElementById('secImagens'),
     };
 
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const alvo = tab.dataset.tab;
-        Object.keys(secoes).forEach(k => secoes[k].classList.toggle('hidden', k !== alvo));
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].addEventListener('click', function() {
+        var allTabs = document.querySelectorAll('.tab');
+        for (var j = 0; j < allTabs.length; j++) { allTabs[j].classList.remove('active'); }
+        this.classList.add('active');
+        var alvo = this.dataset.tab;
+        var keys = Object.keys(secoes);
+        for (var k = 0; k < keys.length; k++) {
+          secoes[keys[k]].classList.toggle('hidden', keys[k] !== alvo);
+        }
       });
-    });
-
-    // ======== EVENTOS DE VALIDAÇÃO ========
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('input[name="corteEmCasa"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-          const enderecoFields = document.getElementById('enderecoFields');
-          if (this.value === 'sim') {
-            enderecoFields.classList.add('visible');
-            document.getElementById('clienteEndereco').setAttribute('required', 'required');
-          } else {
-            enderecoFields.classList.remove('visible');
-            document.getElementById('clienteEndereco').removeAttribute('required');
-          }
-          validarCamposCompleto();
-        });
-      });
-      
-      document.getElementById('nomeSimples').addEventListener('input', function() {
-        const nome = this.value.trim();
-        document.getElementById('btnConfirmarSimples').disabled = !(nome && pagamentoSelecionadoSimples);
-      });
-      
-      document.querySelectorAll('#clienteNome, #clienteTelefone, #dataAgendamento, #horaAgendamento, #servicoSelecionado').forEach(el => {
-        el.addEventListener('input', validarCamposCompleto);
-        el.addEventListener('change', validarCamposCompleto);
-      });
-    });
+    }
 
     // ======== CARREGAR DADOS ========
     async function carregarDados() {
       try {
-        const bizRes = await fetch('/api/barbearia');
+        var bizRes = await fetch('/api/barbearia');
         if (bizRes.ok) {
-          const biz = await bizRes.json();
+          var biz = await bizRes.json();
           document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
-          document.getElementById('bizEndereco').textContent = biz.endereco || 'Rua Maganel, nº 1477, Curado, Recife, PE';
+          document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
           if (biz.logo) {
             document.getElementById('coverLogo').src = biz.logo;
             document.getElementById('infoLogo').src = biz.logo;
           }
           if (biz.whatsapp) {
             bizWhatsapp = biz.whatsapp;
-            document.querySelectorAll('a[href*="wa.me"]').forEach(el => {
-              const oldNumber = el.href.match(/wa\.me\/(\d+)/);
-              if (oldNumber && oldNumber[1]) {
-                el.href = el.href.replace(oldNumber[1], bizWhatsapp);
-              }
-            });
-            document.getElementById('whatsappFloatBtn').href = `https://wa.me/${bizWhatsapp}?text=Olá!%20Quero%20fazer%20um%20agendamento`;
           }
         }
         
-        const [servRes, assinaturasRes, profRes, prodRes, imgRes] = await Promise.all([
-          fetch('/api/servicos'),
-          fetch('/api/assinaturas'),
-          fetch('/api/profissionais'),
-          fetch('/api/produtos'),
-          fetch('/api/imagens')
-        ]);
+        var servRes = await fetch('/api/servicos');
+        var assRes = await fetch('/api/assinaturas');
+        var profRes = await fetch('/api/profissionais');
+        var prodRes = await fetch('/api/produtos');
+        var imgRes = await fetch('/api/imagens');
 
         todosServicos = await servRes.json();
-        const assinaturas = await assinaturasRes.json();
-        const imagens = await imgRes.json();
+        var assinaturas = await assRes.json();
+        var profissionais = await profRes.json();
+        var produtos = await prodRes.json();
+        var imagens = await imgRes.json();
 
         renderServicos(todosServicos);
         renderAssinaturas(assinaturas);
-        renderProfissionais(await profRes.json());
-        renderProdutos(await prodRes.json());
+        renderProfissionais(profissionais);
+        renderProdutos(produtos);
         renderImagens(imagens);
+        preencherSelectAgendamento();
+        preencherProfissionais();
+        
+        console.log('✅ Dados carregados:', {
+          servicos: todosServicos.length,
+          profissionais: profissionais.length,
+          assinaturas: assinaturas.length,
+          produtos: produtos.length,
+          imagens: imagens.length
+        });
         
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
-        showToast('⚠️ Erro ao carregar dados. Recarregue a página.', 3000);
       }
     }
 
-    // ======== FECHAR MODAIS AO CLICAR FORA ========
+    // ======== FECHAR MODAIS ========
     document.getElementById('modalSimples').addEventListener('click', function(e) {
       if (e.target === this) fecharModalSimples();
     });
-
-    document.getElementById('modalCompleto').addEventListener('click', function(e) {
-      if (e.target === this) fecharModalCompleto();
+    document.getElementById('modalAssinatura').addEventListener('click', function(e) {
+      if (e.target === this) fecharModalAssinatura();
     });
-
+    document.getElementById('modalAgendamento').addEventListener('click', function(e) {
+      if (e.target === this) fecharModalAgendamento();
+    });
     document.getElementById('sucessoModal').addEventListener('click', function(e) {
       if (e.target === this) fecharSucesso();
     });
-
     document.getElementById('faqOverlay').addEventListener('click', function(e) {
       if (e.target === this) fecharFAQ();
     });
 
     // ======== INICIAR ========
     carregarDados();
-
     console.log('✂️ Leblon Studio carregado!');
-    console.log('📱 Fluxo 1: Clique no + → Nome + Pagamento → Confirmar');
-    console.log('📱 Fluxo 2: Clique em "Agendar" no menu → Escolha o serviço → Formulário completo');
+    console.log('📋 WhatsApp:', bizWhatsapp);
+    console.log('📍 Endereço: Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280');
   </script>
-
 </body>
 </html>
