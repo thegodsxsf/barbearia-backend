@@ -927,7 +927,7 @@
 
     // ======== PREENCHER PROFISSIONAIS ========
     function preencherProfissionais() {
-      fetch('/api/profissionais')
+      fetch(BACKEND_URL + '/api/profissionais')
         .then(function(res) { return res.json(); })
         .then(function(profissionais) {
           todosProfissionais = profissionais;
@@ -1398,16 +1398,17 @@
     // ======== CARREGAR DADOS ========
     
     
+    
     async function carregarDados() {
       try {
         console.log('📡 Carregando dados da API...');
+        console.log('🔗 BACKEND_URL:', BACKEND_URL);
         
         // Buscar serviços
-        var servRes = await fetch('/api/servicos');
+        var servRes = await fetch(BACKEND_URL + '/api/servicos');
         var servicos = await servRes.json();
         
         console.log('✅ Serviços carregados:', servicos.length);
-        console.log('📦 Primeiro serviço:', servicos[0]);
         
         // Renderizar serviços
         var container = document.getElementById('servicesList');
@@ -1428,14 +1429,11 @@
             console.log('✅ Serviços renderizados:', servicos.length);
           } else {
             container.innerHTML = '<div class="empty-msg">Nenhum serviço disponível.</div>';
-            console.warn('⚠️ Nenhum serviço para renderizar');
           }
-        } else {
-          console.error('❌ Container servicesList não encontrado!');
         }
         
         // Buscar profissionais
-        var profRes = await fetch('/api/profissionais');
+        var profRes = await fetch(BACKEND_URL + '/api/profissionais');
         var profissionais = await profRes.json();
         console.log('✅ Profissionais carregados:', profissionais.length);
         
@@ -1448,15 +1446,17 @@
             html += '<div class="card" style="cursor:default;"><div class="thumb round"><img src="' + (p.foto || 'static/logo.jpeg') + '" onerror="this.style.display=\'none\'" loading="lazy"></div><div class="info"><h3>' + (p.nome || 'Profissional') + '</h3><p class="sub">' + (p.especialidade || '') + '</p></div></div>';
           }
           profContainer.innerHTML = html;
-          document.getElementById('profCount').textContent = profissionais.length + ' profissionais';
+          var profCount = document.getElementById('profCount');
+          if (profCount) profCount.textContent = profissionais.length + ' profissionais';
         }
         
       } catch (err) {
         console.error('❌ Erro ao carregar dados:', err);
         var container = document.getElementById('servicesList');
-        if (container) container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços</div>';
+        if (container) container.innerHTML = '<div class="empty-msg">❌ Erro ao carregar serviços: ' + err.message + '</div>';
       }
     }
+
 
 
 
