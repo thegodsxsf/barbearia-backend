@@ -8,6 +8,55 @@ import getpass
 from flask import Flask, jsonify, request, send_from_directory, g, session, redirect, send_file
 import requests
 
+# ============ BASEROW ============
+BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
+BASEROW_TABLE_ID = "1083808"
+BASEROW_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/?user_field_names=true"
+
+def enviar_pedido_baserow(pedido):
+    """Envia pedido para o Baserow quando concluído"""
+    if not BASEROW_TOKEN:
+        print("⚠️ BASEROW_TOKEN não configurado")
+        return False
+    
+    try:
+        # Preparar dados
+        data_hora = f"{pedido.get('data_agendada', '')} {pedido.get('hora_agendada', '')}".strip()
+        if not data_hora:
+            data_hora = datetime.now().strftime("%Y-%m-%d %H:%M")
+        
+        data = {
+            "Cliente": pedido.get('cliente_nome', '') or "Cliente não informado",
+            "Serviço": pedido.get('servico_nome', '') or "Serviço não informado",
+            "Data/Hora": data_hora,
+            "valor": f"R$ {float(pedido.get('valor', 0)):.2f}"
+        }
+        
+        print(f"📤 Enviando para Baserow: {data}")
+        
+        response = requests.post(
+            BASEROW_URL,
+            json=data,
+            headers={
+                "Authorization": f"Token {BASEROW_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            print(f"✅ Pedido {pedido.get('id')} enviado para Baserow com sucesso!")
+            return True
+        else:
+            print(f"⚠️ Erro Baserow: {response.status_code}")
+            print(f"   Resposta: {response.text[:200]}")
+            return False
+            
+    except Exception as e:
+        print(f"⚠️ Erro ao enviar Baserow: {e}")
+        return False
+
+
 # ---- Configuração do Baserow (token vem de variável de ambiente, nunca fixo no código) ----
 BASEROW_TOKEN = os.environ.get("BASEROW_TOKEN", "")
 BASEROW_TABLE_ID = 1083808  # tabela "Customers"
