@@ -364,23 +364,56 @@ function cardProduto(item) {
     </div>`;
 }
 
-async function carregarDados() {
-    try {
-        var s = await fetch('/api/servicos');
-        var a = await fetch('/api/assinaturas');
-        var p = await fetch('/api/profissionais');
-        var pr = await fetch('/api/produtos');
 
-        var servicos = await s.json();
-        var assinaturas = await a.json();
-        var profissionais = await p.json();
-        var produtos = await pr.json();
+    async function carregarDados() {
+      try {
+        var bizRes = await fetch('/api/barbearia');
+        if (bizRes.ok) {
+          var biz = await bizRes.json();
+          document.getElementById('bizNome').textContent = biz.nome || 'Leblon Studio';
+          document.getElementById('bizEndereco').textContent = biz.endereco || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280';
+          if (biz.logo) {
+            document.getElementById('coverLogo').src = biz.logo;
+            document.getElementById('infoLogo').src = biz.logo;
+          }
+          if (biz.whatsapp) {
+            bizWhatsapp = biz.whatsapp;
+          }
+        }
+        
+        var servRes = await fetch('/api/servicos');
+        var assRes = await fetch('/api/assinaturas');
+        var profRes = await fetch('/api/profissionais');
+        var prodRes = await fetch('/api/produtos');
+        var imgRes = await fetch('/api/imagens');
 
-        renderizar(servicos, 'servicesList', cardServico);
-        renderizar(assinaturas, 'assinaturasList', cardAssinatura);
-        renderizar(profissionais, 'profissionaisList', cardProfissional);
-        renderizar(produtos, 'produtosList', cardProduto);
-    } catch (e) {
+        todosServicos = await servRes.json();
+        var assinaturas = await assRes.json();
+        var profissionais = await profRes.json();
+        var produtos = await prodRes.json();
+        var imagens = await imgRes.json();
+
+        renderServicos(todosServicos);
+        renderAssinaturas(assinaturas);
+        renderProfissionais(profissionais);
+        renderProdutos(produtos);
+        renderImagens(imagens);
+        preencherSelectAgendamento();
+        preencherProfissionais();
+        
+        console.log('✅ Dados carregados:', {
+          servicos: todosServicos.length,
+          profissionais: profissionais.length,
+          assinaturas: assinaturas.length,
+          produtos: produtos.length,
+          imagens: imagens.length
+        });
+        
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+      }
+    }
+ catch (e) {
         document.getElementById('servicesList').innerHTML = '<div class="empty-msg">❌ Erro ao carregar dados</div>';
     }
 }
