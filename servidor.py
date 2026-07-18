@@ -1,12 +1,20 @@
 """
-Barbearia - SQLite
+Barbearia - SQLite + Baserow
 """
 import os
 import sqlite3
 from datetime import date, datetime, timedelta
 import getpass
-from flask import Flask, jsonify, request, send_from_directory, g, session, redirect, send_file
 import requests
+from flask import Flask, jsonify, request, send_from_directory, g, session, redirect, send_file
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(BASE_DIR, "banco.db")
+DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
+
+app = Flask(__name__, static_folder="static")
+app.secret_key = "chave-secreta-barbearia"
 
 # ============ BASEROW ============
 BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
@@ -45,7 +53,7 @@ def enviar_pedido_baserow(pedido):
         )
         
         if response.status_code == 200:
-            print(f"✅ Pedido {pedido.get('id')} enviado para Baserow com sucesso!")
+            print(f"✅ Pedido {pedido.get('id')} enviado para Baserow!")
             return True
         else:
             print(f"⚠️ Erro Baserow: {response.status_code}")
@@ -55,38 +63,6 @@ def enviar_pedido_baserow(pedido):
     except Exception as e:
         print(f"⚠️ Erro ao enviar Baserow: {e}")
         return False
-
-
-# ---- Configuração do Baserow (token vem de variável de ambiente, nunca fixo no código) ----
-BASEROW_TOKEN = os.environ.get("BASEROW_TOKEN", "")
-BASEROW_TABLE_ID = 1083808  # tabela "Customers"
-
-def enviar_pedido_baserow(cliente_nome, servico_nome, data_hora, valor):
-    if not BASEROW_TOKEN:
-        print("⚠️ BASEROW_TOKEN não configurado — pulando envio ao Baserow.")
-        return
-    try:
-        url = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/?user_field_names=true"
-        headers = {"Authorization": f"Token {BASEROW_TOKEN}", "Content-Type": "application/json"}
-        dados = {
-            "Cliente": cliente_nome or "",
-            "Serviço": servico_nome or "",
-            "Data/Hora": data_hora or "",
-            "valor": str(valor or 0)
-        }
-        resp = requests.post(url, headers=headers, json=dados, timeout=5)
-        if not resp.ok:
-            print("⚠️ Baserow respondeu erro:", resp.status_code, resp.text)
-    except Exception as e:
-        print("⚠️ Erro ao enviar para o Baserow:", e)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DB_PATH = os.path.join(BASE_DIR, "banco.db")
-DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
-
-app = Flask(__name__, static_folder="static")
-app.secret_key = "chave-secreta-barbearia"
 
 # ============ SQLITE ============
 def get_db():
@@ -143,16 +119,15 @@ def pagina_gerente():
         return redirect("/gerente/login")
     return send_from_directory(BASE_DIR, "gerente.html")
 
-# ============ API PÚBLICA (usada pelo index.html) ============
+# ============ API PÚBLICA ============
 @app.route("/api/barbearia", methods=["GET"])
 def api_barbearia():
-    # Tenta ler dados da barbearia; se a tabela não existir, devolve valores padrão
     try:
         db = get_db()
         row = db.execute("SELECT * FROM barbearia LIMIT 1").fetchone()
         if row:
             return jsonify(dict(row))
-    except sqlite3.OperationalError:
+    except:
         pass
     return jsonify({
         "nome": "Leblon Studio",
@@ -187,13 +162,11 @@ def api_produtos():
 
 @app.route("/api/imagens", methods=["GET"])
 def api_imagens():
-    # Rota que estava faltando e travava o carregamento do site inteiro.
-    # Se a tabela "imagens" não existir ainda, devolve lista vazia em vez de dar 404.
     try:
         db = get_db()
         rows = db.execute("SELECT * FROM imagens WHERE ativo = 1 ORDER BY ordem, id").fetchall()
         return jsonify([dict(r) for r in rows])
-    except sqlite3.OperationalError:
+    except:
         return jsonify([])
 
 @app.route("/api/horarios", methods=["GET"])
@@ -203,9 +176,8 @@ def api_horarios_get():
         rows = db.execute("SELECT * FROM horarios ORDER BY dia_semana").fetchall()
         if rows:
             return jsonify([dict(r) for r in rows])
-    except sqlite3.OperationalError:
+    except:
         pass
-    # Padrão: todos os dias, sem horário configurado ainda
     return jsonify([{"dia_semana": i, "abertura": "", "fechamento": "", "ativo": 0} for i in range(7)])
 
 @app.route("/api/horarios", methods=["PUT"])
@@ -214,14 +186,9 @@ def api_horarios_put():
     dados = request.get_json() or {}
     db = get_db()
     try:
-        db.execute("""CREATE TABLE IF NOT EXISTS horarios (
-            dia_semana INTEGER PRIMARY KEY, abertura TEXT, fechamento TEXT, ativo INTEGER
-        )""")
         for dia, info in dados.items():
             db.execute(
-                "INSERT INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?) "
-                "ON CONFLICT(dia_semana) DO UPDATE SET abertura=excluded.abertura, "
-                "fechamento=excluded.fechamento, ativo=excluded.ativo",
+                "INSERT OR REPLACE INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?)",
                 (int(dia), info.get("abertura", ""), info.get("fechamento", ""), 1 if info.get("ativo") else 0)
             )
         db.commit()
@@ -229,7 +196,7 @@ def api_horarios_put():
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
-# ---- Recebe pedidos vindos do site (index.html) ----
+# ============ RECEBER PEDIDOS ============
 @app.route("/api/pedidos", methods=["POST"])
 def api_criar_pedido():
     dados = request.get_json() or {}
@@ -246,145 +213,7 @@ def api_criar_pedido():
     db.commit()
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
-# ============ CRUD SERVIÇOS ============
-@app.route("/api/servicos", methods=["POST"])
-@login_required
-def api_criar_servico():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        "INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
-         dados.get('ativo', 1), dados.get('ordem', 0))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/servicos/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_servico(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
-         dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/servicos/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_servico(item_id):
-    db = get_db()
-    db.execute("DELETE FROM servicos WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-# ============ CRUD PRODUTOS ============
-@app.route("/api/produtos", methods=["POST"])
-@login_required
-def api_criar_produto():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        "INSERT INTO produtos (nome, preco, ativo, ordem) VALUES (?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), dados.get('ordem', 0))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/produtos/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_produto(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE produtos SET nome=?, preco=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/produtos/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_produto(item_id):
-    db = get_db()
-    db.execute("DELETE FROM produtos WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-# ============ CRUD PROFISSIONAIS ============
-@app.route("/api/profissionais", methods=["POST"])
-@login_required
-def api_criar_profissional():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        "INSERT INTO profissionais (nome, especialidade, ativo, ordem) VALUES (?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), dados.get('ordem', 0))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/profissionais/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_profissional(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE profissionais SET nome=?, especialidade=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('especialidade', ''), dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/profissionais/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_profissional(item_id):
-    db = get_db()
-    db.execute("DELETE FROM profissionais WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-# ============ CRUD ASSINATURAS (Planos) ============
-@app.route("/api/assinaturas", methods=["POST"])
-@login_required
-def api_criar_assinatura():
-    dados = request.get_json() or {}
-    db = get_db()
-    cur = db.execute(
-        """INSERT INTO assinaturas (nome, preco, icone, descricao, destaque, ativo, ordem, beneficios, cor)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
-         dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1),
-         dados.get('ordem', 0), dados.get('beneficios', ''), dados.get('cor', '#3ddc84'))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/assinaturas/<int:item_id>", methods=["PUT"])
-@login_required
-def api_atualizar_assinatura(item_id):
-    dados = request.get_json() or {}
-    db = get_db()
-    db.execute(
-        "UPDATE assinaturas SET nome=?, preco=?, icone=?, descricao=?, destaque=?, ativo=? WHERE id=?",
-        (dados.get('nome'), dados.get('preco', 0), dados.get('icone', '⭐'),
-         dados.get('descricao', ''), dados.get('destaque', 0), dados.get('ativo', 1), item_id)
-    )
-    db.commit()
-    return jsonify({"status": "ok"})
-
-@app.route("/api/assinaturas/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_deletar_assinatura(item_id):
-    db = get_db()
-    db.execute("DELETE FROM assinaturas WHERE id=?", (item_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-# ============ API GERENTE - LOGIN ============
+# ============ API GERENTE ============
 @app.route("/api/gerente/login", methods=["POST"])
 def gerente_login():
     dados = request.get_json() or {}
@@ -408,7 +237,6 @@ def gerente_me():
     if not session.get("gerente_id"):
         return jsonify({"erro": "Não autenticado"}), 401
     return jsonify({"nome": session.get("gerente_nome")})
-
 
 @app.route("/api/gerente/dashboard")
 @login_required
@@ -456,24 +284,26 @@ def gerente_dashboard():
         "comandas_abertas": comandas_abertas,
         "repasses_pendentes": repasses_pendentes
     })
+
 @app.route("/api/gerente/pedidos", methods=["GET"])
 @login_required
 def gerente_listar_pedidos():
     db = get_db_gerente()
     status = request.args.get("status")
     limit = request.args.get("limit")
-    query = "SELECT * FROM pedidos"
-    params = ()
+    
     if status:
-        query += " WHERE status = ?"
-        params = (status,)
-    query += " ORDER BY id DESC"
-    if limit:
-        query += " LIMIT ?"
-        params = params + (int(limit),)
-    rows = db.execute(query, params).fetchall()
+        if limit:
+            rows = db.execute("SELECT * FROM pedidos WHERE status = ? ORDER BY id DESC LIMIT ?", (status, int(limit))).fetchall()
+        else:
+            rows = db.execute("SELECT * FROM pedidos WHERE status = ? ORDER BY id DESC", (status,)).fetchall()
+    else:
+        if limit:
+            rows = db.execute("SELECT * FROM pedidos ORDER BY id DESC LIMIT ?", (int(limit),)).fetchall()
+        else:
+            rows = db.execute("SELECT * FROM pedidos ORDER BY id DESC").fetchall()
+    
     return jsonify([dict(r) for r in rows])
-
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
 @login_required
@@ -506,10 +336,14 @@ def gerente_atualizar_pedido(pedido_id):
             )
         
         # Enviar para Baserow
-        enviar_pedido_baserow(dict(pedido))
+        try:
+            enviar_pedido_baserow(dict(pedido))
+        except Exception as e:
+            print(f"⚠️ Erro ao enviar Baserow: {e}")
     
     db.commit()
     return jsonify({"status": "ok"})
+
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
 @login_required
 def gerente_deletar_pedido(pedido_id):
@@ -579,7 +413,7 @@ def gerente_deletar_cliente(cliente_id):
     db.commit()
     return jsonify({"status": "ok"})
 
-# ============ API GERENTE - COMANDAS / REPASSES / CAIXA (evitam 404 no painel) ============
+# ============ API GERENTE - COMANDAS ============
 @app.route("/api/gerente/comandas", methods=["GET"])
 @login_required
 def gerente_listar_comandas():
@@ -587,7 +421,7 @@ def gerente_listar_comandas():
     try:
         rows = db.execute("SELECT * FROM comandas ORDER BY id DESC").fetchall()
         return jsonify([dict(r) for r in rows])
-    except sqlite3.OperationalError:
+    except:
         return jsonify([])
 
 @app.route("/api/gerente/comandas", methods=["POST"])
@@ -595,11 +429,6 @@ def gerente_listar_comandas():
 def gerente_criar_comanda():
     dados = request.get_json() or {}
     db = get_db_gerente()
-    db.execute("""CREATE TABLE IF NOT EXISTS comandas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, ticket TEXT, cliente_nome TEXT, cliente_telefone TEXT,
-        profissional TEXT, servicos TEXT, valor_total REAL, status TEXT, pagamento TEXT,
-        criado_em TEXT DEFAULT CURRENT_TIMESTAMP
-    )""")
     ticket = "CMD-" + datetime.now().strftime("%Y%m%d%H%M%S")
     cur = db.execute(
         """INSERT INTO comandas (ticket, cliente_nome, cliente_telefone, profissional, servicos, valor_total, status, pagamento)
@@ -618,6 +447,7 @@ def gerente_deletar_comanda(comanda_id):
     db.commit()
     return jsonify({"status": "ok"})
 
+# ============ API GERENTE - REPASSES ============
 @app.route("/api/gerente/repasses", methods=["GET"])
 @login_required
 def gerente_listar_repasses():
@@ -625,7 +455,7 @@ def gerente_listar_repasses():
     try:
         rows = db.execute("SELECT * FROM repasses ORDER BY id DESC").fetchall()
         return jsonify([dict(r) for r in rows])
-    except sqlite3.OperationalError:
+    except:
         return jsonify([])
 
 @app.route("/api/gerente/repasses/resumo", methods=["GET"])
@@ -635,7 +465,7 @@ def gerente_repasses_resumo():
     try:
         pendente = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pendente'").fetchone()[0]
         pago = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pago'").fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         pendente, pago = 0, 0
     return jsonify({"total_pendente": pendente, "total_pago": pago})
 
@@ -644,10 +474,6 @@ def gerente_repasses_resumo():
 def gerente_criar_repasse():
     dados = request.get_json() or {}
     db = get_db_gerente()
-    db.execute("""CREATE TABLE IF NOT EXISTS repasses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, profissional TEXT, servico_nome TEXT,
-        valor_servico REAL, comissao REAL, status TEXT, criado_em TEXT DEFAULT CURRENT_TIMESTAMP
-    )""")
     porcentagem = dados.get('porcentagem', 50)
     valor_servico = dados.get('valor_servico', 0)
     comissao = valor_servico * (porcentagem / 100)
@@ -667,6 +493,7 @@ def gerente_deletar_repasse(repasse_id):
     db.commit()
     return jsonify({"status": "ok"})
 
+# ============ API GERENTE - CAIXA ============
 @app.route("/api/gerente/caixa", methods=["GET"])
 @login_required
 def gerente_listar_caixa():
@@ -674,7 +501,7 @@ def gerente_listar_caixa():
     try:
         rows = db.execute("SELECT * FROM caixa ORDER BY id DESC").fetchall()
         return jsonify([dict(r) for r in rows])
-    except sqlite3.OperationalError:
+    except:
         return jsonify([])
 
 @app.route("/api/gerente/caixa", methods=["POST"])
@@ -682,10 +509,6 @@ def gerente_listar_caixa():
 def gerente_criar_caixa():
     dados = request.get_json() or {}
     db = get_db_gerente()
-    db.execute("""CREATE TABLE IF NOT EXISTS caixa (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT, descricao TEXT, pagamento TEXT,
-        valor REAL, criado_em TEXT DEFAULT CURRENT_TIMESTAMP
-    )""")
     cur = db.execute(
         "INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)",
         (dados.get('tipo'), dados.get('descricao'), dados.get('pagamento'), dados.get('valor', 0))
@@ -743,6 +566,6 @@ def gerente_relatorio_pdf():
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
-    print("  📡 SQLite")
+    print("  📡 SQLite + Baserow")
     print("="*60)
     app.run(debug=True, host="0.0.0.0", port=5000)
