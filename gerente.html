@@ -583,9 +583,43 @@ async function excluirPedido(id){
   }
 }
 
+
 async function atualizarStatusPedido(id, status){
   try{
-    await api(`/api/gerente/pedidos/${id}`, {method:'PUT', body: JSON.stringify({status})});
+    console.log('📤 Atualizando pedido:', id, 'para', status);
+    
+    const response = await fetch(`/api/gerente/pedidos/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({status: status})
+    });
+    
+    console.log('📥 Resposta status:', response.status);
+    
+    const data = await response.json();
+    console.log('📥 Resposta data:', data);
+    
+    if (!response.ok) {
+      throw new Error(data.erro || 'Erro ao atualizar status');
+    }
+    
+    const statusMap = {
+      'pendente': '⏳ Pendente',
+      'confirmado': '✅ Confirmado',
+      'concluido': '🎯 Concluído',
+      'cancelado': '❌ Cancelado'
+    };
+    showToast(`✅ Status alterado para: ${statusMap[status] || status}`);
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    console.error('❌ Erro:', e);
+    showToast('❌ Erro ao atualizar: ' + e.message);
+  }
+}
+`, {method:'PUT', body: JSON.stringify({status})});
     const statusMap = { 'pendente': '⏳ Pendente', 'confirmado': '✅ Confirmado', 'concluido': '🎯 Concluído', 'cancelado': '❌ Cancelado' };
     showToast(`✅ Status alterado para: ${statusMap[status] || status}`);
     carregarPedidos();
@@ -621,9 +655,36 @@ document.querySelectorAll('#filtrosPedidos .filtro-btn').forEach(btn=>{
   });
 });
 
+
 async function carregarPedidos(){
   try{
     const url = filtroStatusAtual ? `/api/gerente/pedidos?status=${filtroStatusAtual}` : '/api/gerente/pedidos';
+    console.log('📡 Carregando pedidos:', url);
+    const pedidos = await api(url);
+    console.log('✅ Pedidos carregados:', pedidos.length);
+    document.getElementById('tabelaPedidos').innerHTML = pedidos.length ? pedidos.map(p => `<tr>
+      <td><strong>${p.cliente_nome}</strong></td>
+      <td>${p.cliente_telefone || '-'}</td>
+      <td>${p.cliente_cpf || '-'}</td>
+      <td>${p.servico_nome}</td>
+      <td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td>
+      <td>${p.data_agendada ? (p.data_agendada.split('-').reverse().join('/') + ' ' + (p.hora_agendada||'')) : formatarData(p.criado_em)}</td>
+      <td>${formatarPreco(p.valor)}</td>
+      <td>${p.pagamento || '-'}</td>
+      <td><span class="status-pill status-${p.status}">${p.status}</span></td>
+      <td><div class="acoes">
+        ${p.status==='pendente' ? `<button class="btn-mini blue" onclick="atualizarStatusPedido(${p.id}, 'confirmado')">Confirmar</button>` : ''}
+        ${p.status!=='concluido' ? `<button class="btn-mini ok" onclick="atualizarStatusPedido(${p.id}, 'concluido')">Concluir</button>` : ''}
+        ${p.status!=='cancelado' ? `<button class="btn-mini gray" onclick="atualizarStatusPedido(${p.id}, 'cancelado')">Cancelar</button>` : ''}
+        <button class="btn-mini red" onclick="excluirPedido(${p.id})">Excluir</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="10" class="empty-msg">Nenhum pedido encontrado.</td></tr>';
+  } catch(e){ 
+    console.error('❌ Erro ao carregar pedidos:', e);
+    showToast('❌ Erro ao carregar pedidos: ' + e.message);
+  }
+}
+` : '/api/gerente/pedidos';
     const pedidos = await api(url);
     document.getElementById('tabelaPedidos').innerHTML = pedidos.length ? pedidos.map(p => `<tr>
       <td><strong>${p.cliente_nome}</strong></td>
