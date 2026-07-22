@@ -959,14 +959,16 @@
     }
     function formatarPreco(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
 
-    // ======== PREENCHER PROFISSIONAIS ========
+    // ======== PREENCHER PROFISSIONAIS (CORRIGIDO) ========
     async function preencherProfissionais() {
       var profissionais = await fetchSeguro('/api/profissionais', []);
       todosProfissionais = profissionais;
       var options = '';
       for (var i = 0; i < profissionais.length; i++) {
         if (profissionais[i].ativo === 1) {
-          options += '<option value="' + profissionais[i].id + '">' + profissionais[i].nome + ' - ' + (profissionais[i].especialidade || '') + '</option>';
+          // Usa o NOME completo como value, não o ID
+          var nomeCompleto = profissionais[i].nome + ' - ' + (profissionais[i].especialidade || '');
+          options += '<option value="' + nomeCompleto + '">' + nomeCompleto + '</option>';
         }
       }
       
@@ -1167,10 +1169,20 @@
       var msgDiv = document.getElementById('mensagemHorario');
       
       if (!data || !hora || !prof) {
-        msgDiv.innerHTML = '';
-        msgDiv.className = '';
-        btn.disabled = true;
+        if (msgDiv) {
+          msgDiv.innerHTML = '⚠️ Preencha todos os campos para verificar disponibilidade.';
+          msgDiv.className = 'horario-indisponivel';
+        }
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+        }
         return;
+      }
+      
+      if (msgDiv) {
+        msgDiv.innerHTML = '⏳ Verificando disponibilidade do profissional...';
+        msgDiv.className = '';
       }
       
       fetch('/api/verificar_horario', {
@@ -1181,21 +1193,34 @@
       .then(function(res) { return res.json(); })
       .then(function(result) {
         if (!result.disponivel) {
-          msgDiv.innerHTML = '⚠️ <strong>Horário indisponível!</strong> Este horário já está ocupado. Escolha outro horário.';
-          msgDiv.className = 'horario-indisponivel';
-          btn.disabled = true;
-          btn.style.opacity = '0.5';
+          if (msgDiv) {
+            msgDiv.innerHTML = '⚠️ <strong>Horário indisponível!</strong> O profissional <strong>' + prof + '</strong> já está ocupado neste horário. Escolha outro horário ou outro profissional.';
+            msgDiv.className = 'horario-indisponivel';
+          }
+          if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+          }
+          showToast('⚠️ O profissional ' + prof + ' já está ocupado neste horário!', 4000);
         } else {
-          msgDiv.innerHTML = '✅ <strong>Horário disponível!</strong> Você pode confirmar o agendamento.';
-          msgDiv.className = 'horario-disponivel';
-          btn.disabled = false;
-          btn.style.opacity = '1';
+          if (msgDiv) {
+            msgDiv.innerHTML = '✅ <strong>Horário disponível!</strong> O profissional <strong>' + prof + '</strong> está livre neste horário.';
+            msgDiv.className = 'horario-disponivel';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+          }
         }
       })
       .catch(function(err) {
-        console.error(err);
-        msgDiv.innerHTML = '❌ Erro ao verificar horário. Tente novamente.';
-        msgDiv.className = 'horario-indisponivel';
+        console.error('❌ Erro:', err);
+        if (msgDiv) {
+          msgDiv.innerHTML = '❌ Erro ao verificar horário. Tente novamente.';
+          msgDiv.className = 'horario-indisponivel';
+        }
       });
     }
 
@@ -1229,7 +1254,7 @@
       .then(function(res) { return res.json(); })
       .then(function(result) {
         if (!result.disponivel) {
-          alert('⚠️ HORÁRIO INDISPONÍVEL!\n\nEste horário já está ocupado.\nPor favor, escolha outro horário.');
+          alert('⚠️ HORÁRIO INDISPONÍVEL!\n\nO profissional ' + profissionalId + ' já está ocupado neste horário.\nPor favor, escolha outro horário ou outro profissional.');
           showToast('⚠️ Horário indisponível! Escolha outro horário.', 5000);
           return;
         }
@@ -1556,7 +1581,7 @@ function verificarHorarioSimples() {
     }
     
     if (msgDiv) {
-        msgDiv.innerHTML = '⏳ Verificando disponibilidade...';
+        msgDiv.innerHTML = '⏳ Verificando disponibilidade do profissional...';
         msgDiv.style.background = 'rgba(255, 193, 7, 0.1)';
         msgDiv.style.color = '#ffc107';
         msgDiv.style.border = '1px solid #ffc107';
@@ -1571,7 +1596,7 @@ function verificarHorarioSimples() {
     .then(function(result) {
         if (!result.disponivel) {
             if (msgDiv) {
-                msgDiv.innerHTML = '❌ <strong>Horário indisponível!</strong> Este horário já está ocupado. Escolha outro horário.';
+                msgDiv.innerHTML = '❌ <strong>Horário indisponível!</strong> O profissional <strong>' + prof + '</strong> já está ocupado neste horário. Escolha outro horário ou outro profissional.';
                 msgDiv.style.background = 'rgba(231, 76, 60, 0.15)';
                 msgDiv.style.color = '#e74c3c';
                 msgDiv.style.border = '2px solid #e74c3c';
@@ -1581,10 +1606,10 @@ function verificarHorarioSimples() {
                 btn.style.opacity = '0.5';
                 btn.style.cursor = 'not-allowed';
             }
-            showToast('⚠️ Horário indisponível! Escolha outro horário.', 4000);
+            showToast('⚠️ O profissional ' + prof + ' já está ocupado neste horário!', 4000);
         } else {
             if (msgDiv) {
-                msgDiv.innerHTML = '✅ <strong>Horário disponível!</strong> Você pode confirmar o agendamento.';
+                msgDiv.innerHTML = '✅ <strong>Horário disponível!</strong> O profissional <strong>' + prof + '</strong> está livre neste horário.';
                 msgDiv.style.background = 'rgba(61, 220, 132, 0.15)';
                 msgDiv.style.color = '#3ddc84';
                 msgDiv.style.border = '2px solid #3ddc84';
@@ -1648,7 +1673,7 @@ window.confirmarSimples = function() {
     .then(function(res) { return res.json(); })
     .then(function(result) {
         if (!result.disponivel) {
-            alert('⚠️ HORÁRIO INDISPONÍVEL!\n\nEste horário já está ocupado.\nPor favor, escolha outro horário.');
+            alert('⚠️ HORÁRIO INDISPONÍVEL!\n\nO profissional ' + profissionalId + ' já está ocupado neste horário.\nPor favor, escolha outro horário ou outro profissional.');
             showToast('⚠️ Horário indisponível! Escolha outro horário.', 5000);
             return;
         }

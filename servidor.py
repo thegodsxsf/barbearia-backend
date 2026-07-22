@@ -335,6 +335,15 @@ def api_assinaturas():
 def api_produtos():
     return jsonify(listar_produtos_baserow())
 
+@app.route("/api/imagens", methods=["GET"])
+def api_imagens():
+    try:
+        db = get_db()
+        rows = db.execute("SELECT * FROM imagens WHERE ativo = 1 ORDER BY ordem, id").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except:
+        return jsonify([])
+
 # ============ API GERENTE LOGIN ============
 @app.route("/api/gerente/login", methods=["POST"])
 def gerente_login():
@@ -360,27 +369,52 @@ def gerente_me():
         return jsonify({"erro": "Não autenticado"}), 401
     return jsonify({"nome": session.get("gerente_nome")})
 
-# ============ DASHBOARD ============
+# ============ DASHBOARD (CORRIGIDO) ============
 @app.route("/api/gerente/dashboard")
 @login_required
 def gerente_dashboard():
     db = get_db_gerente()
-    entradas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0] or 0
-    saidas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0] or 0
-    pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status='pendente'").fetchone()[0] or 0
+    
+    # FATURAMENTO TOTAL (histórico completo da tabela caixa)
+    faturamento_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0] or 0
+    saidas_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0] or 0
+    
+    # SALDO DO DIA (da tabela caixa_diario)
     hoje = date.today().isoformat()
+    caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+    
+    if caixa_dia:
+        saldo_atual = caixa_dia[4] if caixa_dia[4] else 0
+        entradas_hoje = caixa_dia[2] if caixa_dia[2] else 0
+        saidas_hoje = caixa_dia[3] if caixa_dia[3] else 0
+        saldo_inicial = caixa_dia[1] if caixa_dia[1] else 0
+    else:
+        saldo_atual = 0
+        entradas_hoje = 0
+        saidas_hoje = 0
+        saldo_inicial = 0
+        db.execute(
+            "INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)",
+            (hoje,)
+        )
+        db.commit()
+    
+    # Pedidos
+    pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status='pendente'").fetchone()[0] or 0
     agendamentos_hoje = db.execute("SELECT COUNT(*) FROM pedidos WHERE data_agendada = ? AND status != 'cancelado'", (hoje,)).fetchone()[0] or 0
     total_clientes = db.execute("SELECT COUNT(DISTINCT cliente_nome) FROM pedidos").fetchone()[0] or 0
+    
     planos = listar_planos_baserow()
     equipe = listar_equipe_baserow()
     produtos = listar_produtos_baserow()
+    
     return jsonify({
-        "faturamento_total": entradas,
-        "saidas_total": saidas,
-        "saldo": entradas - saidas,
-        "saldo_inicial": 0,
-        "entradas_hoje": 0,
-        "saidas_hoje": 0,
+        "faturamento_total": faturamento_total,
+        "saidas_total": saidas_total,
+        "saldo": saldo_atual,  # SALDO DO DIA (vem do caixa_diario)
+        "saldo_inicial": saldo_inicial,
+        "entradas_hoje": entradas_hoje,
+        "saidas_hoje": saidas_hoje,
         "pedidos_pendentes": pendentes,
         "agendamentos_hoje": agendamentos_hoje,
         "total_clientes": total_clientes,
@@ -441,7 +475,6 @@ def gerente_atualizar_pedido(pedido_id):
         
         db = get_db_gerente()
         
-        # Busca o pedido
         pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
         if not pedido:
             return jsonify({"erro": "Pedido não encontrado"}), 404
@@ -450,25 +483,17 @@ def gerente_atualizar_pedido(pedido_id):
         servico = pedido[2]
         cliente = pedido[4]
         pagamento = pedido[10] if len(pedido) > 10 else "manual"
+        status_atual = pedido[11] if len(pedido) > 11 else "pendente"
         
-        # Atualiza o status
-        db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
-        
-        # Se for concluído, adiciona ao caixa
-        if novo_status == "concluido":
+        if novo_status == "concluido" and status_atual != "concluido":
             ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
-            
             if not ja_lancado:
-                # Insere no caixa
                 db.execute(
                     "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
                     ("entrada", f"{servico} - {cliente}", pagamento, valor, pedido_id)
                 )
-                
-                # Atualiza o caixa diário
                 hoje = date.today().isoformat()
                 caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
-                
                 if caixa_dia:
                     novas_entradas = (caixa_dia[2] or 0) + valor
                     novo_saldo = (caixa_dia[1] or 0) + novas_entradas - (caixa_dia[3] or 0)
@@ -481,9 +506,9 @@ def gerente_atualizar_pedido(pedido_id):
                         "INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, ?, 0, ?)",
                         (hoje, valor, valor)
                     )
-                
                 print(f"✅ Pedido {pedido_id} concluído! R$ {valor:.2f} adicionado ao caixa.")
         
+        db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
         db.commit()
         return jsonify({"status": "ok"})
         
@@ -493,12 +518,22 @@ def gerente_atualizar_pedido(pedido_id):
         traceback.print_exc()
         return jsonify({"erro": str(e)}), 500
 
+@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_pedido(pedido_id):
     try:
         db = get_db_gerente()
+        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+        if not pedido:
+            return jsonify({"erro": "Pedido não encontrado"}), 404
         db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
         db.commit()
-        return jsonify({"status": "ok"})
+        print(f"🗑️ Pedido {pedido_id} excluído com sucesso!")
+        return jsonify({"status": "ok", "mensagem": "Pedido excluído com sucesso"})
     except Exception as e:
+        print(f"❌ ERRO ao deletar pedido {pedido_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"erro": str(e)}), 500
 
 # ============ CLIENTES ============
@@ -508,6 +543,18 @@ def gerente_listar_clientes():
     db = get_db_gerente()
     rows = db.execute("SELECT * FROM clientes ORDER BY nome").fetchall()
     return jsonify([dict(r) for r in rows])
+
+@app.route("/api/gerente/clientes", methods=["POST"])
+@login_required
+def gerente_criar_cliente():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    cur = db.execute(
+        "INSERT INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)",
+        (dados.get('nome'), dados.get('telefone'), dados.get('cpf'), dados.get('endereco'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
 
 # ============ PLANOS (BASEROW) ============
 @app.route("/api/gerente/planos", methods=["GET"])
@@ -641,15 +688,16 @@ def gerente_deletar_assinante(assinante_id):
         return jsonify({"status": "ok"})
     return jsonify({"erro": "Erro ao deletar assinante"}), 500
 
-# ============ VERIFICAR HORÁRIO DISPONÍVEL ============
+# ============ VERIFICAR HORÁRIO ============
 @app.route("/api/verificar_horario", methods=["POST"])
 def verificar_horario():
     try:
         dados = request.get_json() or {}
         data = dados.get("data")
         hora = dados.get("hora")
+        profissional = dados.get("profissional", "")
         
-        print(f"🔍 Verificando: data={data}, hora={hora}")
+        print(f"🔍 Verificando: data={data}, hora={hora}, profissional={profissional}")
         
         if not data or not hora:
             return jsonify({"erro": "Data e hora são obrigatórias"}), 400
@@ -665,21 +713,54 @@ def verificar_horario():
         """
         params = [data, hora]
         
+        if profissional:
+            query += " AND profissional = ?"
+            params.append(profissional)
+        
         print(f"📝 Query: {query}")
         print(f"📝 Params: {params}")
         
         row = db.execute(query, params).fetchone()
         ocupado = row[0] > 0 if row else False
         
-        print(f"📊 Ocupado: {ocupado}")
+        print(f"📊 Ocupado (mesmo profissional): {ocupado}")
         
         return jsonify({
             "disponivel": not ocupado,
-            "mensagem": "Horário indisponível" if ocupado else "Horário disponível"
+            "mensagem": "Horário indisponível para este profissional" if ocupado else "Horário disponível"
         })
         
     except Exception as e:
         print(f"❌ Erro: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+# ============ CAIXA - RESETAR ============
+@app.route("/api/gerente/caixa/resetar", methods=["POST"])
+@login_required
+def resetar_caixa():
+    try:
+        db = get_db_gerente()
+        hoje = date.today().isoformat()
+        
+        caixa_atual = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+        if caixa_atual:
+            db.execute(
+                "INSERT INTO caixa_historico (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, ?, ?, ?, ?)",
+                (hoje, caixa_atual[1] or 0, caixa_atual[2] or 0, caixa_atual[3] or 0, caixa_atual[4] or 0)
+            )
+        
+        db.execute(
+            "INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)",
+            (hoje,)
+        )
+        db.commit()
+        
+        return jsonify({"status": "ok", "mensagem": "Caixa resetado para R$ 0,00"})
+        
+    except Exception as e:
+        print(f"❌ Erro ao resetar caixa: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"erro": str(e)}), 500
 
 # ============ SERVIÇOS (ADMIN) ============
@@ -730,10 +811,201 @@ def api_servicos_delete(item_id):
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+# ============ COMANDAS ============
+@app.route("/api/gerente/comandas", methods=["GET"])
+@login_required
+def gerente_listar_comandas():
+    db = get_db_gerente()
+    try:
+        rows = db.execute("SELECT * FROM comandas ORDER BY id DESC").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except:
+        return jsonify([])
+
+@app.route("/api/gerente/comandas", methods=["POST"])
+@login_required
+def gerente_criar_comanda():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    ticket = "CMD-" + datetime.now().strftime("%Y%m%d%H%M%S")
+    cur = db.execute(
+        """INSERT INTO comandas (ticket, cliente_nome, cliente_telefone, profissional, servicos, valor_total, status, pagamento)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (ticket, dados.get('cliente_nome'), dados.get('cliente_telefone'), dados.get('profissional'),
+         dados.get('servicos'), dados.get('valor_total', 0), dados.get('status', 'aberta'), dados.get('pagamento'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/gerente/comandas/<int:comanda_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_comanda(comanda_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM comandas WHERE id=?", (comanda_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ REPASSES ============
+@app.route("/api/gerente/repasses", methods=["GET"])
+@login_required
+def gerente_listar_repasses():
+    db = get_db_gerente()
+    try:
+        rows = db.execute("SELECT * FROM repasses ORDER BY id DESC").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except:
+        return jsonify([])
+
+@app.route("/api/gerente/repasses/resumo", methods=["GET"])
+@login_required
+def gerente_repasses_resumo():
+    db = get_db_gerente()
+    try:
+        pendente = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pendente'").fetchone()[0] or 0
+        pago = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pago'").fetchone()[0] or 0
+    except:
+        pendente, pago = 0, 0
+    return jsonify({"total_pendente": pendente, "total_pago": pago})
+
+@app.route("/api/gerente/repasses", methods=["POST"])
+@login_required
+def gerente_criar_repasse():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    porcentagem = dados.get('porcentagem', 50)
+    valor_servico = dados.get('valor_servico', 0)
+    comissao = valor_servico * (porcentagem / 100)
+    cur = db.execute(
+        """INSERT INTO repasses (profissional, servico_nome, valor_servico, comissao, status)
+           VALUES (?, ?, ?, ?, ?)""",
+        (dados.get('profissional'), dados.get('servico_nome'), valor_servico, comissao, dados.get('status', 'pendente'))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/gerente/repasses/<int:repasse_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_repasse(repasse_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM repasses WHERE id=?", (repasse_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ CAIXA ============
+@app.route("/api/gerente/caixa", methods=["GET"])
+@login_required
+def gerente_listar_caixa():
+    db = get_db_gerente()
+    try:
+        rows = db.execute("SELECT * FROM caixa ORDER BY id DESC").fetchall()
+        return jsonify([dict(r) for r in rows])
+    except:
+        return jsonify([])
+
+@app.route("/api/gerente/caixa", methods=["POST"])
+@login_required
+def gerente_criar_caixa():
+    dados = request.get_json() or {}
+    db = get_db_gerente()
+    cur = db.execute(
+        "INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)",
+        (dados.get('tipo'), dados.get('descricao'), dados.get('pagamento'), dados.get('valor', 0))
+    )
+    db.commit()
+    return jsonify({"status": "ok", "id": cur.lastrowid})
+
+@app.route("/api/gerente/caixa/<int:caixa_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_caixa(caixa_id):
+    db = get_db_gerente()
+    db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+# ============ HORÁRIOS ============
+@app.route("/api/horarios", methods=["GET"])
+def api_horarios_get():
+    try:
+        db = get_db()
+        rows = db.execute("SELECT * FROM horarios ORDER BY dia_semana").fetchall()
+        if rows:
+            return jsonify([dict(r) for r in rows])
+    except:
+        pass
+    return jsonify([{"dia_semana": i, "abertura": "", "fechamento": "", "ativo": 0} for i in range(7)])
+
+@app.route("/api/horarios", methods=["PUT"])
+@login_required
+def api_horarios_put():
+    dados = request.get_json() or {}
+    db = get_db()
+    try:
+        for dia, info in dados.items():
+            db.execute(
+                "INSERT OR REPLACE INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?)",
+                (int(dia), info.get("abertura", ""), info.get("fechamento", ""), 1 if info.get("ativo") else 0)
+            )
+        db.commit()
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+# ============ PERFIL ============
+@app.route("/api/gerente/alterar_nome", methods=["POST"])
+@login_required
+def gerente_alterar_nome():
+    dados = request.get_json() or {}
+    novo_nome = dados.get("novo_nome", "").strip()
+    if not novo_nome:
+        return jsonify({"erro": "Nome inválido"}), 400
+    db = get_db_gerente()
+    db.execute("UPDATE gerentes SET nome=? WHERE id=?", (novo_nome, session["gerente_id"]))
+    db.commit()
+    session["gerente_nome"] = novo_nome
+    return jsonify({"status": "ok"})
+
+@app.route("/api/gerente/alterar_login", methods=["POST"])
+@login_required
+def gerente_alterar_login():
+    dados = request.get_json() or {}
+    senha_atual = dados.get("senha_atual", "")
+    novo_usuario = dados.get("novo_usuario", "").strip()
+    nova_senha = dados.get("nova_senha", "")
+    db = get_db_gerente()
+    row = db.execute("SELECT * FROM gerentes WHERE id = ?", (session["gerente_id"],)).fetchone()
+    if not row or row["senha_hash"] != senha_atual:
+        return jsonify({"erro": "Senha atual incorreta"}), 401
+    if novo_usuario:
+        db.execute("UPDATE gerentes SET usuario=? WHERE id=?", (novo_usuario, session["gerente_id"]))
+    if nova_senha:
+        db.execute("UPDATE gerentes SET senha_hash=? WHERE id=?", (nova_senha, session["gerente_id"]))
+    db.commit()
+    session.clear()
+    return jsonify({"status": "ok"})
+
 # ============ INICIALIZAÇÃO ============
+# ============ RESETAR FATURAMENTO ============
+@app.route("/api/gerente/resetar_faturamento", methods=["POST"])
+@login_required
+def resetar_faturamento():
+    try:
+        db = get_db_gerente()
+        db.execute("DELETE FROM caixa")
+        hoje = date.today().isoformat()
+        db.execute("INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)", (hoje,))
+        db.commit()
+        return jsonify({"status": "ok", "mensagem": "Faturamento resetado para R$ 0,00"})
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"erro": str(e)}), 500
+
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
     print("  📡 SQLite + Baserow")
     print("="*60)
     app.run(debug=True, host="0.0.0.0", port=5000)
+
+

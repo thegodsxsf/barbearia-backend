@@ -188,6 +188,7 @@
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000;">🔊 Som Ligado</button>
         <button class="btn-refresh" onclick="resetarCaixa()" style="background:var(--gold); color:#000; border-color:var(--gold); font-weight:700;">📅 Novo Dia</button>
+        <button class="btn-refresh" onclick="resetarFaturamento()" style="background: #e74c3c; color:#fff; border-color:#e74c3c; font-weight:700;">💳 Resetar Faturamento</button>
         <button class="btn-refresh" onclick="recarregarSecaoAtual()">🔄 Atualizar</button>
       </div>
     </div>
@@ -1449,3 +1450,31 @@ iniciar();
 </script>
 </body>
 </html>
+<script>
+async function resetarFaturamento() {
+    if (!confirm('⚠️ ATENÇÃO! Isso vai ZERAR TODO O FATURAMENTO!\n\nTodos os registros de caixa serão apagados.\nIsso NÃO pode ser desfeito!\n\nDeseja continuar?')) return;
+    
+    try {
+        showToast('⏳ Resetando faturamento...');
+        const response = await fetch('/api/gerente/resetar_faturamento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            showToast('✅ ' + data.mensagem);
+            // Recarrega os dados
+            if (typeof carregarInicio === 'function') carregarInicio();
+            if (typeof carregarCaixa === 'function') carregarCaixa();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('❌ Erro: ' + data.erro);
+        }
+    } catch(e) {
+        showToast('❌ Erro ao resetar faturamento: ' + e.message);
+        console.error('Erro:', e);
+    }
+}
+</script>
