@@ -158,10 +158,7 @@
     <div class="nav-link" data-secao="servicos"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Serviços</div>
     <div class="nav-link" data-secao="produtos"><span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span> Produtos</div>
     <div class="nav-link" data-secao="equipe"><span class="icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Equipe</div>
-    <div class="nav-link" data-secao="planos"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> Planos</div>
-
-    <div class="grupo-label">Assinaturas</div>
-    <div class="nav-link" data-secao="assinantes"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Assinantes <span class="badge hidden" id="badgeAssinantes">0</span></div>
+    <div class="nav-link" data-secao="assinaturas"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> Planos</div>
 
     <div class="grupo-label">Financeiro</div>
     <div class="nav-link" data-secao="comandas"><span class="icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Comandas<span class="badge hidden" id="badgeComandas">0</span></div>
@@ -187,16 +184,12 @@
       </div>
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000;">🔊 Som Ligado</button>
-        <button class="btn-refresh" onclick="resetarCaixa()" style="background:var(--gold); color:#000; border-color:var(--gold); font-weight:700;">📅 Novo Dia</button>
         <button class="btn-refresh" onclick="recarregarSecaoAtual()">🔄 Atualizar</button>
       </div>
     </div>
 
-    <!-- INÍCIO -->
     <div id="secInicio">
       <div class="stats-grid">
-        <div class="stat-card"><div class="label">💰 Saldo Inicial do Dia</div><div class="valor gold" id="statSaldoInicial">R$ 0,00</div></div>
-        <div class="stat-card"><div class="label">📈 Entradas Hoje</div><div class="valor green" id="statEntradasHoje">R$ 0,00</div></div>
         <div class="stat-card"><div class="label">💰 Faturamento Total</div><div class="valor green" id="statFaturamento">R$ 0,00</div></div>
         <div class="stat-card"><div class="label">💵 Saldo em Caixa</div><div class="valor blue" id="statSaldo">R$ 0,00</div></div>
         <div class="stat-card"><div class="label">⏳ Pedidos Pendentes</div><div class="valor" id="statPendentes">0</div></div>
@@ -211,7 +204,6 @@
       </div>
     </div>
 
-    <!-- PEDIDOS -->
     <div id="secPedidos" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>📋 Pedidos e Agendamentos</h2>
@@ -227,7 +219,6 @@
       </div>
     </div>
 
-    <!-- CLIENTES -->
     <div id="secClientes" class="hidden">
       <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
         <button class="btn-add" onclick="abrirModalCliente()" style="padding:12px 24px;">➕ NOVO CLIENTE</button>
@@ -243,81 +234,34 @@
       </div>
     </div>
 
-    <!-- SERVIÇOS -->
     <div id="secServicos" class="hidden">
       <div class="card-secao">
-        <div class="cabecalho"><h2>✂️ Serviços</h2><button class="btn-add" onclick="abrirModalServico()">+ Novo Serviço</button></div>
+        <div class="cabecalho"><h2>✂️ Serviços</h2><button class="btn-add" onclick="abrirModalItem('servicos')">+ Novo Serviço</button></div>
         <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço</th><th>Duração</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaServicos"></tbody></table></div>
       </div>
     </div>
 
-    <!-- PRODUTOS (BASEROW) -->
     <div id="secProdutos" class="hidden">
       <div class="card-secao">
-        <div class="cabecalho"><h2>🧴 Produtos</h2><button class="btn-add" onclick="abrirModalProduto()">+ Novo Produto</button></div>
+        <div class="cabecalho"><h2>🧴 Produtos</h2><button class="btn-add" onclick="abrirModalItem('produtos')">+ Novo Produto</button></div>
         <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaProdutos"></tbody></table></div>
       </div>
     </div>
 
-    <!-- EQUIPE (BASEROW) -->
     <div id="secEquipe" class="hidden">
       <div class="card-secao">
-        <div class="cabecalho"><h2>👤 Equipe</h2><button class="btn-add" onclick="abrirModalEquipe()">+ Novo Profissional</button></div>
+        <div class="cabecalho"><h2>👤 Equipe</h2><button class="btn-add" onclick="abrirModalItem('profissionais')">+ Novo Profissional</button></div>
         <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Especialidade</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaEquipe"></tbody></table></div>
       </div>
     </div>
 
-    <!-- PLANOS (BASEROW) -->
-    <div id="secPlanos" class="hidden">
+    <div id="secAssinaturas" class="hidden">
       <div class="card-secao">
-        <div class="cabecalho"><h2>📋 Planos de Assinatura</h2><button class="btn-add" onclick="abrirModalPlano()">+ Novo Plano</button></div>
-        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço/mês</th><th>Destaque</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaPlanos"></tbody></table></div>
+        <div class="cabecalho"><h2>📋 Planos de Assinatura</h2><button class="btn-add" onclick="abrirModalItem('assinaturas')">+ Novo Plano</button></div>
+        <div class="tabela-scroll"><table><thead><tr><th>Nome</th><th>Preço/mês</th><th>Destaque</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="tabelaAssinaturas"></tbody></table></div>
       </div>
     </div>
 
-    <!-- ASSINANTES -->
-    <div id="secAssinantes" class="hidden">
-      <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
-        <div class="stat-card"><div class="label">👥 Total Assinantes</div><div class="valor blue" id="assinantesTotal">0</div></div>
-        <div class="stat-card"><div class="label">🟢 Ativos</div><div class="valor green" id="assinantesAtivos">0</div></div>
-        <div class="stat-card"><div class="label">🔴 Inativos/Cancelados</div><div class="valor red" id="assinantesInativos">0</div></div>
-      </div>
-      <div class="card-secao">
-        <div class="cabecalho">
-          <h2>👥 Gerenciar Assinantes</h2>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn-add" onclick="abrirModalAssinante()">➕ Novo Assinante</button>
-            <button class="btn-add" onclick="sincronizarBaserow()" style="background:var(--blue); color:#fff;">🔄 Sincronizar Baserow</button>
-            <button class="btn-refresh" onclick="carregarAssinantes()">🔄 Atualizar</button>
-          </div>
-        </div>
-        <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
-          <div class="filtro-btn active" data-status="" onclick="filtrarAssinantes('')">Todos</div>
-          <div class="filtro-btn" data-status="ativo" onclick="filtrarAssinantes('ativo')">🟢 Ativos</div>
-          <div class="filtro-btn" data-status="cancelado" onclick="filtrarAssinantes('cancelado')">🔴 Cancelados</div>
-          <div class="filtro-btn" data-status="nao_pago" onclick="filtrarAssinantes('nao_pago')">💰 Não Pagos</div>
-        </div>
-        <div class="tabela-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Nascimento</th>
-                <th>Plano</th>
-                <th>Valor</th>
-                <th>Status</th>
-                <th>Cadastro</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaAssinantes"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- COMANDAS -->
     <div id="secComandas" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>📋 Comandas</h2><button class="btn-add" onclick="abrirModalComanda()">+ Nova Comanda</button></div>
@@ -331,7 +275,6 @@
       </div>
     </div>
 
-    <!-- REPASSES -->
     <div id="secRepasses" class="hidden">
       <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card"><div class="label">Total Pendente</div><div class="valor red" id="repTotalPendente">R$ 0,00</div></div>
@@ -344,7 +287,6 @@
       </div>
     </div>
 
-    <!-- CAIXA -->
     <div id="secCaixa" class="hidden">
       <div class="stats-grid">
         <div class="stat-card"><div class="label">📈 Entradas</div><div class="valor green" id="caixaEntradas">R$ 0,00</div></div>
@@ -357,7 +299,6 @@
       </div>
     </div>
 
-    <!-- RELATÓRIOS -->
     <div id="secRelatorios" class="hidden">
       <div class="card-secao" style="text-align:center; padding:30px;">
         <h2>📊 Relatórios</h2>
@@ -372,7 +313,6 @@
       </div>
     </div>
 
-    <!-- HORÁRIOS -->
     <div id="secHorarios" class="hidden">
       <div class="card-secao">
         <div class="cabecalho"><h2>🕐 Horários de Atendimento</h2></div>
@@ -382,7 +322,6 @@
       </div>
     </div>
 
-    <!-- PERFIL -->
     <div id="secPerfil" class="hidden">
       <div class="card-secao" style="max-width:500px;">
         <h2>👤 Minha Conta</h2>
@@ -403,7 +342,6 @@
     </div>
   </div>
 
-  <!-- MODAL CLIENTE -->
   <div class="modal-overlay" id="modalCliente">
     <div class="modal" style="max-width:600px;">
       <h2 id="modalClienteTitulo">👤 Novo Cliente</h2>
@@ -427,21 +365,6 @@
     </div>
   </div>
 
-  <!-- MODAL ASSINANTE -->
-  <div class="modal-overlay" id="modalAssinante">
-    <div class="modal">
-      <h2 id="modalAssinanteTitulo">👤 Novo Assinante</h2>
-      <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="assinanteNome" placeholder="Nome completo"></div>
-      <div class="form-group"><label>Telefone</label><input type="tel" id="assinanteTelefone" placeholder="(81) 99999-9999"></div>
-      <div class="form-group"><label>Data Nascimento</label><input type="date" id="assinanteNascimento"></div>
-      <div class="form-group"><label>Plano</label><input type="text" id="assinantePlano" placeholder="Ex: Premium"></div>
-      <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="assinanteValor" placeholder="0.00"></div>
-      <div class="form-group"><label>Status</label><select id="assinanteStatus"><option value="ativo">🟢 Ativo</option><option value="cancelado">🔴 Cancelado</option><option value="nao_pago">💰 Não Pago</option></select></div>
-      <div class="modal-acoes"><button class="btn-cancelar" onclick="fecharModalAssinante()">Cancelar</button><button class="btn-salvar" onclick="salvarAssinante()">Salvar</button></div>
-    </div>
-  </div>
-
-  <!-- MODAL ITEM (genérico) -->
   <div class="modal-overlay" id="modalItem">
     <div class="modal">
       <h2 id="modalItemTitulo">Novo item</h2>
@@ -450,7 +373,6 @@
     </div>
   </div>
 
-  <!-- MODAL COMANDA -->
   <div class="modal-overlay" id="modalComanda">
     <div class="modal">
       <h2>📋 Nova Comanda</h2>
@@ -464,7 +386,6 @@
     </div>
   </div>
 
-  <!-- MODAL REPASSE -->
   <div class="modal-overlay" id="modalRepasse">
     <div class="modal">
       <h2>💰 Novo Repasse</h2>
@@ -476,7 +397,6 @@
     </div>
   </div>
 
-  <!-- MODAL CAIXA -->
   <div class="modal-overlay" id="modalCaixa">
     <div class="modal">
       <h2>Novo lançamento</h2>
@@ -488,17 +408,13 @@
   </div>
 
 <script>
-// ============ VARIAVEIS ============
 let filtroStatusAtual = '';
 let filtroComandaStatus = '';
 let itemEditando = null;
 let clienteEditandoId = null;
-let assinanteEditandoId = null;
 let ultimoPedidoId = 0;
 let somAtivo = true;
-let filtroAssinanteStatus = '';
 
-// ============ FUNÇÕES ============
 function formatarData(iso){
   if(!iso) return '-';
   try {
@@ -525,7 +441,6 @@ async function api(url, options={}){
   return data;
 }
 
-// ============ NAVEGAÇÃO ============
 document.querySelectorAll('.nav-link').forEach(link=>{
   link.addEventListener('click', ()=>{
     document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
@@ -537,27 +452,12 @@ document.querySelectorAll('.nav-link').forEach(link=>{
 });
 
 function mostrarSecao(secao){
-  const secoes = ['inicio','pedidos','clientes','servicos','produtos','equipe','planos','assinantes','comandas','repasses','caixa','relatorios','horarios','perfil'];
+  const secoes = ['inicio','pedidos','clientes','servicos','produtos','equipe','assinaturas','comandas','repasses','caixa','relatorios','horarios','perfil'];
   secoes.forEach(s=>{
     const el = document.getElementById('sec' + s.charAt(0).toUpperCase() + s.slice(1));
     if(el) el.classList.toggle('hidden', s !== secao);
   });
-  const titulos = { 
-    inicio:['Início','Visão geral'], 
-    pedidos:['Pedidos & Agenda','Acompanhe os pedidos'], 
-    clientes:['Clientes','Gerencie seus clientes'], 
-    servicos:['Serviços','Gerencie os serviços'], 
-    produtos:['Produtos','Gerencie os produtos (Baserow)'], 
-    equipe:['Equipe','Gerencie os profissionais (Baserow)'], 
-    planos:['Planos','Gerenciar planos de assinatura (Baserow)'],
-    assinantes:['Assinantes','Gerencie seus clientes assinantes'],
-    comandas:['Comandas','Controle de comandas'], 
-    repasses:['Repasses','Comissões'], 
-    caixa:['Caixa','Controle financeiro'], 
-    relatorios:['Relatórios','Baixe relatórios'], 
-    horarios:['Horários','Configure os horários'], 
-    perfil:['Minha Conta','Altere seus dados'] 
-  };
+  const titulos = { inicio:['Início','Visão geral'], pedidos:['Pedidos & Agenda','Acompanhe os pedidos'], clientes:['Clientes','Gerencie seus clientes'], servicos:['Serviços','Gerencie os serviços'], produtos:['Produtos','Gerencie os produtos'], equipe:['Equipe','Gerencie os profissionais'], assinaturas:['Planos','Gerencie os planos'], comandas:['Comandas','Controle de comandas'], repasses:['Repasses','Comissões'], caixa:['Caixa','Controle financeiro'], relatorios:['Relatórios','Baixe relatórios'], horarios:['Horários','Configure os horários'], perfil:['Minha Conta','Altere seus dados'] };
   const t = titulos[secao] || [secao, ''];
   document.getElementById('tituloSecao').textContent = t[0];
   document.getElementById('subtituloSecao').textContent = t[1];
@@ -571,255 +471,131 @@ function carregarSecao(secao){
   if (secao === 'inicio') carregarInicio();
   else if (secao === 'pedidos') carregarPedidos();
   else if (secao === 'clientes') carregarClientes();
-  else if (secao === 'servicos') carregarServicos();
-  else if (secao === 'produtos') carregarProdutos();
-  else if (secao === 'equipe') carregarEquipe();
-  else if (secao === 'planos') carregarPlanos();
-  else if (secao === 'assinantes') carregarAssinantes();
+  else if (secao === 'servicos') carregarCatalogo('servicos');
+  else if (secao === 'produtos') carregarCatalogo('produtos');
+  else if (secao === 'equipe') carregarCatalogo('profissionais');
+  else if (secao === 'assinaturas') carregarCatalogo('assinaturas');
   else if (secao === 'comandas') carregarComandas();
   else if (secao === 'repasses') carregarRepasses();
   else if (secao === 'caixa') carregarCaixa();
   else if (secao === 'relatorios') carregarRelatorios();
   else if (secao === 'horarios') carregarHorarios();
-  else if (secao === 'perfil') { /* sem ação */ }
 }
 
-// ============ SERVIÇOS (SQLite) ============
-async function carregarServicos() {
+async function carregarCatalogo(tabela) {
   try {
-    const response = await fetch('/api/servicos');
-    if (!response.ok) throw new Error('Erro ao buscar serviços');
+    const rotas = { 'servicos': '/api/servicos', 'produtos': '/api/produtos', 'profissionais': '/api/profissionais', 'assinaturas': '/api/assinaturas' };
+    const elementos = { 'servicos': 'tabelaServicos', 'produtos': 'tabelaProdutos', 'profissionais': 'tabelaEquipe', 'assinaturas': 'tabelaAssinaturas' };
+    const response = await fetch(rotas[tabela]);
+    if (!response.ok) throw new Error('Erro ao buscar dados');
     const lista = await response.json();
-    const el = document.getElementById('tabelaServicos');
+    const el = document.getElementById(elementos[tabela]);
     if (!el) return;
-    el.innerHTML = lista.length ? lista.map(s => `<tr><td>${s.nome}</td><td>${formatarPreco(s.preco)}</td><td>${s.duracao_min || 30} min</td><td>${s.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalServico(${JSON.stringify(s).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirServico(${s.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum serviço.</td></tr>';
-  } catch(e) { console.error('Erro ao carregar serviços:', e); showToast('Erro ao carregar serviços: ' + e.message); }
+    if (tabela === 'servicos') {
+      el.innerHTML = lista.length ? lista.map(s => `<tr><td>${s.nome}</td><td>${formatarPreco(s.preco)}</td><td>${s.duracao_min || 30} min</td><td>${s.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('servicos', ${JSON.stringify(s).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('servicos', ${s.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum serviço.</td></tr>';
+    } else if (tabela === 'produtos') {
+      el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${formatarPreco(p.preco)}</td><td>${p.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('produtos', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('produtos', ${p.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum produto.</td></tr>';
+    } else if (tabela === 'profissionais') {
+      el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${p.especialidade || '-'}</td><td>${p.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('profissionais', ${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('profissionais', ${p.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="4" class="empty-msg">Nenhum profissional.</td></tr>';
+    } else if (tabela === 'assinaturas') {
+      el.innerHTML = lista.length ? lista.map(a => `<tr><td>${a.icone || ''} ${a.nome}</td><td>${formatarPreco(a.preco)}</td><td>${a.destaque ? '⭐' : '-'}</td><td>${a.ativo ? '✅' : '❌'}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalItem('assinaturas', ${JSON.stringify(a).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirItemCatalogo('assinaturas', ${a.id})">🗑️</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty-msg">Nenhum plano.</td></tr>';
+    }
+  } catch(e) { console.error('Erro ao carregar catálogo:', e); showToast('Erro ao carregar ' + tabela); }
 }
 
-function abrirModalServico(item=null) {
-  itemEditando = {tabela: 'servicos', id: item ? item.id : null};
-  document.getElementById('modalItemTitulo').textContent = item ? '✏️ Editar Serviço' : '📋 Novo Serviço';
-  document.getElementById('modalItemCampos').innerHTML = `
-    <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div>
-    <div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div>
-    <div class="form-group"><label>Duração (min)</label><input type="number" id="campo_duracao_min" value="${item ? item.duracao_min || 30 : 30}"></div>
-    <div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>
-  `;
+function abrirModalItem(tabela, item=null){
+  itemEditando = {tabela, id: item ? item.id : null};
+  const titulos = { 'servicos': '✂️ Serviço', 'produtos': '🧴 Produto', 'profissionais': '👤 Profissional', 'assinaturas': '⭐ Plano' };
+  document.getElementById('modalItemTitulo').textContent = item ? `✏️ Editar ${titulos[tabela]}` : `📋 Novo ${titulos[tabela]}`;
+  let campos = '';
+  if (tabela === 'servicos') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Duração (min)</label><input type="number" id="campo_duracao_min" value="${item ? item.duracao_min || 30 : 30}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'produtos') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'profissionais') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Especialidade</label><input type="text" id="campo_especialidade" value="${item ? item.especialidade || '' : ''}"></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  } else if (tabela === 'assinaturas') {
+    campos = `<div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || '' : ''}"></div><div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div><div class="form-group"><label>Ícone</label><input type="text" id="campo_icone" value="${item ? item.icone || '⭐' : '⭐'}" maxlength="2"></div><div class="form-group"><label>Descrição</label><textarea id="campo_descricao" rows="2">${item ? item.descricao || '' : ''}</textarea></div><div class="form-group"><label>Destaque</label><select id="campo_destaque"><option value="1" ${item && item.destaque ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.destaque ? 'selected' : ''}>Não</option></select></div><div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? 'selected' : ''}>Sim</option><option value="0" ${item && !item.ativo ? 'selected' : ''}>Não</option></select></div>`;
+  }
+  document.getElementById('modalItemCampos').innerHTML = campos;
   document.getElementById('modalItem').classList.add('active');
 }
 
-async function salvarServico() {
-  const {id} = itemEditando;
-  const dados = {
-    nome: document.getElementById('campo_nome').value.trim(),
-    preco: parseFloat(document.getElementById('campo_preco').value) || 0,
-    duracao_min: parseInt(document.getElementById('campo_duracao_min').value) || 30,
-    ativo: parseInt(document.getElementById('campo_ativo').value) || 1
-  };
-  if (!dados.nome) { showToast('⚠️ Nome é obrigatório.'); return; }
+function fecharModalItem(){ document.getElementById('modalItem').classList.remove('active'); itemEditando = null; }
+
+async function salvarItem(){
+  const {tabela, id} = itemEditando;
+  if (!tabela) { showToast('❌ Erro: tabela não definida'); return; }
+  const nome = document.getElementById('campo_nome')?.value?.trim() || '';
+  const preco = parseFloat(document.getElementById('campo_preco')?.value) || 0;
+  const ativo = parseInt(document.getElementById('campo_ativo')?.value) || 1;
+  if (!nome) { showToast('⚠️ Nome é obrigatório.'); return; }
+  let dados = { nome, preco, ativo };
+  if (tabela === 'servicos') {
+    dados.duracao_min = parseInt(document.getElementById('campo_duracao_min')?.value) || 30;
+    dados.categoria = 'servicos'; dados.ordem = 0;
+  } else if (tabela === 'produtos') {
+    dados.ordem = 0;
+  } else if (tabela === 'profissionais') {
+    dados.especialidade = document.getElementById('campo_especialidade')?.value?.trim() || '';
+    dados.ordem = 0;
+  } else if (tabela === 'assinaturas') {
+    dados.icone = document.getElementById('campo_icone')?.value?.trim() || '⭐';
+    dados.descricao = document.getElementById('campo_descricao')?.value?.trim() || '';
+    dados.destaque = parseInt(document.getElementById('campo_destaque')?.value) || 0;
+    dados.ordem = 0; dados.beneficios = ''; dados.cor = '#3ddc84';
+  }
   try {
-    let url = '/api/servicos';
+    let url = `/api/${tabela}`;
     let method = 'POST';
-    if (id) { url = `/api/servicos/${id}`; method = 'PUT'; }
-    const response = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados) });
+    if (id) { url = `/api/${tabela}/${id}`; method = 'PUT'; }
+    const response = await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dados) });
     if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao salvar'); }
-    showToast('✅ Serviço salvo!');
+    showToast('✅ Salvo com sucesso!');
     fecharModalItem();
-    carregarServicos();
+    carregarCatalogo(tabela);
   } catch(e) { showToast('❌ Erro: ' + e.message); console.error('Erro ao salvar:', e); }
 }
 
-async function excluirServico(id) {
-  if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+async function excluirItemCatalogo(tabela, id) {
+  if (!confirm(`Tem certeza que deseja excluir este item?`)) return;
   try {
-    const response = await fetch(`/api/servicos/${id}`, { method: 'DELETE', headers: {'Content-Type': 'application/json'} });
+    const response = await fetch(`/api/${tabela}/${id}`, { method: 'DELETE', headers: {'Content-Type': 'application/json'} });
     if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao excluir'); }
-    showToast('✅ Serviço excluído!');
-    carregarServicos();
+    showToast('✅ Item excluído!');
+    carregarCatalogo(tabela);
   } catch(e) { showToast('❌ Erro: ' + e.message); console.error('Erro ao excluir:', e); }
 }
 
-// ============ PRODUTOS (BASEROW) ============
-async function carregarProdutos() {
-  try {
-    const response = await fetch("/api/gerente/produtos");
-    if (!response.ok) throw new Error("Erro ao buscar produtos");
-    const lista = await response.json();
-    const el = document.getElementById("tabelaProdutos");
-    if (!el) return;
-    el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${formatarPreco(p.preco)}</td><td>${p.ativo ? "✅" : "❌"}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalProduto(${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirProduto(${p.id})">🗑️</button></div></td></tr>`).join("") : "<tr><td colspan=\"4\" class=\"empty-msg\">Nenhum produto cadastrado no Baserow.</td></tr>";
-  } catch(e) { console.error("Erro ao carregar produtos:", e); showToast("Erro ao carregar produtos: " + e.message); }
-}
-
-function abrirModalProduto(item=null) {
-  itemEditando = {tabela: "produtos", id: item ? item.id : null};
-  document.getElementById("modalItemTitulo").textContent = item ? "✏️ Editar Produto" : "📋 Novo Produto";
-  document.getElementById("modalItemCampos").innerHTML = `
-    <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || "" : ""}"></div>
-    <div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div>
-    <div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? "selected" : ""}>Sim</option><option value="0" ${item && !item.ativo ? "selected" : ""}>Não</option></select></div>
-  `;
-  document.getElementById("modalItem").classList.add("active");
-}
-
-async function salvarProduto() {
-  const {id} = itemEditando;
-  const dados = {
-    nome: document.getElementById("campo_nome").value.trim(),
-    preco: parseFloat(document.getElementById("campo_preco").value) || 0,
-    ativo: parseInt(document.getElementById("campo_ativo").value) || 1
-  };
-  if (!dados.nome) { showToast("⚠️ Nome é obrigatório."); return; }
-  try {
-    let url = "/api/gerente/produtos";
-    let method = "POST";
-    if (id) { url = `/api/gerente/produtos/${id}`; method = "PUT"; }
-    const response = await fetch(url, { method, headers: {"Content-Type": "application/json"}, body: JSON.stringify(dados) });
-    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || "Erro ao salvar"); }
-    showToast("✅ Produto salvo no Baserow!");
-    fecharModalItem();
-    carregarProdutos();
-  } catch(e) { showToast("❌ Erro: " + e.message); console.error("Erro ao salvar:", e); }
-}
-
-async function excluirProduto(id) {
-  if (!confirm("Tem certeza que deseja excluir este produto do Baserow?")) return;
-  try {
-    const response = await fetch(`/api/gerente/produtos/${id}`, { method: "DELETE", headers: {"Content-Type": "application/json"} });
-    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || "Erro ao excluir"); }
-    showToast("✅ Produto excluído do Baserow!");
-    carregarProdutos();
-  } catch(e) { showToast("❌ Erro: " + e.message); console.error("Erro ao excluir:", e); }
-}
-
-// ============ EQUIPE (BASEROW) ============
-async function carregarEquipe() {
-  try {
-    const response = await fetch("/api/gerente/equipe");
-    if (!response.ok) throw new Error("Erro ao buscar equipe");
-    const lista = await response.json();
-    const el = document.getElementById("tabelaEquipe");
-    if (!el) return;
-    el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.nome}</td><td>${p.especialidade || "-"}</td><td>${p.ativo ? "✅" : "❌"}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalEquipe(${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirMembroEquipe(${p.id})">🗑️</button></div></td></tr>`).join("") : "<tr><td colspan=\"4\" class=\"empty-msg\">Nenhum profissional cadastrado no Baserow.</td></tr>";
-  } catch(e) { console.error("Erro ao carregar equipe:", e); showToast("Erro ao carregar equipe: " + e.message); }
-}
-
-function abrirModalEquipe(item=null) {
-  itemEditando = {tabela: "equipe", id: item ? item.id : null};
-  document.getElementById("modalItemTitulo").textContent = item ? "✏️ Editar Profissional" : "📋 Novo Profissional";
-  document.getElementById("modalItemCampos").innerHTML = `
-    <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || "" : ""}"></div>
-    <div class="form-group"><label>Especialidade</label><input type="text" id="campo_especialidade" value="${item ? item.especialidade || "" : ""}"></div>
-    <div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? "selected" : ""}>Sim</option><option value="0" ${item && !item.ativo ? "selected" : ""}>Não</option></select></div>
-  `;
-  document.getElementById("modalItem").classList.add("active");
-}
-
-async function salvarEquipe() {
-  const {id} = itemEditando;
-  const dados = {
-    nome: document.getElementById("campo_nome").value.trim(),
-    especialidade: document.getElementById("campo_especialidade").value.trim(),
-    ativo: parseInt(document.getElementById("campo_ativo").value) || 1
-  };
-  if (!dados.nome) { showToast("⚠️ Nome é obrigatório."); return; }
-  try {
-    let url = "/api/gerente/equipe";
-    let method = "POST";
-    if (id) { url = `/api/gerente/equipe/${id}`; method = "PUT"; }
-    const response = await fetch(url, { method, headers: {"Content-Type": "application/json"}, body: JSON.stringify(dados) });
-    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || "Erro ao salvar"); }
-    showToast("✅ Profissional salvo no Baserow!");
-    fecharModalItem();
-    carregarEquipe();
-  } catch(e) { showToast("❌ Erro: " + e.message); console.error("Erro ao salvar:", e); }
-}
-
-async function excluirMembroEquipe(id) {
-  if (!confirm("Tem certeza que deseja excluir este profissional do Baserow?")) return;
-  try {
-    const response = await fetch(`/api/gerente/equipe/${id}`, { method: "DELETE", headers: {"Content-Type": "application/json"} });
-    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || "Erro ao excluir"); }
-    showToast("✅ Profissional excluído do Baserow!");
-    carregarEquipe();
-  } catch(e) { showToast("❌ Erro: " + e.message); console.error("Erro ao excluir:", e); }
-}
-
-// ============ PLANOS (BASEROW) ============
-async function carregarPlanos() {
-  try {
-    const response = await fetch("/api/gerente/planos");
-    if (!response.ok) throw new Error("Erro ao buscar planos");
-    const lista = await response.json();
-    const el = document.getElementById("tabelaPlanos");
-    if (!el) return;
-    el.innerHTML = lista.length ? lista.map(p => `<tr><td>${p.icone || "⭐"} ${p.nome}</td><td>${formatarPreco(p.preco)}</td><td>${p.destaque ? "⭐" : "-"}</td><td>${p.ativo ? "✅" : "❌"}</td><td><div class="acoes"><button class="btn-mini gray" onclick="abrirModalPlano(${JSON.stringify(p).replace(/"/g, '&quot;')})">✏️</button><button class="btn-mini red" onclick="excluirPlano(${p.id})">🗑️</button></div></td></tr>`).join("") : "<tr><td colspan=\"5\" class=\"empty-msg\">Nenhum plano cadastrado no Baserow.</td></tr>";
-  } catch(e) { console.error("Erro ao carregar planos:", e); showToast("Erro ao carregar planos: " + e.message); }
-}
-
-function abrirModalPlano(item=null) {
-  itemEditando = {tabela: "planos", id: item ? item.id : null};
-  document.getElementById("modalItemTitulo").textContent = item ? "✏️ Editar Plano" : "📋 Novo Plano";
-  document.getElementById("modalItemCampos").innerHTML = `
-    <div class="form-group"><label>Nome <span class="required">*</span></label><input type="text" id="campo_nome" value="${item ? item.nome || "" : ""}"></div>
-    <div class="form-group"><label>Preço (R$) <span class="required">*</span></label><input type="number" step="0.01" id="campo_preco" value="${item ? item.preco || 0 : 0}"></div>
-    <div class="form-group"><label>Descrição</label><textarea id="campo_descricao" rows="2">${item ? item.descricao || "" : ""}</textarea></div>
-    <div class="form-group"><label>Ativo</label><select id="campo_ativo"><option value="1" ${item && item.ativo ? "selected" : ""}>Sim</option><option value="0" ${item && !item.ativo ? "selected" : ""}>Não</option></select></div>
-  `;
-  document.getElementById("modalItem").classList.add("active");
-}
-
-async function salvarPlano() {
-  const {id} = itemEditando;
-  const dados = {
-    nome: document.getElementById("campo_nome").value.trim(),
-    preco: parseFloat(document.getElementById("campo_preco").value) || 0,
-    descricao: document.getElementById("campo_descricao").value.trim(),
-    ativo: parseInt(document.getElementById("campo_ativo").value) || 1
-  };
-  if (!dados.nome) { showToast("⚠️ Nome é obrigatório."); return; }
-  try {
-    let url = "/api/gerente/planos";
-    let method = "POST";
-    if (id) { url = `/api/gerente/planos/${id}`; method = "PUT"; }
-    const response = await fetch(url, { method, headers: {"Content-Type": "application/json"}, body: JSON.stringify(dados) });
-    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || "Erro ao salvar"); }
-    showToast("✅ Plano salvo no Baserow!");
-    fecharModalItem();
-    carregarPlanos();
-  } catch(e) { showToast("❌ Erro: " + e.message); console.error("Erro ao salvar:", e); }
-}
-
-async function excluirPlano(id) {
-  if (!confirm("Tem certeza que deseja excluir este plano do Baserow?")) return;
-  try {
-    const response = await fetch(`/api/gerente/planos/${id}`, { method: "DELETE", headers: {"Content-Type": "application/json"} });
-    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || "Erro ao excluir"); }
-    showToast("✅ Plano excluído do Baserow!");
-    carregarPlanos();
-  } catch(e) { showToast("❌ Erro: " + e.message); console.error("Erro ao excluir:", e); }
-}
-
-// ============ SALVAR ITEM (genérico) ============
-async function salvarItem() {
-  if (!itemEditando) { 
-    showToast("❌ Erro: nenhum item selecionado"); 
-    return; 
+async function excluirPedido(id){
+  console.log('🗑️ CLICOU EM EXCLUIR - ID:', id);
+  if(!confirm('⚠️ Tem certeza que deseja EXCLUIR PERMANENTEMENTE este pedido?')) return;
+  try{
+    const response = await fetch('/api/gerente/pedidos/' + id, { method: 'DELETE', headers: {'Content-Type': 'application/json'} });
+    console.log('📥 Resposta status:', response.status);
+    if (!response.ok) { const erro = await response.json(); throw new Error(erro.erro || 'Erro ao excluir'); }
+    showToast('✅ Pedido excluído com sucesso!');
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    showToast('❌ Erro ao excluir: ' + e.message);
+    console.error('Erro:', e);
   }
-  const {tabela} = itemEditando;
-  if (tabela === "servicos") { await salvarServico(); return; }
-  if (tabela === "produtos") { await salvarProduto(); return; }
-  if (tabela === "equipe") { await salvarEquipe(); return; }
-  if (tabela === "planos") { await salvarPlano(); return; }
-  showToast("❌ Tabela não reconhecida: " + tabela);
 }
 
-function fecharModalItem(){ 
-  document.getElementById('modalItem').classList.remove('active'); 
-  itemEditando = null; 
+async function atualizarStatusPedido(id, status){
+  try{
+    await api(`/api/gerente/pedidos/${id}`, {method:'PUT', body: JSON.stringify({status})});
+    const statusMap = { 'pendente': '⏳ Pendente', 'confirmado': '✅ Confirmado', 'concluido': '🎯 Concluído', 'cancelado': '❌ Cancelado' };
+    showToast(`✅ Status alterado para: ${statusMap[status] || status}`);
+    carregarPedidos();
+    carregarInicio();
+  } catch(e){ 
+    showToast('❌ Erro: ' + e.message);
+    console.error('Erro ao atualizar status:', e);
+  }
 }
 
-// ============ INÍCIO ============
 async function carregarInicio(){
   try{
     const stats = await api('/api/gerente/dashboard');
@@ -836,7 +612,6 @@ async function carregarInicio(){
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
-// ============ PEDIDOS ============
 document.querySelectorAll('#filtrosPedidos .filtro-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('#filtrosPedidos .filtro-btn').forEach(b=>b.classList.remove('active'));
@@ -873,37 +648,6 @@ async function carregarPedidos(){
   }
 }
 
-async function atualizarStatusPedido(id, status){
-  try{
-    await api(`/api/gerente/pedidos/${id}`, {method:'PUT', body: JSON.stringify({status})});
-    const statusMap = {
-      'pendente': '⏳ Pendente',
-      'confirmado': '✅ Confirmado',
-      'concluido': '🎯 Concluído',
-      'cancelado': '❌ Cancelado'
-    };
-    showToast(`✅ Status alterado para: ${statusMap[status] || status}`);
-    carregarPedidos();
-    carregarInicio();
-  } catch(e){ 
-    showToast('❌ Erro: ' + e.message);
-    console.error('Erro ao atualizar status:', e);
-  }
-}
-
-async function excluirPedido(id){
-  if(!confirm('Excluir este pedido?')) return;
-  try{
-    await api(`/api/gerente/pedidos/${id}`, {method:'DELETE'});
-    showToast('✅ Pedido excluído.');
-    carregarPedidos();
-  } catch(e){ 
-    showToast('❌ Erro ao excluir: ' + e.message);
-    console.error('Erro ao excluir:', e);
-  }
-}
-
-// ============ CLIENTES ============
 function abrirModalCliente(cliente = null) {
   clienteEditandoId = cliente ? cliente.id : null;
   document.getElementById('modalClienteTitulo').textContent = cliente ? '✏️ Editar Cliente' : '👤 Novo Cliente';
@@ -981,160 +725,6 @@ async function excluirCliente(id) {
   } catch(e) { showToast('Erro: ' + e.message); }
 }
 
-// ============ ASSINANTES ============
-function abrirModalAssinante(assinante = null) {
-  assinanteEditandoId = assinante ? assinante.id : null;
-  document.getElementById('modalAssinanteTitulo').textContent = assinante ? '✏️ Editar Assinante' : '👤 Novo Assinante';
-  document.getElementById('assinanteNome').value = assinante ? assinante.nome || '' : '';
-  document.getElementById('assinanteTelefone').value = assinante ? assinante.telefone || '' : '';
-  document.getElementById('assinanteNascimento').value = assinante ? assinante.nascimento || '' : '';
-  document.getElementById('assinantePlano').value = assinante ? assinante.plano || '' : '';
-  document.getElementById('assinanteValor').value = assinante ? assinante.valor || '' : '';
-  document.getElementById('assinanteStatus').value = assinante ? assinante.status || 'ativo' : 'ativo';
-  document.getElementById('modalAssinante').classList.add('active');
-}
-
-function fecharModalAssinante() {
-  document.getElementById('modalAssinante').classList.remove('active');
-  assinanteEditandoId = null;
-}
-
-async function salvarAssinante() {
-  const dados = {
-    nome: document.getElementById('assinanteNome').value.trim(),
-    telefone: document.getElementById('assinanteTelefone').value.trim(),
-    nascimento: document.getElementById('assinanteNascimento').value,
-    plano: document.getElementById('assinantePlano').value.trim(),
-    valor: parseFloat(document.getElementById('assinanteValor').value) || 0,
-    status: document.getElementById('assinanteStatus').value
-  };
-  
-  if (!dados.nome) { showToast('⚠️ Nome é obrigatório.'); return; }
-  
-  try {
-    let url = '/api/gerente/assinantes';
-    let method = 'POST';
-    if (assinanteEditandoId) { 
-      url = `/api/gerente/assinantes/${assinanteEditandoId}`; 
-      method = 'PUT'; 
-    }
-    await api(url, {method: method, body: JSON.stringify(dados)});
-    showToast('✅ Assinante salvo!');
-    fecharModalAssinante();
-    carregarAssinantes();
-  } catch(e) { showToast('Erro: ' + e.message); }
-}
-
-function filtrarAssinantes(status) {
-  filtroAssinanteStatus = status;
-  document.querySelectorAll('#secAssinantes .filtro-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`#secAssinantes .filtro-btn[data-status="${status}"]`)?.classList.add('active');
-  carregarAssinantes();
-}
-
-async function carregarAssinantes() {
-  try {
-    const url = filtroAssinanteStatus ? `/api/gerente/assinantes?status=${filtroAssinanteStatus}` : '/api/gerente/assinantes';
-    const assinantes = await api(url);
-    
-    const total = assinantes.length;
-    const ativos = assinantes.filter(a => a.status === 'ativo').length;
-    const inativos = assinantes.filter(a => a.status !== 'ativo').length;
-    
-    document.getElementById('assinantesTotal').textContent = total;
-    document.getElementById('assinantesAtivos').textContent = ativos;
-    document.getElementById('assinantesInativos').textContent = inativos;
-    
-    const badge = document.getElementById('badgeAssinantes');
-    if (total > 0) {
-      badge.textContent = total;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-    
-    document.getElementById('tabelaAssinantes').innerHTML = assinantes.length ? assinantes.map(a => {
-      const statusLabels = {
-        'ativo': '🟢 Ativo',
-        'cancelado': '🔴 Cancelado',
-        'nao_pago': '💰 Não Pago'
-      };
-      return `<tr>
-        <td><strong>${a.nome}</strong></td>
-        <td>${a.telefone || '-'}</td>
-        <td>${a.nascimento || '-'}</td>
-        <td>${a.plano || '-'}</td>
-        <td>${formatarPreco(a.valor)}</td>
-        <td><span class="status-pill ${a.status === 'ativo' ? 'status-concluido' : 'status-cancelado'}">${statusLabels[a.status] || a.status}</span></td>
-        <td>${formatarData(a.criado_em)}</td>
-        <td><div class="acoes">
-          <button class="btn-mini blue" onclick="editarAssinante(${a.id})">✏️</button>
-          <button class="btn-mini red" onclick="excluirAssinante(${a.id})">🗑️</button>
-        </div></td>
-      </tr>`;
-    }).join('') : '<tr><td colspan="8" class="empty-msg">Nenhum assinante cadastrado.</td></tr>';
-  } catch(e) { 
-    showToast('Erro ao carregar assinantes: ' + e.message);
-    console.error('Erro:', e);
-  }
-}
-
-async function editarAssinante(id) {
-  try {
-    const assinantes = await api('/api/gerente/assinantes');
-    const assinante = assinantes.find(a => a.id === id);
-    if (assinante) abrirModalAssinante(assinante);
-  } catch(e) { showToast('Erro: ' + e.message); }
-}
-
-async function excluirAssinante(id) {
-  if (!confirm('Excluir este assinante?')) return;
-  try {
-    await api(`/api/gerente/assinantes/${id}`, {method: 'DELETE'});
-    showToast('✅ Assinante excluído!');
-    carregarAssinantes();
-  } catch(e) { showToast('Erro: ' + e.message); }
-}
-
-async function sincronizarBaserow() {
-  showToast('⏳ Sincronizando com Baserow...');
-  try {
-    const assinantes = await api('/api/gerente/assinantes');
-    let enviados = 0;
-    
-    for (const assinante of assinantes) {
-      try {
-        const dados = {
-          nome: assinante.nome,
-          contato: assinante.telefone || '',
-          Active: assinante.status === 'ativo' ? 'Sim' : 'Nao',
-          nascimento: assinante.nascimento || ''
-        };
-        
-        const response = await fetch('https://api.baserow.io/api/database/rows/table/1090158/?user_field_names=true', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Token Yy9lUDvUu6jCIE13khP6ZUOlVO2tQkqm',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(dados)
-        });
-        
-        if (response.ok) {
-          enviados++;
-        }
-      } catch(e) {
-        console.error('Erro ao enviar:', e);
-      }
-    }
-    
-    showToast(`✅ ${enviados} assinantes sincronizados com Baserow!`);
-  } catch(e) {
-    showToast('❌ Erro ao sincronizar: ' + e.message);
-  }
-}
-
-// ============ COMANDAS ============
 async function carregarComandas(){
   try{
     const comandas = await api('/api/gerente/comandas');
@@ -1173,7 +763,6 @@ async function excluirComanda(id){
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
-// ============ REPASSES ============
 async function carregarRepasses(){
   try{
     const repasses = await api('/api/gerente/repasses');
@@ -1214,7 +803,6 @@ async function excluirRepasse(id){
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
-// ============ CAIXA ============
 async function carregarCaixa(){
   try{
     const lista = await api('/api/gerente/caixa');
@@ -1252,7 +840,6 @@ async function excluirCaixa(id){
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
-// ============ RELATÓRIOS ============
 async function carregarRelatorios(){
   try{
     const pedidos = await api('/api/gerente/pedidos');
@@ -1274,7 +861,6 @@ async function baixarRelatorio(){
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
-// ============ HORÁRIOS ============
 const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 let horariosData = [];
 
@@ -1304,7 +890,6 @@ async function salvarHorarios(){
   } catch(e){ showToast('Erro: ' + e.message); }
 }
 
-// ============ PERFIL ============
 async function alterarNome(){
   const nome = document.getElementById('novoNome').value.trim();
   if(!nome){ showToast('Digite um nome.'); return; }
@@ -1327,32 +912,6 @@ async function alterarLogin(){
     showToast('✅ Login alterado!');
     setTimeout(()=>{ window.location.href = '/gerente/login'; }, 2000);
   } catch(e){ showToast('Erro: ' + e.message); }
-}
-
-// ============ SOM ============
-async function resetarCaixa() {
-    if (!confirm('⚠️ ATENÇÃO! Isso vai ZERAR o caixa do dia para R$ 0,00.\n\nO saldo atual será salvo no histórico.\nOs pedidos e clientes NÃO serão afetados.\n\nDeseja continuar?')) return;
-    
-    try {
-        showToast('⏳ Resetando caixa...');
-        const response = await fetch('/api/gerente/caixa/resetar', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include'
-        });
-        
-        const data = await response.json();
-        if (response.ok) {
-            showToast('✅ ' + data.mensagem);
-            carregarInicio();
-            carregarCaixa();
-        } else {
-            showToast('❌ Erro: ' + data.erro);
-        }
-    } catch(e) {
-        showToast('❌ Erro ao resetar caixa: ' + e.message);
-        console.error('Erro:', e);
-    }
 }
 
 function toggleSom() {
@@ -1391,7 +950,6 @@ function tocarAlerta() {
   } catch(e) { console.log('Som indisponível'); }
 }
 
-// ============ VERIFICAR NOVOS PEDIDOS ============
 setInterval(() => {
   fetch('/api/gerente/pedidos?limit=1')
     .then(res => res.json())
@@ -1421,21 +979,17 @@ setInterval(() => {
     .catch(() => {});
 }, 10000);
 
-// ============ SAIR ============
 async function sair(){
   await fetch('/api/gerente/logout', {method:'POST'});
   window.location.href = '/gerente/login';
 }
 
-// ============ EVENTOS ============
 document.getElementById('modalCliente').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCliente(); });
-document.getElementById('modalAssinante').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalAssinante(); });
 document.getElementById('modalItem').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalItem(); });
 document.getElementById('modalComanda').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalComanda(); });
 document.getElementById('modalRepasse').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalRepasse(); });
 document.getElementById('modalCaixa').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModalCaixa(); });
 
-// ============ INICIAR ============
 async function iniciar(){
   try{
     const me = await api('/api/gerente/me');
