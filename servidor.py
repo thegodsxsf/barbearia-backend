@@ -12,6 +12,69 @@ DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
 app = Flask(__name__, static_folder="static")
 app.secret_key = "chave-secreta-barbearia"
 
+# ============ DISCORD WEBHOOK ============
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1529529706762731541/V1ju8v0T0icdGujyQxRF6-cqYgxr6TIWHT8R3RTT5GeubC9RXssf1QCgcCJhEGgYbFid"
+
+def enviar_discord(mensagem, titulo="📢 Barbearia Studio Leblon", cor=0x00ff00):
+    """Envia mensagem para o Discord via webhook"""
+    try:
+        dados = {
+            "embeds": [{
+                "title": titulo,
+                "description": mensagem,
+                "color": cor,
+                "timestamp": datetime.now().isoformat(),
+                "footer": {"text": "Barbearia Studio Leblon"}
+            }]
+        }
+        response = requests.post(DISCORD_WEBHOOK_URL, json=dados, timeout=5)
+        if response.status_code == 204:
+            print("✅ Mensagem enviada para o Discord!")
+            return True
+        else:
+            print(f"❌ Erro Discord: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Erro Discord: {e}")
+        return False
+
+def notificar_novo_pedido(dados):
+    """Notifica novo pedido no Discord"""
+    try:
+        mensagem = f"""**📋 NOVO PEDIDO RECEBIDO!**
+
+👤 **Cliente:** {dados.get('cliente_nome', 'Não informado')}
+📱 **Telefone:** {dados.get('cliente_telefone', 'Não informado')}
+📄 **CPF:** {dados.get('cliente_cpf', 'Não informado')}
+✂️ **Serviço:** {dados.get('servico_nome', 'Não informado')}
+💈 **Profissional:** {dados.get('profissional', 'Não informado')}
+📅 **Data:** {dados.get('data_agendada', 'Não informada')}
+⏰ **Hora:** {dados.get('hora_agendada', 'Não informada')}
+💰 **Valor:** R$ {float(dados.get('valor', 0)):.2f}
+💳 **Pagamento:** {dados.get('pagamento', 'Não informado')}
+📌 **Tipo:** {dados.get('tipo', 'Pedido')}"""
+        
+        enviar_discord(mensagem, "📋 NOVO PEDIDO", 0x00ff00)
+    except Exception as e:
+        print(f"❌ Erro ao notificar novo pedido: {e}")
+
+def notificar_pedido_concluido(pedido_id, cliente, servico, valor, pagamento, profissional):
+    """Notifica pedido concluído no Discord"""
+    try:
+        mensagem = f"""**✅ PEDIDO CONCLUÍDO!**
+
+📌 **Pedido #:** {pedido_id}
+👤 **Cliente:** {cliente}
+✂️ **Serviço:** {servico}
+💈 **Profissional:** {profissional}
+💰 **Valor:** R$ {float(valor):.2f}
+💳 **Pagamento:** {pagamento}
+📅 **Data:** {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
+        
+        enviar_discord(mensagem, "✅ PEDIDO CONCLUÍDO", 0x00ff00)
+    except Exception as e:
+        print(f"❌ Erro ao notificar pedido concluído: {e}")
+
 # ============ BASEROW CONFIGS ============
 BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
 BASEROW_TABLE_ID = "1083808"
@@ -55,10 +118,7 @@ def listar_produtos_baserow():
 
 def criar_produto_baserow(dados):
     try:
-        dados_envio = {
-            "nome": dados.get('nome', ''),
-            "preço": f"R$ {float(dados.get('preco', 0)):.2f}".replace('.', ',')
-        }
+        dados_envio = {"nome": dados.get('nome', ''), "preço": f"R$ {float(dados.get('preco', 0)):.2f}".replace('.', ',')}
         response = requests.post(BASEROW_URL_PRODUTOS, json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_PRODUTOS}", "Content-Type": "application/json"}, timeout=10)
         if response.status_code == 200:
             return response.json().get('id')
@@ -150,11 +210,7 @@ def listar_planos_baserow():
 
 def criar_plano_baserow(dados):
     try:
-        dados_envio = {
-            "nome": dados.get('nome', ''),
-            "preço": f"R$ {float(dados.get('preco', 0)):.2f}".replace('.', ','),
-            "descrição": dados.get('descricao', '')
-        }
+        dados_envio = {"nome": dados.get('nome', ''), "preço": f"R$ {float(dados.get('preco', 0)):.2f}".replace('.', ','), "descrição": dados.get('descricao', '')}
         response = requests.post(BASEROW_URL_PLANOS, json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_PLANOS}", "Content-Type": "application/json"}, timeout=10)
         if response.status_code == 200:
             return response.json().get('id')
@@ -369,49 +425,29 @@ def gerente_me():
         return jsonify({"erro": "Não autenticado"}), 401
     return jsonify({"nome": session.get("gerente_nome")})
 
-# ============ DASHBOARD (CORRIGIDO) ============
+# ============ DASHBOARD ============
 @app.route("/api/gerente/dashboard")
 @login_required
 def gerente_dashboard():
     db = get_db_gerente()
-    
-    # FATURAMENTO TOTAL (histórico completo da tabela caixa)
-    faturamento_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0] or 0
-    saidas_total = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0] or 0
-    
-    # SALDO DO DIA (da tabela caixa_diario)
+    entradas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0] or 0
+    saidas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0] or 0
     hoje = date.today().isoformat()
     caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
-    
-    if caixa_dia:
-        saldo_atual = caixa_dia[4] if caixa_dia[4] else 0
-        entradas_hoje = caixa_dia[2] if caixa_dia[2] else 0
-        saidas_hoje = caixa_dia[3] if caixa_dia[3] else 0
-        saldo_inicial = caixa_dia[1] if caixa_dia[1] else 0
-    else:
-        saldo_atual = 0
-        entradas_hoje = 0
-        saidas_hoje = 0
-        saldo_inicial = 0
-        db.execute(
-            "INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)",
-            (hoje,)
-        )
-        db.commit()
-    
-    # Pedidos
+    saldo_atual = caixa_dia[4] if caixa_dia else 0
+    saldo_inicial = caixa_dia[1] if caixa_dia else 0
+    entradas_hoje = caixa_dia[2] if caixa_dia else 0
+    saidas_hoje = caixa_dia[3] if caixa_dia else 0
     pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status='pendente'").fetchone()[0] or 0
     agendamentos_hoje = db.execute("SELECT COUNT(*) FROM pedidos WHERE data_agendada = ? AND status != 'cancelado'", (hoje,)).fetchone()[0] or 0
     total_clientes = db.execute("SELECT COUNT(DISTINCT cliente_nome) FROM pedidos").fetchone()[0] or 0
-    
     planos = listar_planos_baserow()
     equipe = listar_equipe_baserow()
     produtos = listar_produtos_baserow()
-    
     return jsonify({
-        "faturamento_total": faturamento_total,
-        "saidas_total": saidas_total,
-        "saldo": saldo_atual,  # SALDO DO DIA (vem do caixa_diario)
+        "faturamento_total": entradas,
+        "saidas_total": saidas,
+        "saldo": saldo_atual,
         "saldo_inicial": saldo_inicial,
         "entradas_hoje": entradas_hoje,
         "saidas_hoje": saidas_hoje,
@@ -458,6 +494,13 @@ def api_criar_pedido():
          dados.get('pagamento'))
     )
     db.commit()
+    
+    # Notifica Discord
+    try:
+        notificar_novo_pedido(dados)
+    except Exception as e:
+        print(f"⚠️ Erro ao notificar Discord: {e}")
+    
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
@@ -469,12 +512,10 @@ def gerente_atualizar_pedido(pedido_id):
         
         if not novo_status:
             return jsonify({"erro": "Status não informado"}), 400
-        
         if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
             return jsonify({"erro": "Status inválido"}), 400
         
         db = get_db_gerente()
-        
         pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
         if not pedido:
             return jsonify({"erro": "Pedido não encontrado"}), 404
@@ -484,6 +525,7 @@ def gerente_atualizar_pedido(pedido_id):
         cliente = pedido[4]
         pagamento = pedido[10] if len(pedido) > 10 else "manual"
         status_atual = pedido[11] if len(pedido) > 11 else "pendente"
+        profissional = pedido[8] if len(pedido) > 8 else "Não informado"
         
         if novo_status == "concluido" and status_atual != "concluido":
             ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
@@ -497,16 +539,16 @@ def gerente_atualizar_pedido(pedido_id):
                 if caixa_dia:
                     novas_entradas = (caixa_dia[2] or 0) + valor
                     novo_saldo = (caixa_dia[1] or 0) + novas_entradas - (caixa_dia[3] or 0)
-                    db.execute(
-                        "UPDATE caixa_diario SET entradas = ?, saldo_final = ? WHERE data = ?",
-                        (novas_entradas, novo_saldo, hoje)
-                    )
+                    db.execute("UPDATE caixa_diario SET entradas = ?, saldo_final = ? WHERE data = ?", (novas_entradas, novo_saldo, hoje))
                 else:
-                    db.execute(
-                        "INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, ?, 0, ?)",
-                        (hoje, valor, valor)
-                    )
+                    db.execute("INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, ?, 0, ?)", (hoje, valor, valor))
                 print(f"✅ Pedido {pedido_id} concluído! R$ {valor:.2f} adicionado ao caixa.")
+                
+                # Notifica Discord - Pedido concluído
+                try:
+                    notificar_pedido_concluido(pedido_id, cliente, servico, valor, pagamento, profissional)
+                except Exception as e:
+                    print(f"⚠️ Erro ao notificar Discord: {e}")
         
         db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
         db.commit()
@@ -514,8 +556,6 @@ def gerente_atualizar_pedido(pedido_id):
         
     except Exception as e:
         print(f"❌ ERRO: {e}")
-        import traceback
-        traceback.print_exc()
         return jsonify({"erro": str(e)}), 500
 
 @app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
@@ -528,12 +568,8 @@ def gerente_deletar_pedido(pedido_id):
             return jsonify({"erro": "Pedido não encontrado"}), 404
         db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
         db.commit()
-        print(f"🗑️ Pedido {pedido_id} excluído com sucesso!")
-        return jsonify({"status": "ok", "mensagem": "Pedido excluído com sucesso"})
+        return jsonify({"status": "ok"})
     except Exception as e:
-        print(f"❌ ERRO ao deletar pedido {pedido_id}: {e}")
-        import traceback
-        traceback.print_exc()
         return jsonify({"erro": str(e)}), 500
 
 # ============ CLIENTES ============
@@ -549,10 +585,7 @@ def gerente_listar_clientes():
 def gerente_criar_cliente():
     dados = request.get_json() or {}
     db = get_db_gerente()
-    cur = db.execute(
-        "INSERT INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)",
-        (dados.get('nome'), dados.get('telefone'), dados.get('cpf'), dados.get('endereco'))
-    )
+    cur = db.execute("INSERT INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)", (dados.get('nome'), dados.get('telefone'), dados.get('cpf'), dados.get('endereco')))
     db.commit()
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
@@ -657,8 +690,7 @@ def gerente_deletar_produto(produto_id):
 @login_required
 def gerente_listar_assinantes():
     try:
-        assinantes = listar_assinantes_baserow()
-        return jsonify(assinantes)
+        return jsonify(listar_assinantes_baserow())
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
@@ -697,70 +729,52 @@ def verificar_horario():
         hora = dados.get("hora")
         profissional = dados.get("profissional", "")
         
-        print(f"🔍 Verificando: data={data}, hora={hora}, profissional={profissional}")
-        
         if not data or not hora:
             return jsonify({"erro": "Data e hora são obrigatórias"}), 400
         
         db = get_db_gerente()
-        
-        query = """
-            SELECT COUNT(*) as total 
-            FROM pedidos 
-            WHERE data_agendada = ? 
-            AND hora_agendada = ? 
-            AND status IN ('pendente', 'confirmado')
-        """
+        query = "SELECT COUNT(*) FROM pedidos WHERE data_agendada = ? AND hora_agendada = ? AND status IN ('pendente', 'confirmado')"
         params = [data, hora]
         
         if profissional:
             query += " AND profissional = ?"
             params.append(profissional)
         
-        print(f"📝 Query: {query}")
-        print(f"📝 Params: {params}")
-        
         row = db.execute(query, params).fetchone()
         ocupado = row[0] > 0 if row else False
         
-        print(f"📊 Ocupado (mesmo profissional): {ocupado}")
-        
-        return jsonify({
-            "disponivel": not ocupado,
-            "mensagem": "Horário indisponível para este profissional" if ocupado else "Horário disponível"
-        })
-        
+        return jsonify({"disponivel": not ocupado, "mensagem": "Horário indisponível" if ocupado else "Horário disponível"})
     except Exception as e:
-        print(f"❌ Erro: {e}")
         return jsonify({"erro": str(e)}), 500
 
-# ============ CAIXA - RESETAR ============
+# ============ CAIXA ============
 @app.route("/api/gerente/caixa/resetar", methods=["POST"])
 @login_required
 def resetar_caixa():
     try:
         db = get_db_gerente()
         hoje = date.today().isoformat()
-        
         caixa_atual = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
         if caixa_atual:
-            db.execute(
-                "INSERT INTO caixa_historico (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, ?, ?, ?, ?)",
-                (hoje, caixa_atual[1] or 0, caixa_atual[2] or 0, caixa_atual[3] or 0, caixa_atual[4] or 0)
-            )
-        
-        db.execute(
-            "INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)",
-            (hoje,)
-        )
+            db.execute("INSERT INTO caixa_historico (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, ?, ?, ?, ?)", (hoje, caixa_atual[1] or 0, caixa_atual[2] or 0, caixa_atual[3] or 0, caixa_atual[4] or 0))
+        db.execute("INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)", (hoje,))
         db.commit()
-        
         return jsonify({"status": "ok", "mensagem": "Caixa resetado para R$ 0,00"})
-        
     except Exception as e:
-        print(f"❌ Erro ao resetar caixa: {e}")
-        import traceback
-        traceback.print_exc()
+        return jsonify({"erro": str(e)}), 500
+
+# ============ RESETAR FATURAMENTO ============
+@app.route("/api/gerente/resetar_faturamento", methods=["POST"])
+@login_required
+def resetar_faturamento():
+    try:
+        db = get_db_gerente()
+        db.execute("DELETE FROM caixa")
+        hoje = date.today().isoformat()
+        db.execute("INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)", (hoje,))
+        db.commit()
+        return jsonify({"status": "ok", "mensagem": "Faturamento resetado para R$ 0,00"})
+    except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
 # ============ SERVIÇOS (ADMIN) ============
@@ -772,11 +786,7 @@ def api_servicos_post():
         if not dados or not dados.get("nome"):
             return jsonify({"erro": "Nome é obrigatório"}), 400
         db = get_db()
-        cur = db.execute(
-            "INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)",
-            (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
-             dados.get('ativo', 1), dados.get('ordem', 0))
-        )
+        cur = db.execute("INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)", (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30), dados.get('ativo', 1), dados.get('ordem', 0)))
         db.commit()
         return jsonify({"status": "ok", "id": cur.lastrowid})
     except Exception as e:
@@ -790,11 +800,7 @@ def api_servicos_put(item_id):
         if not dados:
             return jsonify({"erro": "Dados inválidos"}), 400
         db = get_db()
-        db.execute(
-            "UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?",
-            (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30),
-             dados.get('ativo', 1), item_id)
-        )
+        db.execute("UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?", (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30), dados.get('ativo', 1), item_id))
         db.commit()
         return jsonify({"status": "ok"})
     except Exception as e:
@@ -907,10 +913,7 @@ def gerente_listar_caixa():
 def gerente_criar_caixa():
     dados = request.get_json() or {}
     db = get_db_gerente()
-    cur = db.execute(
-        "INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)",
-        (dados.get('tipo'), dados.get('descricao'), dados.get('pagamento'), dados.get('valor', 0))
-    )
+    cur = db.execute("INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)", (dados.get('tipo'), dados.get('descricao'), dados.get('pagamento'), dados.get('valor', 0)))
     db.commit()
     return jsonify({"status": "ok", "id": cur.lastrowid})
 
@@ -941,10 +944,7 @@ def api_horarios_put():
     db = get_db()
     try:
         for dia, info in dados.items():
-            db.execute(
-                "INSERT OR REPLACE INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?)",
-                (int(dia), info.get("abertura", ""), info.get("fechamento", ""), 1 if info.get("ativo") else 0)
-            )
+            db.execute("INSERT OR REPLACE INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?)", (int(dia), info.get("abertura", ""), info.get("fechamento", ""), 1 if info.get("ativo") else 0))
         db.commit()
         return jsonify({"status": "ok"})
     except Exception as e:
@@ -984,28 +984,9 @@ def gerente_alterar_login():
     return jsonify({"status": "ok"})
 
 # ============ INICIALIZAÇÃO ============
-# ============ RESETAR FATURAMENTO ============
-@app.route("/api/gerente/resetar_faturamento", methods=["POST"])
-@login_required
-def resetar_faturamento():
-    try:
-        db = get_db_gerente()
-        db.execute("DELETE FROM caixa")
-        hoje = date.today().isoformat()
-        db.execute("INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)", (hoje,))
-        db.commit()
-        return jsonify({"status": "ok", "mensagem": "Faturamento resetado para R$ 0,00"})
-    except Exception as e:
-        print(f"❌ Erro: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"erro": str(e)}), 500
-
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
-    print("  📡 SQLite + Baserow")
+    print("  📡 SQLite + Baserow + Discord")
     print("="*60)
     app.run(debug=True, host="0.0.0.0", port=5000)
-
-
