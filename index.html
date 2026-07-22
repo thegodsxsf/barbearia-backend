@@ -595,6 +595,27 @@
   }
   @keyframes toastAnim{ from{ transform:translateX(-50%) translateY(20px); opacity:0; } to{ transform:translateX(-50%) translateY(0); opacity:1; } }
   
+  .horario-indisponivel {
+    background: rgba(231, 76, 60, 0.15);
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    padding: 12px;
+    color: #e74c3c;
+    font-weight: 600;
+    text-align: center;
+    margin: 8px 0;
+  }
+  .horario-disponivel {
+    background: rgba(61, 220, 132, 0.15);
+    border: 2px solid #3ddc84;
+    border-radius: 8px;
+    padding: 12px;
+    color: #3ddc84;
+    font-weight: 600;
+    text-align: center;
+    margin: 8px 0;
+  }
+  
   @media (max-width: 380px) {
     .modal{ padding:16px; }
     .form-row{ flex-direction:column; gap:0; }
@@ -780,6 +801,7 @@
         <div class="service-name">Agendamento</div>
         <div class="service-price">📍 Na barbearia</div>
       </div>
+      <div id="mensagemHorario"></div>
       <div class="form-group">
         <label>Nome completo <span class="required">*</span></label>
         <input type="text" id="agendaNome" placeholder="Digite seu nome completo" required>
@@ -791,11 +813,11 @@
       <div class="form-row">
         <div class="form-group">
           <label>Data <span class="required">*</span></label>
-          <input type="date" id="agendaData" required>
+          <input type="date" id="agendaData" onchange="verificarHorarioAoMudar()" required onchange="verificarHorarioAoMudar()">
         </div>
         <div class="form-group">
           <label>Hora <span class="required">*</span></label>
-          <input type="time" id="agendaHora" required>
+          <input type="time" id="agendaHora" onchange="verificarHorarioAoMudar()" required onchange="verificarHorarioAoMudar()">
         </div>
       </div>
       <div class="form-group">
@@ -804,7 +826,7 @@
       </div>
       <div class="form-group">
         <label>Escolha o profissional <span class="required">*</span></label>
-        <select id="profissionalAgenda" required>
+        <select id="profissionalAgenda" onchange="verificarHorarioAoMudar()" required onchange="verificarHorarioAoMudar()">
           <option value="">Selecione um profissional</option>
         </select>
       </div>
@@ -1113,6 +1135,8 @@
       document.getElementById('agendaData').value = '';
       document.getElementById('agendaHora').value = '';
       document.getElementById('agendaObservacoes').value = '';
+      document.getElementById('mensagemHorario').innerHTML = '';
+      document.getElementById('mensagemHorario').className = '';
       var opts = document.querySelectorAll('#paymentOptionsAgenda .payment-option');
       for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
       pagamentoSelecionadoAgenda = null;
@@ -1121,7 +1145,6 @@
       
       var hoje = new Date().toISOString().split('T')[0];
       document.getElementById('agendaData').min = hoje;
-      setTimeout(validarCamposAgenda, 200);
     }
 
     function fecharModalAgendamento() {
@@ -1133,48 +1156,55 @@
       for (var i = 0; i < opts.length; i++) { opts[i].classList.remove('selected'); }
       el.classList.add('selected');
       pagamentoSelecionadoAgenda = el.dataset.pagamento;
-      validarCamposAgenda();
     }
 
-    function validarCamposAgenda() {
-      var nome = document.getElementById('agendaNome').value.trim();
-      var telefone = document.getElementById('agendaTelefone').value.trim();
+    // ======== VERIFICAR HORÁRIO AUTOMATICAMENTE ========
+    function verificarHorarioAoMudar() {
       var data = document.getElementById('agendaData').value;
       var hora = document.getElementById('agendaHora').value;
       var prof = document.getElementById('profissionalAgenda').value;
-      
-      var valido = true;
-      if (!nome) valido = false;
-      if (!telefone || telefone.replace(/[^0-9]/g, '').length < 10) valido = false;
-      if (!data) valido = false;
-      if (!hora) valido = false;
-      if (!prof) valido = false;
-      
       var btn = document.getElementById('btnConfirmarAgenda');
-      if (btn) {
-        btn.disabled = !valido;
-        if (valido) {
-          btn.style.opacity = '1';
-          btn.style.cursor = 'pointer';
-        } else {
-          btn.style.opacity = '0.5';
-          btn.style.cursor = 'not-allowed';
-        }
+      var msgDiv = document.getElementById('mensagemHorario');
+      
+      if (!data || !hora || !prof) {
+        msgDiv.innerHTML = '';
+        msgDiv.className = '';
+        btn.disabled = true;
+        return;
       }
+      
+      fetch('/api/verificar_horario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: data, hora: hora, profissional: prof })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
+        if (!result.disponivel) {
+          msgDiv.innerHTML = '⚠️ <strong>Horário indisponível!</strong> Este horário já está ocupado. Escolha outro horário.';
+          msgDiv.className = 'horario-indisponivel';
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+        } else {
+          msgDiv.innerHTML = '✅ <strong>Horário disponível!</strong> Você pode confirmar o agendamento.';
+          msgDiv.className = 'horario-disponivel';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      })
+      .catch(function(err) {
+        console.error(err);
+        msgDiv.innerHTML = '❌ Erro ao verificar horário. Tente novamente.';
+        msgDiv.className = 'horario-indisponivel';
+      });
     }
 
-    document.getElementById('agendaNome').addEventListener('input', validarCamposAgenda);
-    document.getElementById('agendaTelefone').addEventListener('input', validarCamposAgenda);
-    document.getElementById('agendaData').addEventListener('change', validarCamposAgenda);
-    document.getElementById('agendaHora').addEventListener('change', validarCamposAgenda);
-    document.getElementById('profissionalAgenda').addEventListener('change', validarCamposAgenda);
-
+    // ======== CONFIRMAR AGENDAMENTO ========
     function confirmarAgendamento() {
       var nome = document.getElementById('agendaNome').value.trim();
       var telefone = document.getElementById('agendaTelefone').value.trim();
       var data = document.getElementById('agendaData').value;
       var hora = document.getElementById('agendaHora').value;
-      var servicoValue = document.getElementById('agendaServico').value;
       var profissionalId = document.getElementById('profissionalAgenda').value;
       var observacoes = document.getElementById('agendaObservacoes').value.trim();
       
@@ -1188,54 +1218,77 @@
         return;
       }
       
-      var servicoNome = 'Agendamento Geral';
-      var valor = 0;
-      if (servicoValue) {
-        for (var i = 0; i < todosServicos.length; i++) {
-          if (todosServicos[i].id == servicoValue) {
-            servicoNome = todosServicos[i].nome;
-            valor = todosServicos[i].preco;
-            break;
+      // VERIFICA O HORÁRIO ANTES DE SALVAR
+      showToast('⏳ Verificando horário...', 2000);
+      
+      fetch('/api/verificar_horario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: data, hora: hora, profissional: profissionalId })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
+        if (!result.disponivel) {
+          alert('⚠️ HORÁRIO INDISPONÍVEL!\n\nEste horário já está ocupado.\nPor favor, escolha outro horário.');
+          showToast('⚠️ Horário indisponível! Escolha outro horário.', 5000);
+          return;
+        }
+        
+        // SÓ CONTINUA SE ESTIVER DISPONÍVEL
+        var servicoValue = document.getElementById('agendaServico').value;
+        var servicoNome = 'Agendamento Geral';
+        var valor = 0;
+        
+        if (servicoValue) {
+          for (var i = 0; i < todosServicos.length; i++) {
+            if (todosServicos[i].id == servicoValue) {
+              servicoNome = todosServicos[i].nome;
+              valor = todosServicos[i].preco;
+              break;
+            }
           }
         }
-      }
-      
-      var selectProf = document.getElementById('profissionalAgenda');
-      var profNome = selectProf.options[selectProf.selectedIndex]?.text || 'Não informado';
-      
-      var dataFormatada = new Date(data + 'T' + hora);
-      var dataStr = dataFormatada.toLocaleDateString('pt-BR');
-      var horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      
-      var pagamentoLabels = { 'pix': 'PIX', 'dinheiro': 'Dinheiro', 'cartao': 'Cartão' };
-      
-      salvarPedidoServidor({
-        tipo: 'agendamento',
-        servico_nome: servicoNome,
-        valor: valor,
-        cliente_nome: nome,
-        cliente_telefone: telefone,
-        data_agendada: data,
-        hora_agendada: hora,
-        corte_em_casa: 'nao',
-        endereco: document.getElementById('bizEndereco').textContent || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280',
-        observacoes: observacoes,
-        pagamento: pagamentoSelecionadoAgenda || '',
-        profissional: profNome
+        
+        var selectProf = document.getElementById('profissionalAgenda');
+        var profNome = selectProf.options[selectProf.selectedIndex]?.text || 'Não informado';
+        
+        var dataFormatada = new Date(data + 'T' + hora);
+        var dataStr = dataFormatada.toLocaleDateString('pt-BR');
+        var horaStr = dataFormatada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        var pagamentoLabels = { 'pix': 'PIX', 'dinheiro': 'Dinheiro', 'cartao': 'Cartão' };
+        
+        salvarPedidoServidor({
+          tipo: 'agendamento',
+          servico_nome: servicoNome,
+          valor: valor,
+          cliente_nome: nome,
+          cliente_telefone: telefone,
+          data_agendada: data,
+          hora_agendada: hora,
+          corte_em_casa: 'nao',
+          endereco: document.getElementById('bizEndereco').textContent || 'Av. Liberdade, 1477 - Totó, Recife - PE, 50940-280',
+          observacoes: observacoes,
+          pagamento: pagamentoSelecionadoAgenda || '',
+          profissional: profNome
+        });
+        
+        document.getElementById('sucessoTitulo').textContent = '✅ Agendamento Confirmado!';
+        document.getElementById('sucessoMensagem').textContent = 'Seu agendamento foi enviado para o gerente. Aguarde que você será atendido em breve.';
+        document.getElementById('sucessoService').textContent = servicoNome + (valor ? ' (' + formatarPreco(valor) + ')' : '');
+        document.getElementById('sucessoCliente').textContent = nome;
+        document.getElementById('sucessoDataHora').textContent = dataStr + ' às ' + horaStr;
+        document.getElementById('sucessoProfissional').textContent = profNome;
+        document.getElementById('sucessoPagamento').textContent = pagamentoSelecionadoAgenda ? pagamentoLabels[pagamentoSelecionadoAgenda] : 'Não informado';
+        document.getElementById('sucessoValor').textContent = valor ? formatarPreco(valor) : 'Consulte o gerente';
+        document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Acabei%20de%20agendar%20um%20serviço%20pelo%20site';
+        
+        fecharModalAgendamento();
+        document.getElementById('sucessoModal').classList.add('active');
+      })
+      .catch(function(err) {
+        console.error(err);
+        showToast('❌ Erro ao verificar horário. Tente novamente.', 3000);
       });
-      
-      document.getElementById('sucessoTitulo').textContent = '✅ Agendamento Confirmado!';
-      document.getElementById('sucessoMensagem').textContent = 'Seu agendamento foi enviado para o gerente. Aguarde que você será atendido em breve.';
-      document.getElementById('sucessoService').textContent = servicoNome + (valor ? ' (' + formatarPreco(valor) + ')' : '');
-      document.getElementById('sucessoCliente').textContent = nome;
-      document.getElementById('sucessoDataHora').textContent = dataStr + ' às ' + horaStr;
-      document.getElementById('sucessoProfissional').textContent = profNome;
-      document.getElementById('sucessoPagamento').textContent = pagamentoSelecionadoAgenda ? pagamentoLabels[pagamentoSelecionadoAgenda] : 'Não informado';
-      document.getElementById('sucessoValor').textContent = valor ? formatarPreco(valor) : 'Consulte o gerente';
-      document.getElementById('whatsappContato').href = 'https://wa.me/558181365730?text=Olá!%20Acabei%20de%20agendar%20um%20serviço%20pelo%20site';
-      
-      fecharModalAgendamento();
-      document.getElementById('sucessoModal').classList.add('active');
     }
 
     // ======== FAQ ========
@@ -1404,9 +1457,6 @@
     }
 
     // ======== CARREGAR DADOS ========
-    // Cada rota é buscada com fetchSeguro: se UMA rota faltar ou falhar,
-    // as outras continuam carregando normalmente (antes, uma única rota
-    // quebrada travava a tela inteira em "Carregando...").
     async function carregarDados() {
       var biz = await fetchSeguro('/api/barbearia', null);
       if (biz) {
@@ -1469,3 +1519,146 @@
   </script>
 </body>
 </html>
+
+<script>
+// ======== VERIFICAR HORÁRIO NO MODAL SIMPLES ========
+function verificarHorarioSimples() {
+    var data = document.getElementById('dataSimples').value;
+    var hora = document.getElementById('horaSimples').value;
+    var prof = document.getElementById('profissionalSimples').value;
+    var btn = document.getElementById('btnConfirmarSimples');
+    var msgDiv = document.getElementById('mensagemHorarioSimples');
+    
+    // Se não existe a div de mensagem, cria
+    if (!msgDiv) {
+        var container = document.getElementById('serviceInfoSimples');
+        if (container) {
+            var newMsg = document.createElement('div');
+            newMsg.id = 'mensagemHorarioSimples';
+            newMsg.style.cssText = 'text-align:center; font-weight:600; padding:10px; margin:10px 0; border-radius:8px; min-height:40px;';
+            container.parentNode.insertBefore(newMsg, container.nextSibling);
+            msgDiv = document.getElementById('mensagemHorarioSimples');
+        }
+    }
+    
+    if (!data || !hora || !prof) {
+        if (msgDiv) {
+            msgDiv.innerHTML = '⚠️ Preencha todos os campos para verificar disponibilidade.';
+            msgDiv.style.background = 'rgba(231, 76, 60, 0.1)';
+            msgDiv.style.color = '#e74c3c';
+            msgDiv.style.border = '1px solid #e74c3c';
+        }
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        }
+        return;
+    }
+    
+    if (msgDiv) {
+        msgDiv.innerHTML = '⏳ Verificando disponibilidade...';
+        msgDiv.style.background = 'rgba(255, 193, 7, 0.1)';
+        msgDiv.style.color = '#ffc107';
+        msgDiv.style.border = '1px solid #ffc107';
+    }
+    
+    fetch('/api/verificar_horario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: data, hora: hora, profissional: prof })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        if (!result.disponivel) {
+            if (msgDiv) {
+                msgDiv.innerHTML = '❌ <strong>Horário indisponível!</strong> Este horário já está ocupado. Escolha outro horário.';
+                msgDiv.style.background = 'rgba(231, 76, 60, 0.15)';
+                msgDiv.style.color = '#e74c3c';
+                msgDiv.style.border = '2px solid #e74c3c';
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            }
+            showToast('⚠️ Horário indisponível! Escolha outro horário.', 4000);
+        } else {
+            if (msgDiv) {
+                msgDiv.innerHTML = '✅ <strong>Horário disponível!</strong> Você pode confirmar o agendamento.';
+                msgDiv.style.background = 'rgba(61, 220, 132, 0.15)';
+                msgDiv.style.color = '#3ddc84';
+                msgDiv.style.border = '2px solid #3ddc84';
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        }
+    })
+    .catch(function(err) {
+        console.error(err);
+        if (msgDiv) {
+            msgDiv.innerHTML = '❌ Erro ao verificar horário. Tente novamente.';
+            msgDiv.style.background = 'rgba(231, 76, 60, 0.1)';
+            msgDiv.style.color = '#e74c3c';
+            msgDiv.style.border = '1px solid #e74c3c';
+        }
+    });
+}
+
+// Adiciona os eventos nos campos do modal simples
+document.addEventListener('DOMContentLoaded', function() {
+    var dataSimples = document.getElementById('dataSimples');
+    var horaSimples = document.getElementById('horaSimples');
+    var profSimples = document.getElementById('profissionalSimples');
+    
+    if (dataSimples) {
+        dataSimples.addEventListener('change', verificarHorarioSimples);
+        dataSimples.addEventListener('input', verificarHorarioSimples);
+    }
+    if (horaSimples) {
+        horaSimples.addEventListener('change', verificarHorarioSimples);
+        horaSimples.addEventListener('input', verificarHorarioSimples);
+    }
+    if (profSimples) {
+        profSimples.addEventListener('change', verificarHorarioSimples);
+    }
+});
+
+// Substitui a função confirmarSimples para verificar antes
+var originalConfirmarSimples = window.confirmarSimples;
+window.confirmarSimples = function() {
+    var nome = document.getElementById('nomeSimples').value.trim();
+    var data = document.getElementById('dataSimples').value;
+    var hora = document.getElementById('horaSimples').value;
+    var profissionalId = document.getElementById('profissionalSimples').value;
+    
+    if (!nome || !pagamentoSelecionadoSimples || !data || !hora || !profissionalId) {
+        showToast('⚠️ Preencha todos os campos.', 2500);
+        return;
+    }
+    
+    // Verifica horário antes de confirmar
+    fetch('/api/verificar_horario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: data, hora: hora, profissional: profissionalId })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        if (!result.disponivel) {
+            alert('⚠️ HORÁRIO INDISPONÍVEL!\n\nEste horário já está ocupado.\nPor favor, escolha outro horário.');
+            showToast('⚠️ Horário indisponível! Escolha outro horário.', 5000);
+            return;
+        }
+        
+        // Se disponível, chama a função original
+        originalConfirmarSimples();
+    })
+    .catch(function(err) {
+        console.error(err);
+        showToast('❌ Erro ao verificar horário. Tente novamente.', 3000);
+    });
+};
+</script>

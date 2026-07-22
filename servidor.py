@@ -594,6 +594,47 @@ def gerente_deletar_assinante(assinante_id):
         return jsonify({"status": "ok"})
     return jsonify({"erro": "Erro ao deletar assinante"}), 500
 
+# ============ VERIFICAR HORÁRIO DISPONÍVEL ============
+@app.route("/api/verificar_horario", methods=["POST"])
+def verificar_horario():
+    try:
+        dados = request.get_json() or {}
+        data = dados.get("data")
+        hora = dados.get("hora")
+        
+        print(f"🔍 Verificando: data={data}, hora={hora}")
+        
+        if not data or not hora:
+            return jsonify({"erro": "Data e hora são obrigatórias"}), 400
+        
+        db = get_db_gerente()
+        
+        query = """
+            SELECT COUNT(*) as total 
+            FROM pedidos 
+            WHERE data_agendada = ? 
+            AND hora_agendada = ? 
+            AND status IN ('pendente', 'confirmado')
+        """
+        params = [data, hora]
+        
+        print(f"📝 Query: {query}")
+        print(f"📝 Params: {params}")
+        
+        row = db.execute(query, params).fetchone()
+        ocupado = row[0] > 0 if row else False
+        
+        print(f"📊 Ocupado: {ocupado}")
+        
+        return jsonify({
+            "disponivel": not ocupado,
+            "mensagem": "Horário indisponível" if ocupado else "Horário disponível"
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+        return jsonify({"erro": str(e)}), 500
+
 # ============ SERVIÇOS (ADMIN) ============
 @app.route("/api/servicos", methods=["POST"])
 @login_required
