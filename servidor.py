@@ -432,20 +432,67 @@ def gerente_atualizar_pedido(pedido_id):
     try:
         dados = request.get_json(force=True, silent=True) or {}
         novo_status = dados.get("status")
+        
         if not novo_status:
             return jsonify({"erro": "Status não informado"}), 400
+        
         if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
             return jsonify({"erro": "Status inválido"}), 400
+        
         db = get_db_gerente()
+        
+        # Busca o pedido
+        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
+        if not pedido:
+            return jsonify({"erro": "Pedido não encontrado"}), 404
+        
+        valor = pedido[3]
+        servico = pedido[2]
+        cliente = pedido[4]
+        pagamento = pedido[10] if len(pedido) > 10 else "manual"
+        
+        # Atualiza o status
         db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
+        
+        # Se for concluído, adiciona ao caixa
+        if novo_status == "concluido":
+            ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
+            
+            if not ja_lancado:
+                # Insere no caixa
+                db.execute(
+                    "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
+                    ("entrada", f"{servico} - {cliente}", pagamento, valor, pedido_id)
+                )
+                
+                # Atualiza o caixa diário
+                hoje = date.today().isoformat()
+                caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
+                
+                if caixa_dia:
+                    novas_entradas = (caixa_dia[2] or 0) + valor
+                    novo_saldo = (caixa_dia[1] or 0) + novas_entradas - (caixa_dia[3] or 0)
+                    db.execute(
+                        "UPDATE caixa_diario SET entradas = ?, saldo_final = ? WHERE data = ?",
+                        (novas_entradas, novo_saldo, hoje)
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, ?, 0, ?)",
+                        (hoje, valor, valor)
+                    )
+                
+                print(f"✅ Pedido {pedido_id} concluído! R$ {valor:.2f} adicionado ao caixa.")
+        
         db.commit()
         return jsonify({"status": "ok"})
+        
     except Exception as e:
+        print(f"❌ ERRO: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"erro": str(e)}), 500
 
-@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
-@login_required
-def gerente_deletar_pedido(pedido_id):
     try:
         db = get_db_gerente()
         db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
