@@ -188,7 +188,7 @@
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="btnSom" class="btn-refresh" onclick="toggleSom()" style="background:var(--accent); color:#000;">🔊 Som Ligado</button>
         <button class="btn-refresh" onclick="resetarCaixa()" style="background:var(--gold); color:#000; border-color:var(--gold); font-weight:700;">📅 Novo Dia</button>
-        <button class="btn-refresh" onclick="resetarFaturamento()" style="background: #e74c3c; color:#fff; border-color:#e74c3c; font-weight:700;">💳 Resetar Faturamento</button>
+        
         <button class="btn-refresh" onclick="recarregarSecaoAtual()">🔄 Atualizar</button>
       </div>
     </div>
@@ -196,15 +196,15 @@
     <!-- INÍCIO -->
     <div id="secInicio">
       <div class="stats-grid">
-        <div class="stat-card"><div class="label">💰 Saldo Inicial do Dia</div><div class="valor gold" id="statSaldoInicial">R$ 0,00</div></div>
-        <div class="stat-card"><div class="label">📈 Entradas Hoje</div><div class="valor green" id="statEntradasHoje">R$ 0,00</div></div>
-        <div class="stat-card"><div class="label">💰 Faturamento Total</div><div class="valor green" id="statFaturamento">R$ 0,00</div></div>
-        <div class="stat-card"><div class="label">💵 Saldo em Caixa</div><div class="valor blue" id="statSaldo">R$ 0,00</div></div>
+        
+        
+        
+        
         <div class="stat-card"><div class="label">⏳ Pedidos Pendentes</div><div class="valor" id="statPendentes">0</div></div>
-        <div class="stat-card"><div class="label">📅 Agendamentos Hoje</div><div class="valor" id="statHoje">0</div></div>
-        <div class="stat-card"><div class="label">👥 Clientes Atendidos</div><div class="valor" id="statClientes">0</div></div>
-        <div class="stat-card"><div class="label">📋 Comandas Abertas</div><div class="valor blue" id="statComandas">0</div></div>
-        <div class="stat-card"><div class="label">💰 Repasses Pendentes</div><div class="valor red" id="statRepasses">0</div></div>
+        
+        
+        
+        
       </div>
       <div class="card-secao">
         <div class="cabecalho"><h2>📋 Últimos pedidos recebidos</h2></div>
@@ -824,13 +824,8 @@ function fecharModalItem(){
 async function carregarInicio(){
   try{
     const stats = await api('/api/gerente/dashboard');
-    document.getElementById('statFaturamento').textContent = formatarPreco(stats.faturamento_total);
-    document.getElementById('statSaldo').textContent = formatarPreco(stats.saldo);
-    document.getElementById('statPendentes').textContent = stats.pedidos_pendentes;
-    document.getElementById('statHoje').textContent = stats.agendamentos_hoje;
-    document.getElementById('statClientes').textContent = stats.total_clientes;
-    document.getElementById('statComandas').textContent = stats.comandas_abertas || 0;
-    document.getElementById('statRepasses').textContent = stats.repasses_pendentes || 0;
+    const elPendentes = document.getElementById('statPendentes');
+    if (elPendentes) elPendentes.textContent = stats.pedidos_pendentes;
     const pedidos = await api('/api/gerente/pedidos');
     const ultimos = pedidos.slice(0, 8);
     document.getElementById('tabelaInicioPedidos').innerHTML = ultimos.length ? ultimos.map(p => `<tr><td>${p.cliente_nome}</td><td>${p.servico_nome}</td><td>${p.profissional && p.profissional !== '' ? '👤 ' + p.profissional : '-'}</td><td>${formatarPreco(p.valor)}</td><td><span class="status-pill status-${p.status}">${p.status}</span></td><td>${formatarData(p.criado_em)}</td></tr>`).join('') : '<tr><td colspan="6" class="empty-msg">Nenhum pedido ainda.</td></tr>';
@@ -886,6 +881,7 @@ async function atualizarStatusPedido(id, status){
     showToast(`✅ Status alterado para: ${statusMap[status] || status}`);
     carregarPedidos();
     carregarInicio();
+    carregarCaixa();
   } catch(e){ 
     showToast('❌ Erro: ' + e.message);
     console.error('Erro ao atualizar status:', e);

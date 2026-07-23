@@ -1,340 +1,84 @@
 import os
-import sqlite3
-from datetime import date, datetime, timedelta
 import requests
-from flask import Flask, jsonify, request, send_from_directory, g, session, redirect
+import re
+from datetime import date, datetime, timedelta
+from flask import Flask, jsonify, request, send_from_directory, g, session, redirect, Response
+from functools import wraps
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DB_PATH = os.path.join(BASE_DIR, "banco.db")
-DB_GERENTE_PATH = os.path.join(BASE_DIR, "banco_gerente.db")
 
 app = Flask(__name__, static_folder="static")
 app.secret_key = "chave-secreta-barbearia"
 
-# ============ DISCORD WEBHOOK ============
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1529529706762731541/V1ju8v0T0icdGujyQxRF6-cqYgxr6TIWHT8R3RTT5GeubC9RXssf1QCgcCJhEGgYbFid"
-
-def enviar_discord(mensagem, titulo="📢 Barbearia Studio Leblon", cor=0x00ff00):
-    """Envia mensagem para o Discord via webhook"""
-    try:
-        dados = {
-            "embeds": [{
-                "title": titulo,
-                "description": mensagem,
-                "color": cor,
-                "timestamp": datetime.now().isoformat(),
-                "footer": {"text": "Barbearia Studio Leblon"}
-            }]
-        }
-        response = requests.post(DISCORD_WEBHOOK_URL, json=dados, timeout=5)
-        if response.status_code == 204:
-            print("✅ Mensagem enviada para o Discord!")
-            return True
-        else:
-            print(f"❌ Erro Discord: {response.status_code}")
-            return False
-    except Exception as e:
-        print(f"❌ Erro Discord: {e}")
-        return False
-
-def notificar_novo_pedido(dados):
-    """Notifica novo pedido no Discord"""
-    try:
-        mensagem = f"""**📋 NOVO PEDIDO RECEBIDO!**
-
-👤 **Cliente:** {dados.get('cliente_nome', 'Não informado')}
-📱 **Telefone:** {dados.get('cliente_telefone', 'Não informado')}
-📄 **CPF:** {dados.get('cliente_cpf', 'Não informado')}
-✂️ **Serviço:** {dados.get('servico_nome', 'Não informado')}
-💈 **Profissional:** {dados.get('profissional', 'Não informado')}
-📅 **Data:** {dados.get('data_agendada', 'Não informada')}
-⏰ **Hora:** {dados.get('hora_agendada', 'Não informada')}
-💰 **Valor:** R$ {float(dados.get('valor', 0)):.2f}
-💳 **Pagamento:** {dados.get('pagamento', 'Não informado')}
-📌 **Tipo:** {dados.get('tipo', 'Pedido')}"""
-        
-        enviar_discord(mensagem, "📋 NOVO PEDIDO", 0x00ff00)
-    except Exception as e:
-        print(f"❌ Erro ao notificar novo pedido: {e}")
-
-def notificar_pedido_concluido(pedido_id, cliente, servico, valor, pagamento, profissional):
-    """Notifica pedido concluído no Discord"""
-    try:
-        mensagem = f"""**✅ PEDIDO CONCLUÍDO!**
-
-📌 **Pedido #:** {pedido_id}
-👤 **Cliente:** {cliente}
-✂️ **Serviço:** {servico}
-💈 **Profissional:** {profissional}
-💰 **Valor:** R$ {float(valor):.2f}
-💳 **Pagamento:** {pagamento}
-📅 **Data:** {datetime.now().strftime('%d/%m/%Y %H:%M')}"""
-        
-        enviar_discord(mensagem, "✅ PEDIDO CONCLUÍDO", 0x00ff00)
-    except Exception as e:
-        print(f"❌ Erro ao notificar pedido concluído: {e}")
-
 # ============ BASEROW CONFIGS ============
-BASEROW_TOKEN = "jivqqHBFnvvVWwmgGPPtqTZLPHcaT38I"
-BASEROW_TABLE_ID = "1083808"
+BASEROW_TOKEN = "4tKiir8cwC5MvMu0Cgj9X5ewrzQn8jNR"
+BASEROW_TABLE_ID = "1094351"
 BASEROW_URL = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/?user_field_names=true"
 
-BASEROW_TOKEN_PLANOS = "QkqtK3vb5i6mxWLl2aPl23auZBn6VsXx"
-BASEROW_TABLE_PLANOS_ID = "1090225"
-BASEROW_URL_PLANOS = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_PLANOS_ID}/?user_field_names=true"
-
-BASEROW_TOKEN_EQUIPE = "PcDmkO9N9yOr1appjvn3sPrRl6rQrv5q"
-BASEROW_TABLE_EQUIPE_ID = "1090262"
-BASEROW_URL_EQUIPE = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_EQUIPE_ID}/?user_field_names=true"
-
-BASEROW_TOKEN_PRODUTOS = "UwjXa3HePyc6ClaA66AyZYevyjoEHmAf"
-BASEROW_TABLE_PRODUTOS_ID = "1090278"
-BASEROW_URL_PRODUTOS = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_PRODUTOS_ID}/?user_field_names=true"
-
-BASEROW_TOKEN_ASSINANTES = "Yy9lUDvUu6jCIE13khP6ZUOlVO2tQkqm"
-BASEROW_TABLE_ASSINANTES_ID = "1090158"
-BASEROW_URL_ASSINANTES = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ASSINANTES_ID}/?user_field_names=true"
-
 # ============ FUNÇÕES BASEROW ============
-def listar_produtos_baserow():
+def baserow_get(categoria=None):
+    """Busca TODOS os registros da tabela (com paginação) e filtra localmente por categoria.
+    Isso evita depender do filtro remoto do Baserow, que falha quando 'categoria' é
+    um campo de selecao (single select) em vez de texto simples."""
     try:
-        response = requests.get(BASEROW_URL_PRODUTOS, headers={"Authorization": f"Token {BASEROW_TOKEN_PRODUTOS}"}, timeout=10)
-        if response.status_code == 200:
+        todos = []
+        url = BASEROW_URL + "&size=200"
+        while url:
+            response = requests.get(url, headers={"Authorization": f"Token {BASEROW_TOKEN}"}, timeout=10)
+            if response.status_code != 200:
+                print(f"❌ Erro Baserow GET: Status {response.status_code}")
+                break
             data = response.json()
-            produtos = data.get('results', [])
-            resultado = []
-            for p in produtos:
-                try:
-                    preco_str = p.get('preço', '0').replace('R$', '').replace(',', '.').strip()
-                    preco = float(preco_str) if preco_str else 0
-                except:
-                    preco = 0
-                resultado.append({'id': p.get('id'), 'nome': p.get('nome', ''), 'preco': preco, 'ativo': 1})
-            return resultado
-        return []
-    except:
+            todos.extend(data.get('results', []))
+            url = data.get('next')
+        if categoria:
+            alvo = categoria.strip().lower()
+            todos = [r for r in todos if str(r.get('categoria', '')).strip().lower() == alvo]
+        return todos
+    except Exception as e:
+        print(f"❌ Erro Baserow GET: {e}")
         return []
 
-def criar_produto_baserow(dados):
+def baserow_post(dados):
+    """Cria um novo registro na tabela Customers."""
     try:
-        dados_envio = {"nome": dados.get('nome', ''), "preço": f"R$ {float(dados.get('preco', 0)):.2f}".replace('.', ',')}
-        response = requests.post(BASEROW_URL_PRODUTOS, json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_PRODUTOS}", "Content-Type": "application/json"}, timeout=10)
+        print(f"📤 Enviando para Baserow: {dados}")
+        response = requests.post(BASEROW_URL, json=dados, headers={"Authorization": f"Token {BASEROW_TOKEN}", "Content-Type": "application/json"}, timeout=10)
         if response.status_code == 200:
+            print(f"✅ Registro criado: ID {response.json().get('id')}")
             return response.json().get('id')
+        print(f"❌ Erro Baserow POST: Status {response.status_code} - {response.text}")
         return None
-    except:
+    except Exception as e:
+        print(f"❌ Erro Baserow POST: {e}")
         return None
 
-def atualizar_produto_baserow(produto_id, dados):
+def baserow_patch(item_id, dados):
+    """Atualiza um registro existente na tabela Customers."""
     try:
-        dados_envio = {}
-        if 'nome' in dados:
-            dados_envio['nome'] = dados['nome']
-        if 'preco' in dados:
-            dados_envio['preço'] = f"R$ {float(dados['preco']):.2f}".replace('.', ',')
-        if not dados_envio:
+        url = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/{item_id}/?user_field_names=true"
+        response = requests.patch(url, json=dados, headers={"Authorization": f"Token {BASEROW_TOKEN}", "Content-Type": "application/json"}, timeout=10)
+        if response.status_code == 200:
+            print(f"✅ Registro {item_id} atualizado")
             return True
-        response = requests.patch(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_PRODUTOS_ID}/{produto_id}/?user_field_names=true", json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_PRODUTOS}", "Content-Type": "application/json"}, timeout=10)
-        return response.status_code == 200
-    except:
+        print(f"❌ Erro Baserow PATCH: Status {response.status_code}")
+        return False
+    except Exception as e:
+        print(f"❌ Erro Baserow PATCH: {e}")
         return False
 
-def deletar_produto_baserow(produto_id):
+def baserow_delete(item_id):
+    """Deleta um registro da tabela Customers."""
     try:
-        response = requests.delete(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_PRODUTOS_ID}/{produto_id}/?user_field_names=true", headers={"Authorization": f"Token {BASEROW_TOKEN_PRODUTOS}"}, timeout=10)
+        url = f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ID}/{item_id}/?user_field_names=true"
+        response = requests.delete(url, headers={"Authorization": f"Token {BASEROW_TOKEN}"}, timeout=10)
         return response.status_code in [200, 204]
-    except:
+    except Exception as e:
+        print(f"❌ Erro Baserow DELETE: {e}")
         return False
-
-def listar_equipe_baserow():
-    try:
-        response = requests.get(BASEROW_URL_EQUIPE, headers={"Authorization": f"Token {BASEROW_TOKEN_EQUIPE}"}, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            membros = data.get('results', [])
-            return [{'id': m.get('id'), 'nome': m.get('nome', ''), 'especialidade': m.get('especialidade', ''), 'ativo': 1} for m in membros]
-        return []
-    except:
-        return []
-
-def criar_membro_equipe_baserow(dados):
-    try:
-        dados_envio = {"nome": dados.get('nome', ''), "especialidade": dados.get('especialidade', '')}
-        response = requests.post(BASEROW_URL_EQUIPE, json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_EQUIPE}", "Content-Type": "application/json"}, timeout=10)
-        if response.status_code == 200:
-            return response.json().get('id')
-        return None
-    except:
-        return None
-
-def atualizar_membro_equipe_baserow(membro_id, dados):
-    try:
-        dados_envio = {}
-        if 'nome' in dados:
-            dados_envio['nome'] = dados['nome']
-        if 'especialidade' in dados:
-            dados_envio['especialidade'] = dados['especialidade']
-        if not dados_envio:
-            return True
-        response = requests.patch(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_EQUIPE_ID}/{membro_id}/?user_field_names=true", json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_EQUIPE}", "Content-Type": "application/json"}, timeout=10)
-        return response.status_code == 200
-    except:
-        return False
-
-def deletar_membro_equipe_baserow(membro_id):
-    try:
-        response = requests.delete(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_EQUIPE_ID}/{membro_id}/?user_field_names=true", headers={"Authorization": f"Token {BASEROW_TOKEN_EQUIPE}"}, timeout=10)
-        return response.status_code in [200, 204]
-    except:
-        return False
-
-def listar_planos_baserow():
-    try:
-        response = requests.get(BASEROW_URL_PLANOS, headers={"Authorization": f"Token {BASEROW_TOKEN_PLANOS}"}, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            planos = data.get('results', [])
-            resultado = []
-            for p in planos:
-                try:
-                    preco_str = p.get('preço', '0').replace('R$', '').replace(',', '.').strip()
-                    preco = float(preco_str) if preco_str else 0
-                except:
-                    preco = 0
-                resultado.append({'id': p.get('id'), 'nome': p.get('nome', ''), 'preco': preco, 'descricao': p.get('descrição', ''), 'icone': '⭐', 'destaque': 0, 'ativo': 1, 'cor': '#3ddc84'})
-            return resultado
-        return []
-    except:
-        return []
-
-def criar_plano_baserow(dados):
-    try:
-        dados_envio = {"nome": dados.get('nome', ''), "preço": f"R$ {float(dados.get('preco', 0)):.2f}".replace('.', ','), "descrição": dados.get('descricao', '')}
-        response = requests.post(BASEROW_URL_PLANOS, json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_PLANOS}", "Content-Type": "application/json"}, timeout=10)
-        if response.status_code == 200:
-            return response.json().get('id')
-        return None
-    except:
-        return None
-
-def atualizar_plano_baserow(plano_id, dados):
-    try:
-        dados_envio = {}
-        if 'nome' in dados:
-            dados_envio['nome'] = dados['nome']
-        if 'preco' in dados:
-            dados_envio['preço'] = f"R$ {float(dados['preco']):.2f}".replace('.', ',')
-        if 'descricao' in dados:
-            dados_envio['descrição'] = dados['descricao']
-        if not dados_envio:
-            return True
-        response = requests.patch(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_PLANOS_ID}/{plano_id}/?user_field_names=true", json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_PLANOS}", "Content-Type": "application/json"}, timeout=10)
-        return response.status_code == 200
-    except:
-        return False
-
-def deletar_plano_baserow(plano_id):
-    try:
-        response = requests.delete(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_PLANOS_ID}/{plano_id}/?user_field_names=true", headers={"Authorization": f"Token {BASEROW_TOKEN_PLANOS}"}, timeout=10)
-        return response.status_code in [200, 204]
-    except:
-        return False
-
-def listar_assinantes_baserow():
-    try:
-        response = requests.get(BASEROW_URL_ASSINANTES, headers={"Authorization": f"Token {BASEROW_TOKEN_ASSINANTES}"}, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            assinantes = data.get('results', [])
-            resultado = []
-            for a in assinantes:
-                resultado.append({
-                    'id': a.get('id'),
-                    'nome': a.get('nome', 'Sem nome'),
-                    'telefone': a.get('contato', ''),
-                    'nascimento': a.get('nascimento', ''),
-                    'plano': a.get('plano', ''),
-                    'valor': 0,
-                    'status': 'ativo' if a.get('Active') == 'Sim' else 'cancelado',
-                    'criado_em': a.get('created_on', '')
-                })
-            return resultado
-        return []
-    except:
-        return []
-
-def criar_assinante_baserow(dados):
-    try:
-        dados_envio = {
-            "nome": dados.get('nome', ''),
-            "contato": dados.get('telefone', ''),
-            "Active": "Sim" if dados.get('status') == 'ativo' else "Nao",
-            "nascimento": dados.get('nascimento', ''),
-            "plano": dados.get('plano', ''),
-            "valor": dados.get('valor', 0)
-        }
-        response = requests.post(BASEROW_URL_ASSINANTES, json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_ASSINANTES}", "Content-Type": "application/json"}, timeout=10)
-        if response.status_code == 200:
-            return response.json().get('id')
-        return None
-    except:
-        return None
-
-def atualizar_assinante_baserow(assinante_id, dados):
-    try:
-        dados_envio = {}
-        if 'nome' in dados:
-            dados_envio['nome'] = dados['nome']
-        if 'telefone' in dados:
-            dados_envio['contato'] = dados['telefone']
-        if 'status' in dados:
-            dados_envio['Active'] = "Sim" if dados['status'] == 'ativo' else "Nao"
-        if 'nascimento' in dados:
-            dados_envio['nascimento'] = dados['nascimento']
-        if 'plano' in dados:
-            dados_envio['plano'] = dados['plano']
-        if 'valor' in dados:
-            dados_envio['valor'] = dados['valor']
-        if not dados_envio:
-            return True
-        response = requests.patch(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ASSINANTES_ID}/{assinante_id}/?user_field_names=true", json=dados_envio, headers={"Authorization": f"Token {BASEROW_TOKEN_ASSINANTES}", "Content-Type": "application/json"}, timeout=10)
-        return response.status_code == 200
-    except:
-        return False
-
-def deletar_assinante_baserow(assinante_id):
-    try:
-        response = requests.delete(f"https://api.baserow.io/api/database/rows/table/{BASEROW_TABLE_ASSINANTES_ID}/{assinante_id}/?user_field_names=true", headers={"Authorization": f"Token {BASEROW_TOKEN_ASSINANTES}"}, timeout=10)
-        return response.status_code in [200, 204]
-    except:
-        return False
-
-# ============ SQLITE ============
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
-    return g.db
-
-def get_db_gerente():
-    if "db_gerente" not in g:
-        g.db_gerente = sqlite3.connect(DB_GERENTE_PATH)
-        g.db_gerente.row_factory = sqlite3.Row
-    return g.db_gerente
-
-@app.teardown_appcontext
-def close_db(e=None):
-    db = g.pop("db", None)
-    if db:
-        db.close()
-    db2 = g.pop("db_gerente", None)
-    if db2:
-        db2.close()
 
 # ============ LOGIN ============
 def login_required(f):
-    from functools import wraps
     @wraps(f)
     def decorado(*args, **kwargs):
         if not session.get("gerente_id"):
@@ -370,49 +114,21 @@ def pagina_gerente():
 def api_barbearia():
     return jsonify({"nome": "Leblon Studio", "endereco": "Av. Liberdade, 1477 - Totó, Recife - PE", "whatsapp": "558181365730"})
 
-@app.route("/api/servicos", methods=["GET"])
-def api_servicos_get():
-    try:
-        db = get_db()
-        rows = db.execute("SELECT * FROM servicos WHERE ativo = 1 ORDER BY ordem, id").fetchall()
-        return jsonify([dict(r) for r in rows])
-    except:
-        return jsonify([])
-
-@app.route("/api/profissionais", methods=["GET"])
-def api_profissionais():
-    return jsonify(listar_equipe_baserow())
-
-@app.route("/api/assinaturas", methods=["GET"])
-def api_assinaturas():
-    return jsonify(listar_planos_baserow())
-
-@app.route("/api/produtos", methods=["GET"])
-def api_produtos():
-    return jsonify(listar_produtos_baserow())
-
-@app.route("/api/imagens", methods=["GET"])
-def api_imagens():
-    try:
-        db = get_db()
-        rows = db.execute("SELECT * FROM imagens WHERE ativo = 1 ORDER BY ordem, id").fetchall()
-        return jsonify([dict(r) for r in rows])
-    except:
-        return jsonify([])
-
-# ============ API GERENTE LOGIN ============
+# ============ GERENTE LOGIN ============
 @app.route("/api/gerente/login", methods=["POST"])
 def gerente_login():
     dados = request.get_json() or {}
     usuario = dados.get("usuario", "").strip()
     senha = dados.get("senha", "")
-    db = get_db_gerente()
-    row = db.execute("SELECT * FROM gerentes WHERE usuario = ?", (usuario,)).fetchone()
-    if not row or row["senha_hash"] != senha:
-        return jsonify({"erro": "Usuário ou senha inválidos"}), 401
-    session["gerente_id"] = row["id"]
-    session["gerente_nome"] = row["nome"]
-    return jsonify({"status": "ok", "nome": row["nome"]})
+    
+    gerentes = baserow_get("gerente")
+    for g in gerentes:
+        if g.get('nome') == usuario and g.get('senha') == senha:
+            session["gerente_id"] = g.get('id')
+            session["gerente_nome"] = g.get('nome')
+            return jsonify({"status": "ok", "nome": g.get('nome')})
+    
+    return jsonify({"erro": "Usuário ou senha inválidos"}), 401
 
 @app.route("/api/gerente/logout", methods=["POST"])
 def gerente_logout():
@@ -429,296 +145,980 @@ def gerente_me():
 @app.route("/api/gerente/dashboard")
 @login_required
 def gerente_dashboard():
-    db = get_db_gerente()
-    entradas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='entrada'").fetchone()[0] or 0
-    saidas = db.execute("SELECT COALESCE(SUM(valor),0) FROM caixa WHERE tipo='saida'").fetchone()[0] or 0
+    pedidos = baserow_get("pedido")
+    pendentes = len([p for p in pedidos if p.get('status') == 'pendente'])
+    
+    planos = baserow_get("plano")
+    equipe = baserow_get("equipe")
+    produtos = baserow_get("produto")
+    
     hoje = date.today().isoformat()
-    caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
-    saldo_atual = caixa_dia[4] if caixa_dia else 0
-    saldo_inicial = caixa_dia[1] if caixa_dia else 0
-    entradas_hoje = caixa_dia[2] if caixa_dia else 0
-    saidas_hoje = caixa_dia[3] if caixa_dia else 0
-    pendentes = db.execute("SELECT COUNT(*) FROM pedidos WHERE status='pendente'").fetchone()[0] or 0
-    agendamentos_hoje = db.execute("SELECT COUNT(*) FROM pedidos WHERE data_agendada = ? AND status != 'cancelado'", (hoje,)).fetchone()[0] or 0
-    total_clientes = db.execute("SELECT COUNT(DISTINCT cliente_nome) FROM pedidos").fetchone()[0] or 0
-    planos = listar_planos_baserow()
-    equipe = listar_equipe_baserow()
-    produtos = listar_produtos_baserow()
+    agendamentos_hoje = len([p for p in pedidos if p.get('data_agendada') == hoje and p.get('status') != 'cancelado'])
+    
+    # Busca dados do caixa
+    caixa = baserow_get("caixa")
+    entradas_caixa = sum(float(c.get('preço', 0)) for c in caixa if c.get('tipo') == 'entrada')
+    saidas_caixa = sum(float(c.get('preço', 0)) for c in caixa if c.get('tipo') == 'saida')
+    saldo_caixa = entradas_caixa - saidas_caixa
+    
+    # Busca comandas abertas
+    comandas = baserow_get("comanda")
+    comandas_abertas = len([c for c in comandas if c.get('status') == 'aberta'])
+    
+    # Busca repasses pendentes
+    repasses = baserow_get("repasse")
+    repasses_pendentes = len([r for r in repasses if r.get('status') == 'pendente'])
+    
     return jsonify({
-        "faturamento_total": entradas,
-        "saidas_total": saidas,
-        "saldo": saldo_atual,
-        "saldo_inicial": saldo_inicial,
-        "entradas_hoje": entradas_hoje,
-        "saidas_hoje": saidas_hoje,
+        "faturamento_total": entradas_caixa,
+        "saidas_total": saidas_caixa,
+        "saldo": saldo_caixa,
+        "saldo_inicial": 0,
+        "entradas_hoje": entradas_caixa,
+        "saidas_hoje": saidas_caixa,
         "pedidos_pendentes": pendentes,
         "agendamentos_hoje": agendamentos_hoje,
-        "total_clientes": total_clientes,
+        "total_clientes": len(baserow_get("cliente")),
         "assinaturas_ativas": len(planos),
-        "comandas_abertas": 0,
-        "repasses_pendentes": 0,
+        "comandas_abertas": comandas_abertas,
+        "repasses_pendentes": repasses_pendentes,
         "total_equipe": len(equipe),
         "total_produtos": len(produtos)
     })
 
-# ============ PEDIDOS ============
-@app.route("/api/gerente/pedidos", methods=["GET"])
-@login_required
-def gerente_listar_pedidos():
-    db = get_db_gerente()
-    status = request.args.get("status")
-    limit = request.args.get("limit")
-    if status:
-        if limit:
-            rows = db.execute("SELECT * FROM pedidos WHERE status = ? ORDER BY id DESC LIMIT ?", (status, int(limit))).fetchall()
-        else:
-            rows = db.execute("SELECT * FROM pedidos WHERE status = ? ORDER BY id DESC", (status,)).fetchall()
-    else:
-        if limit:
-            rows = db.execute("SELECT * FROM pedidos ORDER BY id DESC LIMIT ?", (int(limit),)).fetchall()
-        else:
-            rows = db.execute("SELECT * FROM pedidos ORDER BY id DESC").fetchall()
-    return jsonify([dict(r) for r in rows])
+# ============ SERVIÇOS ============
+@app.route("/api/servicos", methods=["GET"])
+def api_servicos_get():
+    items = baserow_get("servico")
+    resultado = []
+    for item in items:
+        try:
+            preco = float(item.get('preço', 0)) if item.get('preço') else 0
+            duracao = int(item.get('duração', 30)) if item.get('duração') else 30
+        except:
+            preco = 0
+            duracao = 30
+        resultado.append({
+            'id': item.get('id'), 
+            'nome': item.get('nome', ''), 
+            'preco': preco, 
+            'duracao_min': duracao, 
+            'ativo': 1
+        })
+    return jsonify(resultado)
 
-@app.route("/api/pedidos", methods=["POST"])
-def api_criar_pedido():
-    dados = request.get_json() or {}
-    db = get_db_gerente()
-    cur = db.execute(
-        """INSERT INTO pedidos (tipo, servico_nome, valor, cliente_nome, cliente_telefone,
-            cliente_cpf, data_agendada, hora_agendada, profissional, pagamento, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente')""",
-        (dados.get('tipo'), dados.get('servico_nome'), dados.get('valor', 0),
-         dados.get('cliente_nome'), dados.get('cliente_telefone'), dados.get('cliente_cpf'),
-         dados.get('data_agendada'), dados.get('hora_agendada'), dados.get('profissional'),
-         dados.get('pagamento'))
-    )
-    db.commit()
-    
-    # Notifica Discord
-    try:
-        notificar_novo_pedido(dados)
-    except Exception as e:
-        print(f"⚠️ Erro ao notificar Discord: {e}")
-    
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
+@app.route("/api/servicos", methods=["POST"])
 @login_required
-def gerente_atualizar_pedido(pedido_id):
-    try:
-        dados = request.get_json(force=True, silent=True) or {}
-        novo_status = dados.get("status")
-        
-        if not novo_status:
-            return jsonify({"erro": "Status não informado"}), 400
-        if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
-            return jsonify({"erro": "Status inválido"}), 400
-        
-        db = get_db_gerente()
-        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
-        if not pedido:
-            return jsonify({"erro": "Pedido não encontrado"}), 404
-        
-        valor = pedido[3]
-        servico = pedido[2]
-        cliente = pedido[4]
-        pagamento = pedido[10] if len(pedido) > 10 else "manual"
-        status_atual = pedido[11] if len(pedido) > 11 else "pendente"
-        profissional = pedido[8] if len(pedido) > 8 else "Não informado"
-        
-        if novo_status == "concluido" and status_atual != "concluido":
-            ja_lancado = db.execute("SELECT COUNT(*) FROM caixa WHERE pedido_id = ?", (pedido_id,)).fetchone()[0]
-            if not ja_lancado:
-                db.execute(
-                    "INSERT INTO caixa (tipo, descricao, pagamento, valor, pedido_id) VALUES (?, ?, ?, ?, ?)",
-                    ("entrada", f"{servico} - {cliente}", pagamento, valor, pedido_id)
-                )
-                hoje = date.today().isoformat()
-                caixa_dia = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
-                if caixa_dia:
-                    novas_entradas = (caixa_dia[2] or 0) + valor
-                    novo_saldo = (caixa_dia[1] or 0) + novas_entradas - (caixa_dia[3] or 0)
-                    db.execute("UPDATE caixa_diario SET entradas = ?, saldo_final = ? WHERE data = ?", (novas_entradas, novo_saldo, hoje))
-                else:
-                    db.execute("INSERT INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, ?, 0, ?)", (hoje, valor, valor))
-                print(f"✅ Pedido {pedido_id} concluído! R$ {valor:.2f} adicionado ao caixa.")
-                
-                # Notifica Discord - Pedido concluído
-                try:
-                    notificar_pedido_concluido(pedido_id, cliente, servico, valor, pagamento, profissional)
-                except Exception as e:
-                    print(f"⚠️ Erro ao notificar Discord: {e}")
-        
-        db.execute("UPDATE pedidos SET status = ? WHERE id = ?", (novo_status, pedido_id))
-        db.commit()
-        return jsonify({"status": "ok"})
-        
-    except Exception as e:
-        print(f"❌ ERRO: {e}")
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
-@login_required
-def gerente_deletar_pedido(pedido_id):
-    try:
-        db = get_db_gerente()
-        pedido = db.execute("SELECT * FROM pedidos WHERE id = ?", (pedido_id,)).fetchone()
-        if not pedido:
-            return jsonify({"erro": "Pedido não encontrado"}), 404
-        db.execute("DELETE FROM pedidos WHERE id = ?", (pedido_id,))
-        db.commit()
-        return jsonify({"status": "ok"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-# ============ CLIENTES ============
-@app.route("/api/gerente/clientes", methods=["GET"])
-@login_required
-def gerente_listar_clientes():
-    db = get_db_gerente()
-    rows = db.execute("SELECT * FROM clientes ORDER BY nome").fetchall()
-    return jsonify([dict(r) for r in rows])
-
-@app.route("/api/gerente/clientes", methods=["POST"])
-@login_required
-def gerente_criar_cliente():
-    dados = request.get_json() or {}
-    db = get_db_gerente()
-    cur = db.execute("INSERT INTO clientes (nome, telefone, cpf, endereco) VALUES (?, ?, ?, ?)", (dados.get('nome'), dados.get('telefone'), dados.get('cpf'), dados.get('endereco')))
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-# ============ PLANOS (BASEROW) ============
-@app.route("/api/gerente/planos", methods=["GET"])
-@login_required
-def gerente_listar_planos():
-    return jsonify(listar_planos_baserow())
-
-@app.route("/api/gerente/planos", methods=["POST"])
-@login_required
-def gerente_criar_plano():
+def api_servicos_post():
     dados = request.get_json(force=True, silent=True) or {}
     if not dados.get('nome'):
         return jsonify({"erro": "Nome é obrigatório"}), 400
-    plano_id = criar_plano_baserow(dados)
-    if plano_id:
-        return jsonify({"status": "ok", "id": plano_id})
-    return jsonify({"erro": "Erro ao criar plano"}), 500
+    item = {
+        "nome": dados.get('nome', ''), 
+        "preço": str(dados.get('preco', 0)), 
+        "duração": str(dados.get('duracao_min', 30)), 
+        "categoria": "servico"
+    }
+    item_id = baserow_post(item)
+    if item_id:
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar serviço"}), 500
 
-@app.route("/api/gerente/planos/<int:plano_id>", methods=["PUT"])
+@app.route("/api/servicos/<int:item_id>", methods=["PUT"])
 @login_required
-def gerente_atualizar_plano(plano_id):
+def api_servicos_put(item_id):
     dados = request.get_json(force=True, silent=True) or {}
-    if atualizar_plano_baserow(plano_id, dados):
-        return jsonify({"status": "ok"})
-    return jsonify({"erro": "Erro ao atualizar plano"}), 500
+    item = {}
+    if 'nome' in dados: item['nome'] = dados['nome']
+    if 'preco' in dados: item['preço'] = str(dados['preco'])
+    if 'duracao_min' in dados: item['duração'] = str(dados['duracao_min'])
+    if baserow_patch(item_id, item): return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao atualizar serviço"}), 500
 
-@app.route("/api/gerente/planos/<int:plano_id>", methods=["DELETE"])
+@app.route("/api/servicos/<int:item_id>", methods=["DELETE"])
 @login_required
-def gerente_deletar_plano(plano_id):
-    if deletar_plano_baserow(plano_id):
-        return jsonify({"status": "ok"})
-    return jsonify({"erro": "Erro ao deletar plano"}), 500
+def api_servicos_delete(item_id):
+    if baserow_delete(item_id): return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar serviço"}), 500
 
-# ============ EQUIPE (BASEROW) ============
-@app.route("/api/gerente/equipe", methods=["GET"])
-@login_required
-def gerente_listar_equipe():
-    return jsonify(listar_equipe_baserow())
+# ============ PRODUTOS ============
+@app.route("/api/produtos", methods=["GET"])
+def api_produtos():
+    items = baserow_get("produto")
+    resultado = []
+    for item in items:
+        try: 
+            preco = float(item.get('preço', 0)) if item.get('preço') else 0
+        except: 
+            preco = 0
+        resultado.append({
+            'id': item.get('id'), 
+            'nome': item.get('nome', ''), 
+            'preco': preco, 
+            'ativo': 1
+        })
+    return jsonify(resultado)
 
-@app.route("/api/gerente/equipe", methods=["POST"])
-@login_required
-def gerente_criar_membro():
-    dados = request.get_json(force=True, silent=True) or {}
-    if not dados.get('nome'):
-        return jsonify({"erro": "Nome é obrigatório"}), 400
-    membro_id = criar_membro_equipe_baserow(dados)
-    if membro_id:
-        return jsonify({"status": "ok", "id": membro_id})
-    return jsonify({"erro": "Erro ao criar membro"}), 500
-
-@app.route("/api/gerente/equipe/<int:membro_id>", methods=["PUT"])
-@login_required
-def gerente_atualizar_membro(membro_id):
-    dados = request.get_json(force=True, silent=True) or {}
-    if atualizar_membro_equipe_baserow(membro_id, dados):
-        return jsonify({"status": "ok"})
-    return jsonify({"erro": "Erro ao atualizar membro"}), 500
-
-@app.route("/api/gerente/equipe/<int:membro_id>", methods=["DELETE"])
-@login_required
-def gerente_deletar_membro(membro_id):
-    if deletar_membro_equipe_baserow(membro_id):
-        return jsonify({"status": "ok"})
-    return jsonify({"erro": "Erro ao deletar membro"}), 500
-
-# ============ PRODUTOS (BASEROW) ============
 @app.route("/api/gerente/produtos", methods=["GET"])
 @login_required
 def gerente_listar_produtos():
-    return jsonify(listar_produtos_baserow())
+    return api_produtos()
 
 @app.route("/api/gerente/produtos", methods=["POST"])
 @login_required
 def gerente_criar_produto():
     dados = request.get_json(force=True, silent=True) or {}
-    if not dados.get('nome'):
+    if not dados.get('nome'): 
         return jsonify({"erro": "Nome é obrigatório"}), 400
-    produto_id = criar_produto_baserow(dados)
-    if produto_id:
-        return jsonify({"status": "ok", "id": produto_id})
+    item = {
+        "nome": dados.get('nome', ''), 
+        "preço": str(dados.get('preco', 0)), 
+        "categoria": "produto"
+    }
+    item_id = baserow_post(item)
+    if item_id: 
+        return jsonify({"status": "ok", "id": item_id})
     return jsonify({"erro": "Erro ao criar produto"}), 500
 
 @app.route("/api/gerente/produtos/<int:produto_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_produto(produto_id):
     dados = request.get_json(force=True, silent=True) or {}
-    if atualizar_produto_baserow(produto_id, dados):
+    item = {}
+    if 'nome' in dados: item['nome'] = dados['nome']
+    if 'preco' in dados: item['preço'] = str(dados['preco'])
+    if baserow_patch(produto_id, item): 
         return jsonify({"status": "ok"})
     return jsonify({"erro": "Erro ao atualizar produto"}), 500
 
 @app.route("/api/gerente/produtos/<int:produto_id>", methods=["DELETE"])
 @login_required
 def gerente_deletar_produto(produto_id):
-    if deletar_produto_baserow(produto_id):
+    if baserow_delete(produto_id): 
         return jsonify({"status": "ok"})
     return jsonify({"erro": "Erro ao deletar produto"}), 500
 
-# ============ ASSINANTES (BASEROW) ============
+# ============ PLANOS ============
+@app.route("/api/assinaturas", methods=["GET"])
+def api_assinaturas():
+    items = baserow_get("plano")
+    resultado = []
+    for item in items:
+        try: 
+            preco = float(item.get('preço', 0)) if item.get('preço') else 0
+        except: 
+            preco = 0
+        resultado.append({
+            'id': item.get('id'), 
+            'nome': item.get('nome', ''), 
+            'preco': preco, 
+            'descricao': item.get('descrição', ''), 
+            'icone': '⭐', 
+            'destaque': 0, 
+            'ativo': 1, 
+            'cor': '#3ddc84'
+        })
+    return jsonify(resultado)
+
+@app.route("/api/gerente/planos", methods=["GET"])
+@login_required
+def gerente_listar_planos():
+    return api_assinaturas()
+
+@app.route("/api/gerente/planos", methods=["POST"])
+@login_required
+def gerente_criar_plano():
+    dados = request.get_json(force=True, silent=True) or {}
+    if not dados.get('nome'): 
+        return jsonify({"erro": "Nome é obrigatório"}), 400
+    item = {
+        "nome": dados.get('nome', ''), 
+        "preço": str(dados.get('preco', 0)), 
+        "descrição": dados.get('descricao', ''), 
+        "categoria": "plano"
+    }
+    item_id = baserow_post(item)
+    if item_id: 
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar plano"}), 500
+
+@app.route("/api/gerente/planos/<int:plano_id>", methods=["PUT"])
+@login_required
+def gerente_atualizar_plano(plano_id):
+    dados = request.get_json(force=True, silent=True) or {}
+    item = {}
+    if 'nome' in dados: item['nome'] = dados['nome']
+    if 'preco' in dados: item['preço'] = str(dados['preco'])
+    if 'descricao' in dados: item['descrição'] = dados['descricao']
+    if baserow_patch(plano_id, item): 
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao atualizar plano"}), 500
+
+@app.route("/api/gerente/planos/<int:plano_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_plano(plano_id):
+    if baserow_delete(plano_id): 
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar plano"}), 500
+
+# ============ EQUIPE ============
+@app.route("/api/profissionais", methods=["GET"])
+def api_profissionais():
+    items = baserow_get("equipe")
+    resultado = []
+    for item in items:
+        resultado.append({
+            'id': item.get('id'), 
+            'nome': item.get('nome', ''), 
+            'especialidade': item.get('especialidade', ''), 
+            'ativo': 1
+        })
+    return jsonify(resultado)
+
+@app.route("/api/gerente/equipe", methods=["GET"])
+@login_required
+def gerente_listar_equipe():
+    return api_profissionais()
+
+@app.route("/api/gerente/equipe", methods=["POST"])
+@login_required
+def gerente_criar_membro():
+    dados = request.get_json(force=True, silent=True) or {}
+    if not dados.get('nome'): 
+        return jsonify({"erro": "Nome é obrigatório"}), 400
+    item = {
+        "nome": dados.get('nome', ''), 
+        "especialidade": dados.get('especialidade', ''), 
+        "categoria": "equipe"
+    }
+    item_id = baserow_post(item)
+    if item_id: 
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar membro"}), 500
+
+@app.route("/api/gerente/equipe/<int:membro_id>", methods=["PUT"])
+@login_required
+def gerente_atualizar_membro(membro_id):
+    dados = request.get_json(force=True, silent=True) or {}
+    item = {}
+    if 'nome' in dados: item['nome'] = dados['nome']
+    if 'especialidade' in dados: item['especialidade'] = dados['especialidade']
+    if baserow_patch(membro_id, item): 
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao atualizar membro"}), 500
+
+@app.route("/api/gerente/equipe/<int:membro_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_membro(membro_id):
+    if baserow_delete(membro_id): 
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar membro"}), 500
+
+# ============ ASSINANTES ============
 @app.route("/api/gerente/assinantes", methods=["GET"])
 @login_required
 def gerente_listar_assinantes():
-    try:
-        return jsonify(listar_assinantes_baserow())
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+    items = baserow_get("assinante")
+    resultado = []
+    for item in items:
+        resultado.append({
+            'id': item.get('id'),
+            'nome': item.get('nome', ''),
+            'telefone': item.get('numero telefone', ''),
+            'nascimento': item.get('nascimento', ''),
+            'plano': item.get('plano', ''),
+            'valor': float(item.get('preço', 0)) if item.get('preço') else 0,
+            'status': item.get('status', 'ativo'),
+            'criado_em': item.get('created_on', '')
+        })
+    return jsonify(resultado)
 
 @app.route("/api/gerente/assinantes", methods=["POST"])
 @login_required
 def gerente_criar_assinante():
     dados = request.get_json(force=True, silent=True) or {}
-    if not dados.get("nome"):
+    if not dados.get("nome"): 
         return jsonify({"erro": "Nome é obrigatório"}), 400
-    assinante_id = criar_assinante_baserow(dados)
-    if assinante_id:
-        return jsonify({"status": "ok", "id": assinante_id})
+    item = {
+        "nome": dados.get('nome', ''),
+        "numero telefone": dados.get('telefone', ''),
+        "nascimento": dados.get('nascimento', ''),
+        "plano": dados.get('plano', ''),
+        "preço": str(dados.get('valor', 0)),
+        "status": dados.get('status', 'ativo'),
+        "categoria": "assinante"
+    }
+    item_id = baserow_post(item)
+    if item_id: 
+        return jsonify({"status": "ok", "id": item_id})
     return jsonify({"erro": "Erro ao criar assinante"}), 500
 
 @app.route("/api/gerente/assinantes/<int:assinante_id>", methods=["PUT"])
 @login_required
 def gerente_atualizar_assinante(assinante_id):
     dados = request.get_json(force=True, silent=True) or {}
-    if atualizar_assinante_baserow(assinante_id, dados):
+    item = {}
+    if 'nome' in dados: item['nome'] = dados['nome']
+    if 'telefone' in dados: item['numero telefone'] = dados['telefone']
+    if 'nascimento' in dados: item['nascimento'] = dados['nascimento']
+    if 'plano' in dados: item['plano'] = dados['plano']
+    if 'valor' in dados: item['preço'] = str(dados['valor'])
+    if 'status' in dados: item['status'] = dados['status']
+    if baserow_patch(assinante_id, item): 
         return jsonify({"status": "ok"})
     return jsonify({"erro": "Erro ao atualizar assinante"}), 500
 
 @app.route("/api/gerente/assinantes/<int:assinante_id>", methods=["DELETE"])
 @login_required
 def gerente_deletar_assinante(assinante_id):
-    if deletar_assinante_baserow(assinante_id):
+    if baserow_delete(assinante_id): 
         return jsonify({"status": "ok"})
     return jsonify({"erro": "Erro ao deletar assinante"}), 500
+
+# ============ CLIENTES ============
+@app.route("/api/gerente/clientes", methods=["GET"])
+@login_required
+def gerente_listar_clientes():
+    items = baserow_get("cliente")
+    resultado = []
+    for item in items:
+        resultado.append({
+            'id': item.get('id'),
+            'nome': item.get('nome', ''),
+            'telefone': item.get('numero telefone', ''),
+            'cpf': item.get('cpf', ''),
+            'endereco': item.get('endereço', ''),
+            'email': item.get('Email', ''),
+            'data_nascimento': item.get('nascimento', '')
+        })
+    return jsonify(resultado)
+
+@app.route("/api/gerente/clientes", methods=["POST"])
+@login_required
+def gerente_criar_cliente():
+    dados = request.get_json(force=True, silent=True) or {}
+    if not dados.get("nome"): 
+        return jsonify({"erro": "Nome é obrigatório"}), 400
+    item = {
+        "nome": dados.get('nome', ''),
+        "numero telefone": dados.get('telefone', ''),
+        "cpf": dados.get('cpf', ''),
+        "endereço": dados.get('endereco', ''),
+        "Email": dados.get('email', ''),
+        "nascimento": dados.get('data_nascimento', ''),
+        "categoria": "cliente"
+    }
+    item_id = baserow_post(item)
+    if item_id: 
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar cliente"}), 500
+
+@app.route("/api/gerente/clientes/<int:cliente_id>", methods=["PUT"])
+@login_required
+def gerente_atualizar_cliente(cliente_id):
+    dados = request.get_json(force=True, silent=True) or {}
+    item = {}
+    if 'nome' in dados: item['nome'] = dados['nome']
+    if 'telefone' in dados: item['numero telefone'] = dados['telefone']
+    if 'cpf' in dados: item['cpf'] = dados['cpf']
+    if 'endereco' in dados: item['endereço'] = dados['endereco']
+    if 'email' in dados: item['Email'] = dados['email']
+    if 'data_nascimento' in dados: item['nascimento'] = dados['data_nascimento']
+    if baserow_patch(cliente_id, item): 
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao atualizar cliente"}), 500
+
+@app.route("/api/gerente/clientes/<int:cliente_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_cliente(cliente_id):
+    if baserow_delete(cliente_id): 
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar cliente"}), 500
+
+# ============ PEDIDOS ============
+@app.route("/api/gerente/pedidos", methods=["GET"])
+@login_required
+def gerente_listar_pedidos():
+    items = baserow_get("pedido")
+    status = request.args.get("status")
+    if status:
+        items = [p for p in items if p.get('status') == status]
+    resultado = []
+    for item in items:
+        try:
+            valor = float(item.get('preço', 0)) if item.get('preço') else 0
+        except:
+            valor = 0
+        resultado.append({
+            'id': item.get('id'),
+            'tipo': item.get('tipo', 'pedido'),
+            'servico_nome': item.get('servico', ''),
+            'valor': valor,
+            'cliente_nome': item.get('cliente', ''),
+            'cliente_telefone': item.get('telefone', ''),
+            'cliente_cpf': item.get('cpf', ''),
+            'data_agendada': item.get('data_agendada', ''),
+            'hora_agendada': item.get('hora_agendada', ''),
+            'profissional': item.get('profissional', ''),
+            'pagamento': item.get('pagamento', ''),
+            'status': item.get('status', 'pendente'),
+            'criado_em': item.get('created_on', '')
+        })
+    return jsonify(resultado)
+
+@app.route("/api/pedidos", methods=["POST"])
+def api_criar_pedido():
+    dados = request.get_json() or {}
+    item = {
+        "tipo": dados.get('tipo', 'pedido'),
+        "servico": dados.get('servico_nome', ''),
+        "preço": str(dados.get('valor', 0)),
+        "cliente": dados.get('cliente_nome', ''),
+        "telefone": dados.get('cliente_telefone', ''),
+        "cpf": dados.get('cliente_cpf', ''),
+        "data_agendada": dados.get('data_agendada', ''),
+        "hora_agendada": dados.get('hora_agendada', ''),
+        "profissional": dados.get('profissional', ''),
+        "pagamento": dados.get('pagamento', ''),
+        "status": "pendente",
+        "categoria": "pedido"
+    }
+    item_id = baserow_post(item)
+    if item_id:
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar pedido"}), 500
+
+@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["PUT"])
+@login_required
+def gerente_atualizar_pedido(pedido_id):
+    dados = request.get_json(force=True, silent=True) or {}
+    novo_status = dados.get("status")
+    if not novo_status:
+        return jsonify({"erro": "Status não informado"}), 400
+    if novo_status not in ("pendente", "confirmado", "concluido", "cancelado"):
+        return jsonify({"erro": "Status inválido"}), 400
+    
+    # Busca o pedido atual
+    pedidos = baserow_get("pedido")
+    pedido_atual = None
+    for p in pedidos:
+        if p.get('id') == pedido_id:
+            pedido_atual = p
+            break
+    
+    if not pedido_atual:
+        return jsonify({"erro": "Pedido não encontrado"}), 404
+    
+    # Se o pedido está sendo CONCLUÍDO
+    if novo_status == "concluido" and pedido_atual.get('status') != "concluido":
+        try:
+            valor = float(pedido_atual.get('preço', 0))
+            print(f"💰 Pedido #{pedido_id} sendo concluído. Valor: R$ {valor:.2f}")
+            
+            if valor > 0:
+                # CRIA DIRETAMENTE NO BASEROW
+                item_caixa = {
+                    "tipo": "entrada",
+                    "descrição": f"Pedido #{pedido_id} - {pedido_atual.get('cliente', '')} - {pedido_atual.get('servico', '')}",
+                    "pagamento": pedido_atual.get('pagamento', 'manual'),
+                    "preço": str(valor),
+                    "categoria": "caixa"
+                }
+                
+                # Tenta criar no Baserow
+                resultado = baserow_post(item_caixa)
+                if resultado:
+                    print(f"✅ Pedido #{pedido_id} ADICIONADO ao caixa: R$ {valor:.2f}")
+                else:
+                    print(f"❌ ERRO ao adicionar pedido #{pedido_id} ao caixa")
+                    # Tenta novamente com outro formato
+                    item_caixa2 = {
+                        "nome": f"Pedido #{pedido_id}",
+                        "preço": str(valor),
+                        "categoria": "caixa",
+                        "descrição": f"Pedido #{pedido_id} - {pedido_atual.get('cliente', '')}",
+                        "tipo": "entrada"
+                    }
+                    resultado2 = baserow_post(item_caixa2)
+                    if resultado2:
+                        print(f"✅ Pedido #{pedido_id} ADICIONADO (2ª tentativa): R$ {valor:.2f}")
+        except Exception as e:
+            print(f"❌ Erro ao processar conclusão: {e}")
+    
+    # Atualiza o status do pedido
+    if not baserow_patch(pedido_id, {"status": novo_status}):
+        return jsonify({"erro": "Erro ao atualizar pedido"}), 500
+    
+    return jsonify({"status": "ok"})
+
+@app.route("/api/gerente/pedidos/<int:pedido_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_pedido(pedido_id):
+    if baserow_delete(pedido_id):
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar pedido"}), 500
+
+# ============ CAIXA ============
+@app.route("/api/gerente/caixa", methods=["GET"])
+@login_required
+def gerente_listar_caixa():
+    """Lista todas as movimentações de caixa"""
+    items = baserow_get("caixa")
+    resultado = []
+    for item in items:
+        try:
+            valor = float(item.get('preço', 0)) if item.get('preço') else 0
+        except:
+            valor = 0
+        resultado.append({
+            'id': item.get('id'),
+            'tipo': item.get('tipo', 'entrada'),
+            'descricao': item.get('descrição', ''),
+            'pagamento': item.get('pagamento', ''),
+            'valor': valor,
+            'criado_em': item.get('created_on', '')
+        })
+    return jsonify(resultado)
+
+@app.route("/api/gerente/caixa", methods=["POST"])
+@login_required
+def gerente_criar_caixa():
+    """Cria uma nova movimentação de caixa"""
+    dados = request.get_json(force=True, silent=True) or {}
+    if not dados.get('descricao'):
+        return jsonify({"erro": "Descrição é obrigatória"}), 400
+    
+    valor = float(dados.get('valor', 0))
+    if valor <= 0:
+        return jsonify({"erro": "Valor deve ser maior que zero"}), 400
+    
+    if dados.get('tipo') == 'saida':
+        movimentacoes = baserow_get("caixa")
+        entradas = sum(float(m.get('preço', 0)) for m in movimentacoes if m.get('tipo') == 'entrada')
+        saidas = sum(float(m.get('preço', 0)) for m in movimentacoes if m.get('tipo') == 'saida')
+        saldo = entradas - saidas
+        if valor > saldo:
+            return jsonify({"erro": f"Saldo insuficiente. Saldo atual: R$ {saldo:.2f}"}), 400
+    
+    item = {
+        "tipo": dados.get('tipo', 'entrada'),
+        "descrição": dados.get('descricao', ''),
+        "pagamento": dados.get('pagamento', 'manual'),
+        "preço": str(valor),
+        "categoria": "caixa"
+    }
+    item_id = baserow_post(item)
+    if item_id:
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar movimentação"}), 500
+
+@app.route("/api/gerente/caixa/<int:caixa_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_caixa(caixa_id):
+    """Deleta uma movimentação de caixa"""
+    if baserow_delete(caixa_id):
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar movimentação"}), 500
+
+@app.route("/api/gerente/caixa/resetar", methods=["POST"])
+@login_required
+def gerente_resetar_caixa():
+    """Reseta o caixa do dia - salva o saldo atual como histórico e zera"""
+    try:
+        movimentacoes = baserow_get("caixa")
+        
+        entradas = sum(float(m.get('preço', 0)) for m in movimentacoes if m.get('tipo') == 'entrada')
+        saidas = sum(float(m.get('preço', 0)) for m in movimentacoes if m.get('tipo') == 'saida')
+        saldo_atual = entradas - saidas
+        
+        hoje = date.today().isoformat()
+        item = {
+            "tipo": "fechamento",
+            "descrição": f"Fechamento do dia {hoje} - Saldo: R$ {saldo_atual:.2f}",
+            "pagamento": "historico",
+            "preço": str(saldo_atual),
+            "categoria": "caixa_historico"
+        }
+        baserow_post(item)
+        
+        for m in movimentacoes:
+            if m.get('categoria') == 'caixa':
+                baserow_delete(m.get('id'))
+        
+        return jsonify({
+            "status": "ok", 
+            "mensagem": f"Caixa resetado! Saldo anterior: R$ {saldo_atual:.2f} salvo no histórico."
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro ao resetar caixa: {e}")
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/gerente/caixa/resumo", methods=["GET"])
+@login_required
+def gerente_resumo_caixa():
+    """Retorna resumo do caixa"""
+    movimentacoes = baserow_get("caixa")
+    entradas = sum(float(m.get('preço', 0)) for m in movimentacoes if m.get('tipo') == 'entrada')
+    saidas = sum(float(m.get('preço', 0)) for m in movimentacoes if m.get('tipo') == 'saida')
+    saldo = entradas - saidas
+    
+    return jsonify({
+        "entradas": entradas,
+        "saidas": saidas,
+        "saldo": saldo,
+        "total_movimentacoes": len(movimentacoes)
+    })
+
+@app.route("/api/gerente/caixa/diagnostico", methods=["GET"])
+@login_required
+def gerente_diagnostico_caixa():
+    """Rota de diagnóstico para verificar o estado do caixa"""
+    try:
+        # Busca todos os pedidos
+        pedidos = baserow_get("pedido")
+        pedidos_concluidos = [p for p in pedidos if p.get('status') == 'concluido']
+        
+        # Busca todas as movimentações de caixa
+        caixa = baserow_get("caixa")
+        entradas = [c for c in caixa if c.get('tipo') == 'entrada']
+        
+        # Calcula totais
+        total_pedidos = sum(float(p.get('preço', 0)) for p in pedidos_concluidos)
+        total_caixa = sum(float(c.get('preço', 0)) for c in entradas)
+        
+        # Verifica quais pedidos estão no caixa
+        ids_no_caixa = []
+        for c in entradas:
+            desc = c.get('descrição', '')
+            if 'Pedido #' in desc:
+                try:
+                    match = re.search(r'Pedido #(\d+)', desc)
+                    if match:
+                        ids_no_caixa.append(int(match.group(1)))
+                except:
+                    pass
+        
+        # Lista pedidos concluídos que NÃO estão no caixa
+        faltando = []
+        for p in pedidos_concluidos:
+            if p.get('id') not in ids_no_caixa:
+                faltando.append({
+                    'id': p.get('id'),
+                    'cliente': p.get('cliente', ''),
+                    'servico': p.get('servico', ''),
+                    'valor': float(p.get('preço', 0))
+                })
+        
+        return jsonify({
+            "total_pedidos_concluidos": len(pedidos_concluidos),
+            "total_valor_pedidos": total_pedidos,
+            "total_entradas_caixa": len(entradas),
+            "total_valor_caixa": total_caixa,
+            "ids_no_caixa": ids_no_caixa,
+            "pedidos_faltando": faltando,
+            "exemplos_caixa": entradas[:3],
+            "exemplos_pedidos": pedidos_concluidos[:3]
+        })
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/gerente/caixa/sincronizar_pedidos", methods=["POST"])
+@login_required
+def gerente_sincronizar_pedidos_caixa():
+    """Sincroniza todos os pedidos concluídos com o caixa"""
+    try:
+        pedidos = baserow_get("pedido")
+        caixa_items = baserow_get("caixa")
+        
+        ids_no_caixa = set()
+        for c in caixa_items:
+            if c.get('tipo') == 'entrada' and c.get('descrição', '').startswith('Pedido #'):
+                try:
+                    desc = c.get('descrição', '')
+                    if 'Pedido #' in desc:
+                        parte = desc.split('Pedido #')[1]
+                        id_str = parte.split(' ')[0] if ' ' in parte else parte
+                        ids_no_caixa.add(int(id_str))
+                except:
+                    pass
+        
+        adicionados = 0
+        for p in pedidos:
+            if p.get('status') == 'concluido':
+                pedido_id = p.get('id')
+                if pedido_id not in ids_no_caixa:
+                    try:
+                        valor = float(p.get('preço', 0))
+                        if valor > 0:
+                            item_caixa = {
+                                "tipo": "entrada",
+                                "descrição": f"Pedido #{pedido_id} - {p.get('cliente', '')} - {p.get('servico', '')}",
+                                "pagamento": p.get('pagamento', 'manual'),
+                                "preço": str(valor),
+                                "categoria": "caixa"
+                            }
+                            resultado = baserow_post(item_caixa)
+                            if resultado:
+                                adicionados += 1
+                    except:
+                        pass
+        
+        return jsonify({
+            "status": "ok",
+            "mensagem": f"{adicionados} pedidos sincronizados com o caixa"
+        })
+        
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@app.route("/api/gerente/caixa/forcar_sincronizacao", methods=["POST"])
+@login_required
+def gerente_forcar_sincronizacao():
+    """Força a sincronização de TODOS os pedidos concluídos com o caixa"""
+    try:
+        pedidos = baserow_get("pedido")
+        caixa_items = baserow_get("caixa")
+        
+        # Remove todas as entradas de pedidos do caixa (apenas as que começam com "Pedido #")
+        removidos = 0
+        for c in caixa_items:
+            if c.get('tipo') == 'entrada' and c.get('descrição', '').startswith('Pedido #'):
+                if baserow_delete(c.get('id')):
+                    removidos += 1
+        
+        # Adiciona todos os pedidos concluídos novamente
+        adicionados = 0
+        for p in pedidos:
+            if p.get('status') == 'concluido':
+                try:
+                    valor = float(p.get('preço', 0))
+                    if valor > 0:
+                        item_caixa = {
+                            "tipo": "entrada",
+                            "descrição": f"Pedido #{p.get('id')} - {p.get('cliente', '')} - {p.get('servico', '')}",
+                            "pagamento": p.get('pagamento', 'manual'),
+                            "preço": str(valor),
+                            "categoria": "caixa"
+                        }
+                        resultado = baserow_post(item_caixa)
+                        if resultado:
+                            adicionados += 1
+                            print(f"✅ Pedido #{p.get('id')} adicionado: R$ {valor:.2f}")
+                except Exception as e:
+                    print(f"❌ Erro ao adicionar pedido #{p.get('id')}: {e}")
+        
+        # Recalcula o saldo
+        caixa_atualizado = baserow_get("caixa")
+        entradas = sum(float(c.get('preço', 0)) for c in caixa_atualizado if c.get('tipo') == 'entrada')
+        saidas = sum(float(c.get('preço', 0)) for c in caixa_atualizado if c.get('tipo') == 'saida')
+        saldo = entradas - saidas
+        
+        return jsonify({
+            "status": "ok",
+            "mensagem": f"Removidos: {removidos}, Adicionados: {adicionados}",
+            "saldo_atual": saldo,
+            "entradas": entradas,
+            "saidas": saidas
+        })
+        
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+# ============ COMANDAS ============
+@app.route("/api/gerente/comandas", methods=["GET"])
+@login_required
+def gerente_listar_comandas():
+    """Lista todas as comandas"""
+    items = baserow_get("comanda")
+    resultado = []
+    for item in items:
+        try:
+            valor = float(item.get('preço', 0)) if item.get('preço') else 0
+        except:
+            valor = 0
+        resultado.append({
+            'id': item.get('id'),
+            'ticket': item.get('ticket', f"#CM{item.get('id', '')}"),
+            'cliente_nome': item.get('cliente', ''),
+            'cliente_telefone': item.get('numero telefone', ''),
+            'profissional': item.get('profissional', ''),
+            'servicos': item.get('servico', ''),
+            'valor_total': valor,
+            'pagamento': item.get('pagamento', 'pendente'),
+            'status': item.get('status', 'aberta'),
+            'criado_em': item.get('created_on', '')
+        })
+    return jsonify(resultado)
+
+@app.route("/api/gerente/comandas", methods=["POST"])
+@login_required
+def gerente_criar_comanda():
+    """Cria uma nova comanda"""
+    dados = request.get_json(force=True, silent=True) or {}
+    if not dados.get('cliente_nome'):
+        return jsonify({"erro": "Nome do cliente é obrigatório"}), 400
+    
+    comandas = baserow_get("comanda")
+    num_ticket = len(comandas) + 1
+    
+    item = {
+        "ticket": f"#CM{num_ticket:04d}",
+        "cliente": dados.get('cliente_nome', ''),
+        "numero telefone": dados.get('cliente_telefone', ''),
+        "profissional": dados.get('profissional', ''),
+        "servico": dados.get('servicos', ''),
+        "preço": str(dados.get('valor_total', 0)),
+        "pagamento": dados.get('pagamento', 'pendente'),
+        "status": dados.get('status', 'aberta'),
+        "categoria": "comanda"
+    }
+    item_id = baserow_post(item)
+    if item_id:
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar comanda"}), 500
+
+@app.route("/api/gerente/comandas/<int:comanda_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_comanda(comanda_id):
+    """Deleta uma comanda"""
+    if baserow_delete(comanda_id):
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar comanda"}), 500
+
+# ============ REPASSES ============
+@app.route("/api/gerente/repasses", methods=["GET"])
+@login_required
+def gerente_listar_repasses():
+    """Lista todos os repasses"""
+    items = baserow_get("repasse")
+    resultado = []
+    for item in items:
+        try:
+            valor_servico = float(item.get('preço', 0)) if item.get('preço') else 0
+            comissao = valor_servico * (float(item.get('comissao', 50)) / 100)
+        except:
+            valor_servico = 0
+            comissao = 0
+        
+        resultado.append({
+            'id': item.get('id'),
+            'profissional': item.get('profissional', ''),
+            'servico_nome': item.get('servico', ''),
+            'valor_servico': valor_servico,
+            'comissao': comissao,
+            'porcentagem': float(item.get('comissao', 50)),
+            'status': item.get('status', 'pendente'),
+            'criado_em': item.get('created_on', '')
+        })
+    return jsonify(resultado)
+
+@app.route("/api/gerente/repasses", methods=["POST"])
+@login_required
+def gerente_criar_repasse():
+    """Cria um novo repasse"""
+    dados = request.get_json(force=True, silent=True) or {}
+    if not dados.get('profissional') or not dados.get('servico_nome'):
+        return jsonify({"erro": "Profissional e serviço são obrigatórios"}), 400
+    
+    item = {
+        "profissional": dados.get('profissional', ''),
+        "servico": dados.get('servico_nome', ''),
+        "preço": str(dados.get('valor_servico', 0)),
+        "comissao": str(dados.get('porcentagem', 50)),
+        "status": dados.get('status', 'pendente'),
+        "categoria": "repasse"
+    }
+    item_id = baserow_post(item)
+    if item_id:
+        return jsonify({"status": "ok", "id": item_id})
+    return jsonify({"erro": "Erro ao criar repasse"}), 500
+
+@app.route("/api/gerente/repasses/<int:repasse_id>", methods=["DELETE"])
+@login_required
+def gerente_deletar_repasse(repasse_id):
+    """Deleta um repasse"""
+    if baserow_delete(repasse_id):
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao deletar repasse"}), 500
+
+@app.route("/api/gerente/repasses/resumo", methods=["GET"])
+@login_required
+def gerente_resumo_repasses():
+    """Retorna resumo dos repasses"""
+    repasses = baserow_get("repasse")
+    total_pendente = 0
+    total_pago = 0
+    
+    for r in repasses:
+        try:
+            valor = float(r.get('preço', 0))
+            comissao = valor * (float(r.get('comissao', 50)) / 100)
+            if r.get('status') == 'pendente':
+                total_pendente += comissao
+            else:
+                total_pago += comissao
+        except:
+            pass
+    
+    return jsonify({
+        "total_pendente": total_pendente,
+        "total_pago": total_pago
+    })
+
+# ============ RELATÓRIO PDF ============
+@app.route("/api/gerente/relatorio/pdf", methods=["GET"])
+@login_required
+def gerente_relatorio_pdf():
+    """Gera um relatório PDF simples (HTML para impressão)"""
+    pedidos = baserow_get("pedido")
+    comandas = baserow_get("comanda")
+    repasses = baserow_get("repasse")
+    caixa = baserow_get("caixa")
+    
+    total_entradas = sum(float(c.get('preço', 0)) for c in caixa if c.get('tipo') == 'entrada')
+    total_saidas = sum(float(c.get('preço', 0)) for c in caixa if c.get('tipo') == 'saida')
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Relatório - Barbearia Studio Leblon</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 40px; }}
+            h1 {{ color: #333; border-bottom: 2px solid #3ddc84; padding-bottom: 10px; }}
+            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            th {{ background: #f0f0f0; text-align: left; padding: 8px; border: 1px solid #ddd; }}
+            td {{ padding: 8px; border: 1px solid #ddd; }}
+            .total {{ font-weight: bold; font-size: 1.2em; margin-top: 20px; }}
+            .green {{ color: #2ecc71; }}
+            .red {{ color: #e74c3c; }}
+        </style>
+    </head>
+    <body>
+        <h1>📊 Relatório - Barbearia Studio Leblon</h1>
+        <p><strong>Data:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+        
+        <h2>📋 Pedidos ({len(pedidos)})</h2>
+        <table>
+            <tr><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th></tr>
+            {''.join(f"<tr><td>{p.get('cliente', '-')}</td><td>{p.get('servico', '-')}</td><td>{p.get('profissional', '-')}</td><td>R$ {float(p.get('preço', 0)):.2f}</td><td>{p.get('status', '')}</td></tr>" for p in pedidos[:20])}
+            {'' if len(pedidos) <= 20 else f"<tr><td colspan='5'>... e mais {len(pedidos)-20} pedidos</td></tr>"}
+        </table>
+        
+        <h2>💰 Resumo Financeiro</h2>
+        <div class="total">
+            <p>Total Entradas: <span class="green">R$ {total_entradas:.2f}</span></p>
+            <p>Total Saídas: <span class="red">R$ {total_saidas:.2f}</span></p>
+            <p>Saldo: <span style="color: {'#2ecc71' if total_entradas > total_saidas else '#e74c3c'}">R$ {(total_entradas - total_saidas):.2f}</span></p>
+        </div>
+        
+        <p><em>Relatório gerado automaticamente em {datetime.now().strftime('%d/%m/%Y %H:%M')}</em></p>
+    </body>
+    </html>
+    """
+    return Response(html, mimetype='text/html')
 
 # ============ VERIFICAR HORÁRIO ============
 @app.route("/api/verificar_horario", methods=["POST"])
@@ -732,223 +1132,38 @@ def verificar_horario():
         if not data or not hora:
             return jsonify({"erro": "Data e hora são obrigatórias"}), 400
         
-        db = get_db_gerente()
-        query = "SELECT COUNT(*) FROM pedidos WHERE data_agendada = ? AND hora_agendada = ? AND status IN ('pendente', 'confirmado')"
-        params = [data, hora]
+        pedidos = baserow_get("pedido")
+        ocupado = False
         
-        if profissional:
-            query += " AND profissional = ?"
-            params.append(profissional)
-        
-        row = db.execute(query, params).fetchone()
-        ocupado = row[0] > 0 if row else False
+        for p in pedidos:
+            if p.get('data_agendada') == data and p.get('hora_agendada') == hora:
+                if p.get('status') in ['pendente', 'confirmado']:
+                    if profissional:
+                        if p.get('profissional') == profissional:
+                            ocupado = True
+                            break
+                    else:
+                        ocupado = True
+                        break
         
         return jsonify({"disponivel": not ocupado, "mensagem": "Horário indisponível" if ocupado else "Horário disponível"})
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
-# ============ CAIXA ============
-@app.route("/api/gerente/caixa/resetar", methods=["POST"])
-@login_required
-def resetar_caixa():
-    try:
-        db = get_db_gerente()
-        hoje = date.today().isoformat()
-        caixa_atual = db.execute("SELECT * FROM caixa_diario WHERE data = ?", (hoje,)).fetchone()
-        if caixa_atual:
-            db.execute("INSERT INTO caixa_historico (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, ?, ?, ?, ?)", (hoje, caixa_atual[1] or 0, caixa_atual[2] or 0, caixa_atual[3] or 0, caixa_atual[4] or 0))
-        db.execute("INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)", (hoje,))
-        db.commit()
-        return jsonify({"status": "ok", "mensagem": "Caixa resetado para R$ 0,00"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-# ============ RESETAR FATURAMENTO ============
-@app.route("/api/gerente/resetar_faturamento", methods=["POST"])
-@login_required
-def resetar_faturamento():
-    try:
-        db = get_db_gerente()
-        db.execute("DELETE FROM caixa")
-        hoje = date.today().isoformat()
-        db.execute("INSERT OR REPLACE INTO caixa_diario (data, saldo_inicial, entradas, saidas, saldo_final) VALUES (?, 0, 0, 0, 0)", (hoje,))
-        db.commit()
-        return jsonify({"status": "ok", "mensagem": "Faturamento resetado para R$ 0,00"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-# ============ SERVIÇOS (ADMIN) ============
-@app.route("/api/servicos", methods=["POST"])
-@login_required
-def api_servicos_post():
-    try:
-        dados = request.get_json(force=True, silent=True)
-        if not dados or not dados.get("nome"):
-            return jsonify({"erro": "Nome é obrigatório"}), 400
-        db = get_db()
-        cur = db.execute("INSERT INTO servicos (nome, preco, duracao_min, ativo, ordem) VALUES (?, ?, ?, ?, ?)", (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30), dados.get('ativo', 1), dados.get('ordem', 0)))
-        db.commit()
-        return jsonify({"status": "ok", "id": cur.lastrowid})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/servicos/<int:item_id>", methods=["PUT"])
-@login_required
-def api_servicos_put(item_id):
-    try:
-        dados = request.get_json(force=True, silent=True)
-        if not dados:
-            return jsonify({"erro": "Dados inválidos"}), 400
-        db = get_db()
-        db.execute("UPDATE servicos SET nome=?, preco=?, duracao_min=?, ativo=? WHERE id=?", (dados.get('nome'), dados.get('preco', 0), dados.get('duracao_min', 30), dados.get('ativo', 1), item_id))
-        db.commit()
-        return jsonify({"status": "ok"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-@app.route("/api/servicos/<int:item_id>", methods=["DELETE"])
-@login_required
-def api_servicos_delete(item_id):
-    try:
-        db = get_db()
-        db.execute("DELETE FROM servicos WHERE id=?", (item_id,))
-        db.commit()
-        return jsonify({"status": "ok"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
-
-# ============ COMANDAS ============
-@app.route("/api/gerente/comandas", methods=["GET"])
-@login_required
-def gerente_listar_comandas():
-    db = get_db_gerente()
-    try:
-        rows = db.execute("SELECT * FROM comandas ORDER BY id DESC").fetchall()
-        return jsonify([dict(r) for r in rows])
-    except:
-        return jsonify([])
-
-@app.route("/api/gerente/comandas", methods=["POST"])
-@login_required
-def gerente_criar_comanda():
-    dados = request.get_json() or {}
-    db = get_db_gerente()
-    ticket = "CMD-" + datetime.now().strftime("%Y%m%d%H%M%S")
-    cur = db.execute(
-        """INSERT INTO comandas (ticket, cliente_nome, cliente_telefone, profissional, servicos, valor_total, status, pagamento)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (ticket, dados.get('cliente_nome'), dados.get('cliente_telefone'), dados.get('profissional'),
-         dados.get('servicos'), dados.get('valor_total', 0), dados.get('status', 'aberta'), dados.get('pagamento'))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/gerente/comandas/<int:comanda_id>", methods=["DELETE"])
-@login_required
-def gerente_deletar_comanda(comanda_id):
-    db = get_db_gerente()
-    db.execute("DELETE FROM comandas WHERE id=?", (comanda_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-# ============ REPASSES ============
-@app.route("/api/gerente/repasses", methods=["GET"])
-@login_required
-def gerente_listar_repasses():
-    db = get_db_gerente()
-    try:
-        rows = db.execute("SELECT * FROM repasses ORDER BY id DESC").fetchall()
-        return jsonify([dict(r) for r in rows])
-    except:
-        return jsonify([])
-
-@app.route("/api/gerente/repasses/resumo", methods=["GET"])
-@login_required
-def gerente_repasses_resumo():
-    db = get_db_gerente()
-    try:
-        pendente = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pendente'").fetchone()[0] or 0
-        pago = db.execute("SELECT COALESCE(SUM(comissao),0) FROM repasses WHERE status='pago'").fetchone()[0] or 0
-    except:
-        pendente, pago = 0, 0
-    return jsonify({"total_pendente": pendente, "total_pago": pago})
-
-@app.route("/api/gerente/repasses", methods=["POST"])
-@login_required
-def gerente_criar_repasse():
-    dados = request.get_json() or {}
-    db = get_db_gerente()
-    porcentagem = dados.get('porcentagem', 50)
-    valor_servico = dados.get('valor_servico', 0)
-    comissao = valor_servico * (porcentagem / 100)
-    cur = db.execute(
-        """INSERT INTO repasses (profissional, servico_nome, valor_servico, comissao, status)
-           VALUES (?, ?, ?, ?, ?)""",
-        (dados.get('profissional'), dados.get('servico_nome'), valor_servico, comissao, dados.get('status', 'pendente'))
-    )
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/gerente/repasses/<int:repasse_id>", methods=["DELETE"])
-@login_required
-def gerente_deletar_repasse(repasse_id):
-    db = get_db_gerente()
-    db.execute("DELETE FROM repasses WHERE id=?", (repasse_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
-
-# ============ CAIXA ============
-@app.route("/api/gerente/caixa", methods=["GET"])
-@login_required
-def gerente_listar_caixa():
-    db = get_db_gerente()
-    try:
-        rows = db.execute("SELECT * FROM caixa ORDER BY id DESC").fetchall()
-        return jsonify([dict(r) for r in rows])
-    except:
-        return jsonify([])
-
-@app.route("/api/gerente/caixa", methods=["POST"])
-@login_required
-def gerente_criar_caixa():
-    dados = request.get_json() or {}
-    db = get_db_gerente()
-    cur = db.execute("INSERT INTO caixa (tipo, descricao, pagamento, valor) VALUES (?, ?, ?, ?)", (dados.get('tipo'), dados.get('descricao'), dados.get('pagamento'), dados.get('valor', 0)))
-    db.commit()
-    return jsonify({"status": "ok", "id": cur.lastrowid})
-
-@app.route("/api/gerente/caixa/<int:caixa_id>", methods=["DELETE"])
-@login_required
-def gerente_deletar_caixa(caixa_id):
-    db = get_db_gerente()
-    db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
-    db.commit()
-    return jsonify({"status": "ok"})
+# ============ IMAGENS ============
+@app.route("/api/imagens", methods=["GET"])
+def api_imagens():
+    return jsonify([])
 
 # ============ HORÁRIOS ============
 @app.route("/api/horarios", methods=["GET"])
 def api_horarios_get():
-    try:
-        db = get_db()
-        rows = db.execute("SELECT * FROM horarios ORDER BY dia_semana").fetchall()
-        if rows:
-            return jsonify([dict(r) for r in rows])
-    except:
-        pass
     return jsonify([{"dia_semana": i, "abertura": "", "fechamento": "", "ativo": 0} for i in range(7)])
 
 @app.route("/api/horarios", methods=["PUT"])
 @login_required
 def api_horarios_put():
-    dados = request.get_json() or {}
-    db = get_db()
-    try:
-        for dia, info in dados.items():
-            db.execute("INSERT OR REPLACE INTO horarios (dia_semana, abertura, fechamento, ativo) VALUES (?, ?, ?, ?)", (int(dia), info.get("abertura", ""), info.get("fechamento", ""), 1 if info.get("ativo") else 0))
-        db.commit()
-        return jsonify({"status": "ok"})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+    return jsonify({"status": "ok"})
 
 # ============ PERFIL ============
 @app.route("/api/gerente/alterar_nome", methods=["POST"])
@@ -958,11 +1173,11 @@ def gerente_alterar_nome():
     novo_nome = dados.get("novo_nome", "").strip()
     if not novo_nome:
         return jsonify({"erro": "Nome inválido"}), 400
-    db = get_db_gerente()
-    db.execute("UPDATE gerentes SET nome=? WHERE id=?", (novo_nome, session["gerente_id"]))
-    db.commit()
-    session["gerente_nome"] = novo_nome
-    return jsonify({"status": "ok"})
+    
+    if baserow_patch(session["gerente_id"], {"nome": novo_nome}):
+        session["gerente_nome"] = novo_nome
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao alterar nome"}), 500
 
 @app.route("/api/gerente/alterar_login", methods=["POST"])
 @login_required
@@ -971,22 +1186,55 @@ def gerente_alterar_login():
     senha_atual = dados.get("senha_atual", "")
     novo_usuario = dados.get("novo_usuario", "").strip()
     nova_senha = dados.get("nova_senha", "")
-    db = get_db_gerente()
-    row = db.execute("SELECT * FROM gerentes WHERE id = ?", (session["gerente_id"],)).fetchone()
-    if not row or row["senha_hash"] != senha_atual:
+    
+    if not senha_atual:
+        return jsonify({"erro": "Senha atual é obrigatória"}), 400
+    
+    if not novo_usuario and not nova_senha:
+        return jsonify({"erro": "Digite pelo menos um campo"}), 400
+    
+    gerentes = baserow_get("gerente")
+    gerente_atual = None
+    for g in gerentes:
+        if g.get('id') == session["gerente_id"]:
+            gerente_atual = g
+            break
+    
+    if not gerente_atual:
+        return jsonify({"erro": "Gerente não encontrado"}), 404
+    
+    if gerente_atual.get('senha') != senha_atual:
         return jsonify({"erro": "Senha atual incorreta"}), 401
+    
+    item = {}
     if novo_usuario:
-        db.execute("UPDATE gerentes SET usuario=? WHERE id=?", (novo_usuario, session["gerente_id"]))
+        item['nome'] = novo_usuario
     if nova_senha:
-        db.execute("UPDATE gerentes SET senha_hash=? WHERE id=?", (nova_senha, session["gerente_id"]))
-    db.commit()
-    session.clear()
-    return jsonify({"status": "ok"})
+        item['senha'] = nova_senha
+    
+    if baserow_patch(session["gerente_id"], item):
+        if novo_usuario:
+            session["gerente_nome"] = novo_usuario
+        return jsonify({"status": "ok"})
+    return jsonify({"erro": "Erro ao alterar login"}), 500
 
 # ============ INICIALIZAÇÃO ============
 if __name__ == "__main__":
     print("="*60)
     print("  🚀 Barbearia Studio Leblon")
-    print("  📡 SQLite + Baserow + Discord")
+    print("  📡 100% Baserow")
     print("="*60)
+    print("📌 Token: 4tKiir8cwC5MvMu0Cgj9X5ewrzQn8jNR")
+    print("📌 Tabela: 1094351 (Customers)")
+    print("="*60)
+    print("")
+    print("🔧 Quando você clicar em CONCLUIR no pedido:")
+    print("  - O valor será adicionado automaticamente ao CAIXA")
+    print("  - O saldo aparecerá no dashboard e na seção Caixa")
+    print("")
+    print("🔧 Rotas de diagnóstico:")
+    print("  GET /api/gerente/caixa/diagnostico - Verificar estado do caixa")
+    print("  POST /api/gerente/caixa/sincronizar_pedidos - Sincronizar pedidos faltantes")
+    print("  POST /api/gerente/caixa/forcar_sincronizacao - Forçar sincronização completa")
+    print("")
     app.run(debug=True, host="0.0.0.0", port=5000)
